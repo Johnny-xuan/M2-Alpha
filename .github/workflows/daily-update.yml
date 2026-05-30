@@ -1,0 +1,61 @@
+name: 每日数据更新 · Daily Update
+
+on:
+  schedule:
+    # 北京时间 18:30 = UTC 10:30；周一到周五 (1-5)
+    # 注意：GitHub cron 可能延迟 5–30 分钟（非保证）
+    - cron: '30 10 * * 1-5'
+  workflow_dispatch:    # 允许手动触发
+
+permissions:
+  contents: write       # 让 Action 能 commit + push 回 main
+
+concurrency:
+  group: daily-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 1️⃣ Fetch latest A-share data (AKShare)
+        run: python build/fetch_data.py
+
+      - name: 2️⃣ Run model inference
+        run: python build/inference.py
+
+      - name: 3️⃣ Update docs/data/data.json
+        run: python build/update_daily.py
+
+      - name: 4️⃣ Commit + push if changed
+        env:
+          GH_USER: ${{ github.actor }}
+        run: |
+          git config user.name  "M²-Alpha Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/data/data.json
+          if git diff --cached --quiet; then
+            echo "no changes."
+            exit 0
+          fi
+          STAMP=$(date -u +%Y-%m-%d)
+          git commit -m "data: 每日更新 ${STAMP}"
+          git push

@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M²-Alpha · A 股每日选股参考</title>
+<meta name="description" content="基于深度学习的 A 股每日选股参考 — 沪深 300 池子里每日筛选 10 只值得关注的股票，过去 11 个月累计跑赢基准 +96%。" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:wght@100..800&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ─────────── ambient gradient + grid overlay ─────────── -->
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-vignette" aria-hidden="true"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     STICKY TOP NAV
+     ═══════════════════════════════════════════════════════════════ -->
+<nav class="navbar">
+  <a class="brand" href="#hero">
+    <span class="brand__mark">M<sup>2</sup></span>
+    <span class="brand__name">α<em>lpha</em></span>
+  </a>
+
+  <ul class="nav-tabs">
+    <li><a href="#picks" class="nav-tab nav-tab--active" data-tab="picks">今日推荐</a></li>
+    <li><a href="#scorecard" class="nav-tab" data-tab="scorecard">预测复盘</a></li>
+    <li><a href="#performance" class="nav-tab" data-tab="performance">历史业绩</a></li>
+    <li><a href="#strategy" class="nav-tab" data-tab="strategy">交易策略</a></li>
+    <li><a href="#howto" class="nav-tab" data-tab="howto">如何使用</a></li>
+  </ul>
+
+  <div class="nav-cluster">
+    <div class="nav-pill nav-pill--clock" title="当前时间">
+      <span class="nav-pill__k" id="nav-today">— —</span>
+      <span class="nav-pill__t" id="nav-clock">— : — : —</span>
+    </div>
+    <div class="nav-pill nav-pill--signal" title="模型最新信号日期">
+      <span class="nav-pill__dot"></span>
+      <span class="nav-pill__k">SIGNAL</span>
+      <span class="nav-pill__v" id="nav-asof">—</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     HERO — brand + value prop + Top 3 picks
+     ═══════════════════════════════════════════════════════════════ -->
+<header class="hero" id="hero">
+  <div class="hero__left">
+    <div class="eyebrow">
+      <span class="eyebrow__dot"></span>
+      <span class="eyebrow__txt">A 股 · 沪深 300 · 每日更新</span>
+    </div>
+
+    <h1 class="wordmark">
+      <span class="wm-line1">A 股 <em>每日</em></span>
+      <span class="wm-line2">选 股 <em>参考</em></span>
+    </h1>
+
+    <p class="hero__pitch">
+      基于深度学习模型，每日在沪深 300 中筛出
+      <strong class="acc">10 只</strong>
+      最具上涨潜力的股票 ——
+      过去 <strong>11 个月</strong>累计跑赢基准
+      <strong class="gain">+96.4 pp</strong> · 月胜率
+      <strong class="gain">82%</strong>。
+    </p>
+
+    <div class="hero__ctas">
+      <a class="cta cta--primary" href="#picks">查看今日清单 →</a>
+      <a class="cta cta--ghost" href="#scorecard">看历史命中</a>
+    </div>
+
+    <div class="hero__quick-stats">
+      <div class="qs">
+        <div class="qs__k">累计收益</div>
+        <div class="qs__v gain" data-count-to="121.19" data-suffix="%">+0.00%</div>
+      </div>
+      <div class="qs">
+        <div class="qs__k">月胜率</div>
+        <div class="qs__v gain" data-count-to="81.8" data-suffix="%">0.00%</div>
+      </div>
+      <div class="qs">
+        <div class="qs__k">最大回撤</div>
+        <div class="qs__v loss" data-count-to="-12.57" data-suffix="%">0.00%</div>
+      </div>
+      <div class="qs">
+        <div class="qs__k">最新信号</div>
+        <div class="qs__v" id="qs-asof">—</div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="hero__right">
+    <div class="featured">
+      <div class="featured__head">
+        <span class="featured__label">今日最受看好 TOP 3</span>
+        <span class="featured__date" id="featured-date">2026-06-01 开盘</span>
+      </div>
+      <div class="featured__cards" id="featured-cards"></div>
+      <a class="featured__more" href="#picks">看完整 10 只清单 ↓</a>
+    </div>
+  </aside>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 01 — 今日完整清单
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section" id="picks">
+  <header class="section-head">
+    <div class="section-num">01 / 今 日 推 荐</div>
+    <h2 class="section-title">2026-06-01 开 盘 建 仓 清 单</h2>
+    <p class="section-sub">
+      下列 10 只为模型在 <span id="picks-asof">2026-05-29</span> 收盘后给出的次日开盘买入建议。
+      策略要求<strong>等权 10%</strong>分配 · 同一行业最多 2 只 · 第二天开盘买 / 第三天开盘卖 / 再看新清单。
+    </p>
+  </header>
+
+  <table class="picks" id="picks-table">
+    <thead>
+      <tr>
+        <th class="c-rk">#</th>
+        <th class="c-code">代 码</th>
+        <th class="c-name">名 称</th>
+        <th class="c-ind">行 业</th>
+        <th class="c-score">看 好 度</th>
+        <th class="c-bar">SIGNAL</th>
+        <th class="c-px">参 考 价</th>
+        <th class="c-w">建议权重</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="picks__note">
+    <span class="ico-i">i</span>
+    <div>
+      <strong>看好度</strong> = 模型在窗口最后一日给出的截面 z-score；越大代表该股相对同期其它股票越被看好。
+      <strong>参考价</strong> = 模型计算时所用最新收盘价；实际开盘价可能 ± 2-3% 滑动。
+      <strong>建议权重</strong>按"等权 10 万元/只"反算股数 (整手向下取整) — 高价股 (如中际旭创) 可能因不可拆分单手而轻微偏离。
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 02 — 预测复盘 / Scorecard
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section section--scorecard" id="scorecard">
+  <header class="section-head">
+    <div class="section-num">02 / 预 测 复 盘</div>
+    <h2 class="section-title">过 去 <span id="sc-days">208</span> 天 · 模 型 准 不 准</h2>
+    <p class="section-sub">
+      每日"开盘买、第三日开盘卖"复盘 — 模型推荐的 Top 10 平均涨幅
+      vs 沪深 300 同期实际表现。这是"凭什么能跟着买"的硬证据。
+    </p>
+  </header>
+
+  <!-- 关键数字 -->
+  <div class="sc-stats">
+    <div class="sc-stat">
+      <div class="sc-stat__k">日 均 超 额</div>
+      <div class="sc-stat__v gain" data-count-to="0.32" data-suffix="%">+0.00%</div>
+      <div class="sc-stat__d">Top 10 平 均 涨 幅 减 去 同 期 沪 深 300</div>
+    </div>
+    <div class="sc-stat">
+      <div class="sc-stat__k">日 级 胜 率</div>
+      <div class="sc-stat__v gain" data-count-to="57.7" data-suffix="%">0.00%</div>
+      <div class="sc-stat__d">208 天 中 ~120 天 Top 10 跑 赢 基 准</div>
+    </div>
+    <div class="sc-stat">
+      <div class="sc-stat__k">个 股 命 中</div>
+      <div class="sc-stat__v gain" data-count-to="51.0" data-suffix="%">0.00%</div>
+      <div class="sc-stat__d">每 个 推 荐 股 票 跑 赢 基 准 的 比 例</div>
+    </div>
+    <div class="sc-stat">
+      <div class="sc-stat__k">最 佳 一 天</div>
+      <div class="sc-stat__v gain" id="sc-best">+0.00%</div>
+      <div class="sc-stat__d" id="sc-best-d">—</div>
+    </div>
+  </div>
+
+  <!-- 滚动命中率走势图 -->
+  <div class="sc-chart-host">
+    <h3 class="sub-h">
+      <span>最近 60 天 · 每日 Top-10 vs 沪深 300</span>
+      <span class="sub-h__legend">
+        <span class="lg lg--gain"><i></i>跑赢</span>
+        <span class="lg lg--loss"><i></i>跑输</span>
+      </span>
+    </h3>
+    <svg id="excess-chart" class="excess-chart" viewBox="0 0 1400 280" preserveAspectRatio="none" aria-label="每日超额走势"></svg>
+  </div>
+
+  <!-- 单日复盘 / 日期范围选择器 -->
+  <div class="sc-detail">
+    <div class="sub-h sub-h--ctrl">
+      <span id="sc-detail-title">最近 10 天 · 每日推荐与实际表现</span>
+      <div class="sc-counter" id="sc-counter"></div>
+    </div>
+
+    <div class="sc-rangebar">
+      <div class="sc-chips" role="tablist">
+        <button class="sc-chip-btn sc-chip-btn--active" data-preset="10">最近 10 天</button>
+        <button class="sc-chip-btn" data-preset="30">近 30 天</button>
+        <button class="sc-chip-btn" data-preset="60">近 60 天</button>
+        <button class="sc-chip-btn" data-preset="all">全 部 208 天</button>
+      </div>
+
+      <div class="sc-range">
+        <label class="sc-range__l">
+          <span>起</span>
+          <input type="date" id="date-start" class="sc-range__inp">
+        </label>
+        <span class="sc-range__arrow">→</span>
+        <label class="sc-range__l">
+          <span>止</span>
+          <input type="date" id="date-end" class="sc-range__inp">
+        </label>
+        <button class="sc-range__btn" id="date-apply">查 看 →</button>
+      </div>
+    </div>
+
+    <div class="sc-days" id="sc-days-list"></div>
+    <div class="sc-loadmore" id="sc-loadmore" hidden>
+      <button id="sc-loadmore-btn">显 示 更 多 →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 03 — 历史业绩
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section section--perf" id="performance">
+  <header class="section-head">
+    <div class="section-num">03 / 历 史 业 绩</div>
+    <h2 class="section-title">11 个 月 连 续 回 测 · 100 万 起 步</h2>
+    <p class="section-sub">
+      按下方"交易策略"严格执行（开盘买 / 开盘卖 / 等权 10 只 / 行业分散 / 双边 0.13% 手续费）
+      在沪深 300 真实历史数据上的滚动回测结果。
+    </p>
+  </header>
+
+  <div class="perf-stats">
+    <div class="perf-stat">
+      <div class="perf-stat__k">100 万 起 步</div>
+      <div class="perf-stat__v" data-count-to="2.21" data-suffix="x">0.00x</div>
+      <div class="perf-stat__d">期 末 净 值 ≈ 221 万</div>
+    </div>
+    <div class="perf-stat">
+      <div class="perf-stat__k">累 计 收 益</div>
+      <div class="perf-stat__v gain" data-count-to="121.19" data-suffix="%">+0.00%</div>
+      <div class="perf-stat__d">沪 深 300 同 期 <span id="perf-bench">—</span></div>
+    </div>
+    <div class="perf-stat">
+      <div class="perf-stat__k">超 越 基 准</div>
+      <div class="perf-stat__v gain" data-count-to="96.4" data-prefix="+" data-suffix="pp">+0.00pp</div>
+      <div class="perf-stat__d">扣 除 手 续 费 后</div>
+    </div>
+    <div class="perf-stat">
+      <div class="perf-stat__k">月 度 胜 率</div>
+      <div class="perf-stat__v gain" data-count-to="81.8" data-suffix="%">0.00%</div>
+      <div class="perf-stat__d">11 个 月 中 9 个 月 跑 赢</div>
+    </div>
+    <div class="perf-stat">
+      <div class="perf-stat__k">最 大 回 撤</div>
+      <div class="perf-stat__v loss" data-count-to="-12.57" data-suffix="%">0.00%</div>
+      <div class="perf-stat__d">单 次 最 大 回 撤 12.6%</div>
+    </div>
+    <div class="perf-stat">
+      <div class="perf-stat__k">夏 普 比</div>
+      <div class="perf-stat__v gain" data-count-to="2.93">0.00</div>
+      <div class="perf-stat__d">收 益 与 波 动 之 比</div>
+    </div>
+  </div>
+
+  <!-- 净值曲线 -->
+  <div class="chart-host">
+    <h3 class="sub-h">
+      <span>净 值 曲 线 · 模型组合 vs 沪深 300 基准</span>
+      <span class="sub-h__legend">
+        <span class="lg lg--model"><i></i>M²-Alpha 组合</span>
+        <span class="lg lg--bench"><i></i>沪深 300</span>
+        <span class="lg lg--dd"><i></i>回撤区</span>
+      </span>
+    </h3>
+    <svg id="equity-chart" class="chart" viewBox="0 0 1400 420" preserveAspectRatio="none" aria-label="净值曲线"></svg>
+    <div id="equity-tooltip" class="tooltip" hidden></div>
+  </div>
+
+  <!-- 月度收益 -->
+  <div class="monthly-host">
+    <h3 class="sub-h">
+      <span>每 月 收 益 · 模型 vs 沪深 300</span>
+      <span class="ctrl">月超额胜率 <em class="gain">9 / 11</em></span>
+    </h3>
+    <div id="monthly-bars" class="monthly"></div>
+  </div>
+
+  <!-- 持仓构成 -->
+  <div class="holdings-host">
+    <h3 class="sub-h">
+      <span>过 去 11 个 月 · 模 型 偏 好</span>
+    </h3>
+    <div class="holdings">
+      <div class="holdings__left">
+        <h4 class="sub-sub">行 业 分 布</h4>
+        <div class="industry-bars" id="industry-bars"></div>
+      </div>
+      <div class="holdings__right">
+        <h4 class="sub-sub">最 常 持 有 的 12 支</h4>
+        <ol class="top-held" id="top-held"></ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 04 — 交易策略
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section section--strategy" id="strategy">
+  <header class="section-head">
+    <div class="section-num">04 / 交 易 策 略</div>
+    <h2 class="section-title">公 开 透 明 · 6 条 规 则</h2>
+    <p class="section-sub">
+      模型输出的是排序信号 — 真正的收益来自下面这套<strong>纪律化</strong>的交易规则。
+      历史回测的 +121% 全部基于此严格执行。
+    </p>
+  </header>
+
+  <div class="rules-grid">
+    <article class="rule">
+      <div class="rule__n">01</div>
+      <h3 class="rule__h">候 选 池 · CSI300</h3>
+      <p>只在沪深 300 成分股里选 — 流动性好、可融券、信息透明。不涉及小盘股、ST 股、新股。</p>
+    </article>
+
+    <article class="rule">
+      <div class="rule__n">02</div>
+      <h3 class="rule__h">每 日 取 Top 10</h3>
+      <p>从模型当日打分前 30 的候选里挑出 10 只，作为次日交易组合。位次稳定可降低换手。</p>
+    </article>
+
+    <article class="rule">
+      <div class="rule__n">03</div>
+      <h3 class="rule__h">等 权 10% / 只</h3>
+      <p>每只配置 10% 资金，不按打分加权。避免集中暴露在单一头寸；100 万本金即每只 10 万。</p>
+    </article>
+
+    <article class="rule">
+      <div class="rule__n">04</div>
+      <h3 class="rule__h">每 行 业 ≤ 2 只</h3>
+      <p>同一申万行业不超过 2 只 — 强制分散到至少 5 个行业。极端行情下不至于一锅端。</p>
+    </article>
+
+    <article class="rule">
+      <div class="rule__n">05</div>
+      <h3 class="rule__h">滞 后 卖 出 · Top 50 才 卖</h3>
+      <p>已持仓的股票只要还在<strong>当日打分前 50 名</strong>就继续持有 — 避免频繁交易吃手续费。</p>
+    </article>
+
+    <article class="rule">
+      <div class="rule__n">06</div>
+      <h3 class="rule__h">开 盘 买 / 开 盘 卖</h3>
+      <p>09:30 集合竞价成交 — 不等盘中博弈、不追涨杀跌。<br>双边手续费按 0.13% 计算（已扣）。</p>
+    </article>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SECTION 05 — 如何使用
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="section section--howto" id="howto">
+  <header class="section-head">
+    <div class="section-num">05 / 如 何 使 用</div>
+    <h2 class="section-title">三 步 跟 单 流 程</h2>
+    <p class="section-sub">
+      本站每个交易日晚上 19:00 后更新次日清单。如果你想跟着模型参考下单，按下面流程操作。
+    </p>
+  </header>
+
+  <ol class="steps">
+    <li class="step">
+      <div class="step__n">①</div>
+      <div class="step__body">
+        <h3>每晚 19:00 后来本站</h3>
+        <p>
+          A 股当日收盘后，模型用最新数据重新算出次日推荐 — 本站在
+          <strong>19:00 前后</strong>更新清单。打开本页面就能看到。
+        </p>
+      </div>
+    </li>
+
+    <li class="step">
+      <div class="step__n">②</div>
+      <div class="step__body">
+        <h3>次日 09:25 录入买单</h3>
+        <p>
+          在自己的券商交易软件里按 10 只清单录入"市价委托" — 09:30 集合竞价撮合。
+          每只按 NAV 的 <strong>10%</strong> 分配资金 (100 万 → 每只 10 万)。
+        </p>
+      </div>
+    </li>
+
+    <li class="step">
+      <div class="step__n">③</div>
+      <div class="step__body">
+        <h3>持有一天，第三日开盘卖出</h3>
+        <p>
+          A 股 T+1：买入后第二个交易日 09:30 开盘卖出，回笼资金。
+          同时来本站看<strong>新的清单</strong>，按新清单建仓。如此循环。
+        </p>
+      </div>
+    </li>
+  </ol>
+
+  <div class="howto-warn">
+    <div class="warn-head">
+      <span class="warn-ico">!</span>
+      <strong>风险提示 · 务必阅读</strong>
+    </div>
+    <ul>
+      <li>本站为模型预测的公开展示，<strong>不构成任何形式的投资建议</strong>。</li>
+      <li><strong>过去的收益不代表未来表现</strong> — 模型有效性可能随市场结构变化而衰减。</li>
+      <li>历史回测中也曾出现单日 <span class="loss">-9.21%</span> 的最差日（2025-10-09），跟单需有承受短期回撤的心理准备。</li>
+      <li>严格按规则执行 — 如果只买其中几只 / 不按权重 / 隔几天才轮换 — 实际效果将<strong>与回测显著不同</strong>。</li>
+      <li>建议至少配置 <strong>10 万元以上</strong>本金参与，否则手续费占比过高吞噬收益。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════════════ -->
+<footer class="footer">
+  <div class="footer__brand">
+    <span class="footer__mark">M²·Alpha</span>
+    <span class="footer__tag">A 股每日选股参考</span>
+  </div>
+  <div class="footer__txt">
+    本站所有数字均为真实历史回测结果。所提供信息仅供参考与研究，不构成投资建议、要约或诱导。
+    据此进行的任何交易决策，请自行承担风险。
+  </div>
+  <div class="footer__meta">
+    <span>© 2026 · M²-Alpha Project</span>
+    <span class="sep">·</span>
+    <span>仅供研究与展示用途</span>
+  </div>
+</footer>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

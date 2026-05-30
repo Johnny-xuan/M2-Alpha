@@ -1,0 +1,13 @@
+# M²-Alpha 每日数据更新依赖（GitHub Actions runner 使用）
+
+# 数据 / 计算
+pandas>=2.0
+numpy>=1.24
+pyarrow>=14.0
+
+# A 股数据源（无 token，免费）
+akshare>=1.12.0
+
+# 深度学习推理（CPU only — runner 没 GPU）
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.0,<3.0

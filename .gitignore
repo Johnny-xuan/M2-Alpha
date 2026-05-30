@@ -1,0 +1,49 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/_cache/
+build/tmp/
+
+# Virtual envs
+venv/
+.venv/
+env/
+.env
+
+# Data / cache (raw upstream + intermediate)
+build/cache/
+build/raw/
+*.parquet
+docs/data/*.csv
+
+# Logs
+*.log
+logs/
+
+# Test screenshots
+screenshots/
+*.png.tmp
+
+# Local secrets
+.env.local
+secrets.json
