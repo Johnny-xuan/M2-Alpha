@@ -28,11 +28,11 @@
   </a>
 
   <ul class="nav-tabs">
-    <li><a href="#picks" class="nav-tab nav-tab--active" data-tab="picks">今日推荐</a></li>
-    <li><a href="#scorecard" class="nav-tab" data-tab="scorecard">预测复盘</a></li>
-    <li><a href="#performance" class="nav-tab" data-tab="performance">历史业绩</a></li>
-    <li><a href="#strategy" class="nav-tab" data-tab="strategy">交易策略</a></li>
-    <li><a href="#howto" class="nav-tab" data-tab="howto">如何使用</a></li>
+    <li><a href="#picks" class="nav-tab nav-tab--active" data-tab="picks">今日 Signal</a></li>
+    <li><a href="#scorecard" class="nav-tab" data-tab="scorecard">OOS 复盘</a></li>
+    <li><a href="#performance" class="nav-tab" data-tab="performance">Backtest</a></li>
+    <li><a href="#strategy" class="nav-tab" data-tab="strategy">Strategy</a></li>
+    <li><a href="#howto" class="nav-tab" data-tab="howto">Usage</a></li>
   </ul>
 
   <div class="nav-cluster">
@@ -55,26 +55,25 @@
   <div class="hero__left">
     <div class="eyebrow">
       <span class="eyebrow__dot"></span>
-      <span class="eyebrow__txt">A 股 · 沪深 300 · 每日更新</span>
+      <span class="eyebrow__txt">CSI 300 · CROSS-SECTIONAL ALPHA · LIVE DAILY</span>
     </div>
 
     <h1 class="wordmark">
-      <span class="wm-line1">A 股 <em>每日</em></span>
-      <span class="wm-line2">选 股 <em>参考</em></span>
+      <span class="wm-line1">Cross<em>-Sectional</em></span>
+      <span class="wm-line2">Alpha <em>Engine</em></span>
     </h1>
 
     <p class="hero__pitch">
-      基于深度学习模型，每日在沪深 300 中筛出
-      <strong class="acc">10 只</strong>
-      最具上涨潜力的股票 ——
-      过去 <strong>11 个月</strong>累计跑赢基准
-      <strong class="gain">+96.4 pp</strong> · 月胜率
-      <strong class="gain">82%</strong>。
+      自研深度学习量化模型 · 沪深 300 cross-sectional alpha selection ·
+      每个交易日自动给出 <strong class="acc">10 只 ranked signals</strong> ·
+      11 个月 OOS 跑赢基准
+      <strong class="gain">+96.4 pp</strong> · monthly excess win rate
+      <strong class="gain">82%</strong>.
     </p>
 
     <div class="hero__ctas">
-      <a class="cta cta--primary" href="#picks">查看今日清单 →</a>
-      <a class="cta cta--ghost" href="#scorecard">看历史命中</a>
+      <a class="cta cta--primary" href="#picks">查看今日 Signal →</a>
+      <a class="cta cta--ghost" href="#scorecard">OOS Track Record</a>
     </div>
 
     <div class="hero__quick-stats">
@@ -100,11 +99,11 @@
   <aside class="hero__right">
     <div class="featured">
       <div class="featured__head">
-        <span class="featured__label">今日最受看好 TOP 3</span>
-        <span class="featured__date" id="featured-date">2026-06-01 开盘</span>
+        <span class="featured__label">TOP 3 · 模型最看好</span>
+        <span class="featured__date" id="featured-date">2026-06-01 · open</span>
       </div>
       <div class="featured__cards" id="featured-cards"></div>
-      <a class="featured__more" href="#picks">看完整 10 只清单 ↓</a>
+      <a class="featured__more" href="#picks">View full Top-10 signal ↓</a>
     </div>
   </aside>
 </header>
@@ -114,11 +113,11 @@
      ═══════════════════════════════════════════════════════════════ -->
 <section class="section" id="picks">
   <header class="section-head">
-    <div class="section-num">01 / 今 日 推 荐</div>
-    <h2 class="section-title">2026-06-01 开 盘 建 仓 清 单</h2>
+    <div class="section-num">01 / TODAY'S SIGNAL</div>
+    <h2 class="section-title">2026-06-01 · Top-10 Signal</h2>
     <p class="section-sub">
-      下列 10 只为模型在 <span id="picks-asof">2026-05-29</span> 收盘后给出的次日开盘买入建议。
-      策略要求<strong>等权 10%</strong>分配 · 同一行业最多 2 只 · 第二天开盘买 / 第三天开盘卖 / 再看新清单。
+      下列 10 只为模型在 <span id="picks-asof">2026-05-29</span> 收盘后输出的 cross-sectional top-10 signals。
+      Strategy: <strong>equal-weight 10% / 只</strong> · 同一行业 ≤ 2 只 · 次日 open-to-open execution · 滞后带 sell-out-50。
     </p>
   </header>
 
@@ -126,13 +125,13 @@
     <thead>
       <tr>
         <th class="c-rk">#</th>
-        <th class="c-code">代 码</th>
+        <th class="c-code">CODE</th>
         <th class="c-name">名 称</th>
-        <th class="c-ind">行 业</th>
-        <th class="c-score">看 好 度</th>
-        <th class="c-bar">SIGNAL</th>
-        <th class="c-px">参 考 价</th>
-        <th class="c-w">建议权重</th>
+        <th class="c-ind">INDUSTRY</th>
+        <th class="c-score">SCORE</th>
+        <th class="c-bar">SIGNAL STRENGTH</th>
+        <th class="c-px">REF. PX</th>
+        <th class="c-w">WEIGHT</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -141,9 +140,9 @@
   <div class="picks__note">
     <span class="ico-i">i</span>
     <div>
-      <strong>看好度</strong> = 模型在窗口最后一日给出的截面 z-score；越大代表该股相对同期其它股票越被看好。
-      <strong>参考价</strong> = 模型计算时所用最新收盘价；实际开盘价可能 ± 2-3% 滑动。
-      <strong>建议权重</strong>按"等权 10 万元/只"反算股数 (整手向下取整) — 高价股 (如中际旭创) 可能因不可拆分单手而轻微偏离。
+      <strong>SCORE</strong> = 模型窗口最后一日的 cross-sectional z-score；数值越大表示该股票相对同期截面被打分越高。
+      <strong>REF. PX</strong> = 模型计算时所用的最新 close price；实际 open 价格可能存在 ±2–3% 滑动。
+      <strong>WEIGHT</strong> 按 equal-weight 10 万元 / 只反算股数（整手向下取整）— 高价股可能因 lot-size 约束略有偏离。
     </div>
   </div>
 </section>
@@ -153,33 +152,33 @@
      ═══════════════════════════════════════════════════════════════ -->
 <section class="section section--scorecard" id="scorecard">
   <header class="section-head">
-    <div class="section-num">02 / 预 测 复 盘</div>
-    <h2 class="section-title">过 去 <span id="sc-days">208</span> 天 · 模 型 准 不 准</h2>
+    <div class="section-num">02 / OOS TRACK RECORD</div>
+    <h2 class="section-title">过 去 <span id="sc-days">208</span> 天 · Open-to-Open 复盘</h2>
     <p class="section-sub">
-      每日"开盘买、第三日开盘卖"复盘 — 模型推荐的 Top 10 平均涨幅
-      vs 沪深 300 同期实际表现。这是"凭什么能跟着买"的硬证据。
+      每个交易日的 cross-sectional top-10 signal，按"次日 open 买入 / 第三日 open 卖出"
+      execute，复盘实际平均收益 vs CSI 300 同期表现。每过一个交易日，新增一行 OOS 样本。
     </p>
   </header>
 
   <!-- 关键数字 -->
   <div class="sc-stats">
     <div class="sc-stat">
-      <div class="sc-stat__k">日 均 超 额</div>
+      <div class="sc-stat__k">DAILY AVG EXCESS</div>
       <div class="sc-stat__v gain" data-count-to="0.32" data-suffix="%">+0.00%</div>
-      <div class="sc-stat__d">Top 10 平 均 涨 幅 减 去 同 期 沪 深 300</div>
+      <div class="sc-stat__d">Top-10 平均收益减去同期 CSI 300</div>
     </div>
     <div class="sc-stat">
-      <div class="sc-stat__k">日 级 胜 率</div>
+      <div class="sc-stat__k">DAILY WIN RATE</div>
       <div class="sc-stat__v gain" data-count-to="57.7" data-suffix="%">0.00%</div>
-      <div class="sc-stat__d">208 天 中 ~120 天 Top 10 跑 赢 基 准</div>
+      <div class="sc-stat__d">208 天中约 120 天 top-10 跑赢基准</div>
     </div>
     <div class="sc-stat">
-      <div class="sc-stat__k">个 股 命 中</div>
+      <div class="sc-stat__k">PER-PICK HIT RATE</div>
       <div class="sc-stat__v gain" data-count-to="51.0" data-suffix="%">0.00%</div>
-      <div class="sc-stat__d">每 个 推 荐 股 票 跑 赢 基 准 的 比 例</div>
+      <div class="sc-stat__d">每只 signal 个股跑赢基准的比例</div>
     </div>
     <div class="sc-stat">
-      <div class="sc-stat__k">最 佳 一 天</div>
+      <div class="sc-stat__k">BEST DAY</div>
       <div class="sc-stat__v gain" id="sc-best">+0.00%</div>
       <div class="sc-stat__d" id="sc-best-d">—</div>
     </div>
@@ -238,44 +237,44 @@
      ═══════════════════════════════════════════════════════════════ -->
 <section class="section section--perf" id="performance">
   <header class="section-head">
-    <div class="section-num">03 / 历 史 业 绩</div>
-    <h2 class="section-title">11 个 月 连 续 回 测 · 100 万 起 步</h2>
+    <div class="section-num">03 / BACKTEST</div>
+    <h2 class="section-title">11 个月 OOS Backtest · 100 万 NAV 起步</h2>
     <p class="section-sub">
-      按下方"交易策略"严格执行（开盘买 / 开盘卖 / 等权 10 只 / 行业分散 / 双边 0.13% 手续费）
-      在沪深 300 真实历史数据上的滚动回测结果。
+      按下方 Strategy 严格执行（open-to-open / equal-weight top-10 / industry ≤ 2 /
+      双边 0.13% commission）在 CSI 300 真实历史数据上的滚动 walk-forward 回测结果。
     </p>
   </header>
 
   <div class="perf-stats">
     <div class="perf-stat">
-      <div class="perf-stat__k">100 万 起 步</div>
+      <div class="perf-stat__k">FINAL NAV</div>
       <div class="perf-stat__v" data-count-to="2.21" data-suffix="x">0.00x</div>
-      <div class="perf-stat__d">期 末 净 值 ≈ 221 万</div>
+      <div class="perf-stat__d">100 万 → 约 221 万</div>
     </div>
     <div class="perf-stat">
-      <div class="perf-stat__k">累 计 收 益</div>
+      <div class="perf-stat__k">CUM. RETURN</div>
       <div class="perf-stat__v gain" data-count-to="121.19" data-suffix="%">+0.00%</div>
-      <div class="perf-stat__d">沪 深 300 同 期 <span id="perf-bench">—</span></div>
+      <div class="perf-stat__d">CSI 300 同期 <span id="perf-bench">—</span></div>
     </div>
     <div class="perf-stat">
-      <div class="perf-stat__k">超 越 基 准</div>
+      <div class="perf-stat__k">EXCESS vs BENCHMARK</div>
       <div class="perf-stat__v gain" data-count-to="96.4" data-prefix="+" data-suffix="pp">+0.00pp</div>
-      <div class="perf-stat__d">扣 除 手 续 费 后</div>
+      <div class="perf-stat__d">net of bilateral commission</div>
     </div>
     <div class="perf-stat">
-      <div class="perf-stat__k">月 度 胜 率</div>
+      <div class="perf-stat__k">MONTHLY WIN RATE</div>
       <div class="perf-stat__v gain" data-count-to="81.8" data-suffix="%">0.00%</div>
-      <div class="perf-stat__d">11 个 月 中 9 个 月 跑 赢</div>
+      <div class="perf-stat__d">11 个月中 9 个月 outperform</div>
     </div>
     <div class="perf-stat">
-      <div class="perf-stat__k">最 大 回 撤</div>
+      <div class="perf-stat__k">MAX DRAWDOWN</div>
       <div class="perf-stat__v loss" data-count-to="-12.57" data-suffix="%">0.00%</div>
-      <div class="perf-stat__d">单 次 最 大 回 撤 12.6%</div>
+      <div class="perf-stat__d">单次最大回撤 −12.6%</div>
     </div>
     <div class="perf-stat">
-      <div class="perf-stat__k">夏 普 比</div>
+      <div class="perf-stat__k">SHARPE (ANN.)</div>
       <div class="perf-stat__v gain" data-count-to="2.93">0.00</div>
-      <div class="perf-stat__d">收 益 与 波 动 之 比</div>
+      <div class="perf-stat__d">return / volatility, annualized</div>
     </div>
   </div>
 
@@ -325,49 +324,49 @@
      ═══════════════════════════════════════════════════════════════ -->
 <section class="section section--strategy" id="strategy">
   <header class="section-head">
-    <div class="section-num">04 / 交 易 策 略</div>
-    <h2 class="section-title">公 开 透 明 · 6 条 规 则</h2>
+    <div class="section-num">04 / STRATEGY</div>
+    <h2 class="section-title">Strategy · 6 条规则</h2>
     <p class="section-sub">
-      模型输出的是排序信号 — 真正的收益来自下面这套<strong>纪律化</strong>的交易规则。
-      历史回测的 +121% 全部基于此严格执行。
+      模型输出是 cross-sectional ranking signal —— 真正可执行的收益来自下面这套
+      确定性 strategy。回测的 +121% 完全基于此规则严格 execute。
     </p>
   </header>
 
   <div class="rules-grid">
     <article class="rule">
       <div class="rule__n">01</div>
-      <h3 class="rule__h">候 选 池 · CSI300</h3>
-      <p>只在沪深 300 成分股里选 — 流动性好、可融券、信息透明。不涉及小盘股、ST 股、新股。</p>
+      <h3 class="rule__h">Universe · CSI 300</h3>
+      <p>仅在沪深 300 成分股内选股 — liquidity 充足、可融券、信息披露透明。不涉及小盘、ST、新股。</p>
     </article>
 
     <article class="rule">
       <div class="rule__n">02</div>
-      <h3 class="rule__h">每 日 取 Top 10</h3>
-      <p>从模型当日打分前 30 的候选里挑出 10 只，作为次日交易组合。位次稳定可降低换手。</p>
+      <h3 class="rule__h">Daily Top-10 Signal</h3>
+      <p>从模型当日 score 前 30 的候选池里筛出 10 只作为次日组合。位次稳定有助于降低 turnover。</p>
     </article>
 
     <article class="rule">
       <div class="rule__n">03</div>
-      <h3 class="rule__h">等 权 10% / 只</h3>
-      <p>每只配置 10% 资金，不按打分加权。避免集中暴露在单一头寸；100 万本金即每只 10 万。</p>
+      <h3 class="rule__h">Equal-Weight 10% / 只</h3>
+      <p>每只 position 配置 10% 资金，<strong>不</strong>按 score 加权。避免集中暴露；100 万 NAV 即每只 10 万。</p>
     </article>
 
     <article class="rule">
       <div class="rule__n">04</div>
-      <h3 class="rule__h">每 行 业 ≤ 2 只</h3>
-      <p>同一申万行业不超过 2 只 — 强制分散到至少 5 个行业。极端行情下不至于一锅端。</p>
+      <h3 class="rule__h">Industry Cap ≤ 2</h3>
+      <p>同一申万一级行业最多 2 只 — 强制 diversify 到至少 5 个行业。极端行情下避免集中爆破。</p>
     </article>
 
     <article class="rule">
       <div class="rule__n">05</div>
-      <h3 class="rule__h">滞 后 卖 出 · Top 50 才 卖</h3>
-      <p>已持仓的股票只要还在<strong>当日打分前 50 名</strong>就继续持有 — 避免频繁交易吃手续费。</p>
+      <h3 class="rule__h">Lazy Sell · Top-50 才卖</h3>
+      <p>已持仓的股票只要还在<strong>当日 score 前 50</strong>就继续持有 — 避免频繁 turnover 吃 commission。</p>
     </article>
 
     <article class="rule">
       <div class="rule__n">06</div>
-      <h3 class="rule__h">开 盘 买 / 开 盘 卖</h3>
-      <p>09:30 集合竞价成交 — 不等盘中博弈、不追涨杀跌。<br>双边手续费按 0.13% 计算（已扣）。</p>
+      <h3 class="rule__h">Open-to-Open Execution</h3>
+      <p>09:30 集合竞价成交 — 不参与盘中博弈、不追涨杀跌。<br>双边 commission 按 0.13% 计算（已扣除）。</p>
     </article>
   </div>
 </section>
@@ -377,10 +376,10 @@
      ═══════════════════════════════════════════════════════════════ -->
 <section class="section section--howto" id="howto">
   <header class="section-head">
-    <div class="section-num">05 / 如 何 使 用</div>
-    <h2 class="section-title">三 步 跟 单 流 程</h2>
+    <div class="section-num">05 / USAGE</div>
+    <h2 class="section-title">如何参考使用 · 3 步</h2>
     <p class="section-sub">
-      本站每个交易日晚上 19:00 后更新次日清单。如果你想跟着模型参考下单，按下面流程操作。
+      本站每个交易日北京时间 18:30 后自动更新次日 signal。如果你想跟随模型 paper-trade，按下面流程操作。
     </p>
   </header>
 

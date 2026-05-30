@@ -91,13 +91,19 @@ def main():
     panel_open = panel.set_index(["trade_date", "ts_code"])["open"]
     all_pred_dates = sorted(preds["trade_date"].unique())
 
+    # CRITICAL: merge into existing by_date, don't replace.
+    # First Action run only has ~60 days of preds (fetch_data --days 90);
+    # the seed data.json has 11 months — must preserve old + add new.
     scorecard_by_date = data["scorecard"].get("by_date", {})
+    print(f"  existing scorecard.by_date entries: {len(scorecard_by_date)}")
 
+    new_count = 0
     for d in all_pred_dates:
         di = all_pred_dates.index(d)
         if di + 2 >= len(all_pred_dates):
             continue  # not enough future
         d1, d2 = all_pred_dates[di + 1], all_pred_dates[di + 2]
+        is_new = _fmt(d) not in scorecard_by_date
         daily = preds[preds.trade_date == d].nlargest(10, "pred")
         picks_perf = []
         rets = []
@@ -134,8 +140,11 @@ def main():
             "hit_rate": round(hits / len(rets) * 100, 1),
             "picks": picks_perf,
         }
+        if is_new:
+            new_count += 1
 
     data["scorecard"]["by_date"] = scorecard_by_date
+    print(f"  scorecard.by_date: {len(scorecard_by_date)} total (+{new_count} new)")
 
     # 5. Rebuild all_dates (lightweight chart series) + recent + summary
     dates_sorted = sorted(scorecard_by_date.keys())
