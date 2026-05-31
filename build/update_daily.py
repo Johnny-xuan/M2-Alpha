@@ -181,7 +181,87 @@ def main():
         "worst_day": {"d": dates_sorted[int(np.argmin(arr))], "ret": round(float(arr.min()), 2)},
     }
 
-    # 6. Recompute industry_avg + top_held from scorecard picks (live, not seed)
+    # 6. 扩展 equity_curve + monthly_returns 到最新 scorecard 日期
+    # (seed equity_curve 来自原始 strategy A 回测; 之后通过 daily avg_ret 复利推算)
+    eq = data.get("equity_curve", [])
+    if eq:
+        last_eq_date = eq[-1]["d"]
+        last_nav = eq[-1]["nav"]
+        last_bench = eq[-1]["bench"]
+        # 找出 scorecard 中比 last_eq_date 更新的日子
+        new_days = [d for d in dates_sorted if d > last_eq_date]
+        for d in new_days:
+            sd = scorecard_by_date[d]
+            if sd.get("avg_ret") is None: continue
+            # daily return → 复利
+            new_nav = last_nav * (1 + sd["avg_ret"] / 100.0)
+            if sd.get("bench_ret") is not None:
+                new_bench = last_bench * (1 + sd["bench_ret"] / 100.0)
+            else:
+                new_bench = last_bench
+            ret_pct = (new_nav / eq[0]["nav"] - 1) * 100
+            bret_pct = (new_bench / eq[0]["bench"] - 1) * 100
+            eq.append({
+                "d": d,
+                "nav": round(new_nav, 2),
+                "bench": round(new_bench, 2),
+                "ret": round(ret_pct, 3),
+                "bret": round(bret_pct, 3),
+            })
+            last_nav, last_bench = new_nav, new_bench
+        if new_days:
+            print(f"  extended equity_curve: +{len(new_days)} days → {eq[-1]['d']}")
+        data["equity_curve"] = eq
+
+        # 同步 summary: cum_return / final_nav / max_drawdown 重算
+        navs = [r["nav"] for r in eq]
+        cum = (navs[-1] / navs[0] - 1) * 100
+        peak = navs[0]; mdd = 0.0
+        for v in navs:
+            if v > peak: peak = v
+            d_pct = (v / peak - 1) * 100
+            if d_pct < mdd: mdd = d_pct
+        data["summary"]["cum_return"] = round(cum, 2)
+        data["summary"]["final_nav"] = round(navs[-1], 2)
+        data["summary"]["max_drawdown"] = round(mdd, 2)
+        bench_cum = (eq[-1]["bench"] / eq[0]["bench"] - 1) * 100
+        data["summary"]["benchmark_cum"] = round(bench_cum, 2)
+        data["summary"]["excess"] = round(cum - bench_cum, 2)
+        data["summary"]["n_days"] = len(eq)
+        # Sharpe (annualized)
+        if len(navs) > 1:
+            rets = np.array([navs[i] / navs[i - 1] - 1 for i in range(1, len(navs))])
+            if rets.std() > 0:
+                sharpe = float(rets.mean() / rets.std() * np.sqrt(252))
+                data["summary"]["sharpe"] = round(sharpe, 2)
+        print(f"  refreshed summary: cum={cum:.2f}% / sharpe={data['summary']['sharpe']:.2f} / mdd={mdd:.2f}% / final_nav={navs[-1]:.0f}")
+
+    # 7. 扩展 monthly_returns
+    mr = data.get("monthly_returns", [])
+    if mr and eq:
+        # 重算最后一个月（可能补了新日子）+ 追加新月
+        from collections import defaultdict
+        nav_by_month = defaultdict(list)
+        bench_by_month = defaultdict(list)
+        for r in eq:
+            m = r["d"][:7]
+            nav_by_month[m].append(r["nav"])
+            bench_by_month[m].append(r["bench"])
+        months_in_data = sorted(nav_by_month.keys())
+        new_mr = []
+        for m in months_in_data:
+            navs_m = nav_by_month[m]; benches_m = bench_by_month[m]
+            if len(navs_m) < 2: continue
+            ret = (navs_m[-1] / navs_m[0] - 1) * 100
+            bret = (benches_m[-1] / benches_m[0] - 1) * 100
+            new_mr.append({"m": m, "model": round(ret, 2), "bench": round(bret, 2), "excess": round(ret - bret, 2)})
+        data["monthly_returns"] = new_mr
+        # update monthly_win_rate in summary
+        win_months = sum(1 for x in new_mr if x["excess"] > 0)
+        data["summary"]["monthly_win_rate"] = round(win_months / max(len(new_mr), 1) * 100, 1)
+        print(f"  refreshed monthly_returns: {len(new_mr)} months, win {win_months}/{len(new_mr)}")
+
+    # 8. Recompute industry_avg + top_held from scorecard picks (live, not seed)
     ind_count = Counter()
     ticker_count = Counter()
     ticker_info = {}
