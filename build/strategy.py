@@ -101,7 +101,11 @@ def simulate(preds_df: pd.DataFrame,
     if start_signal_date:
         signal_dates = [d for d in signal_dates if d >= start_signal_date]
 
-    # rank 表：每日所有股票按 pred 降序排名（1=最佳）
+    # 全局排序：先按 ts_code 让原始顺序稳定，否则 sort_values 在打分相同时
+    # 用非稳定排序，会导致同一份 preds.parquet 两次跑出来 picks 不同。
+    preds = preds.sort_values(["trade_date", "ts_code"]).reset_index(drop=True)
+
+    # rank 表：每日所有股票按 pred 降序排名（1=最佳，ts_code 作 tie-breaker）
     preds_ranked = preds.copy()
     preds_ranked["rank"] = preds_ranked.groupby("trade_date")["pred"].rank(
         method="first", ascending=False
@@ -125,8 +129,11 @@ def simulate(preds_df: pd.DataFrame,
         d_next = signal_dates[di + 1] if di + 1 < len(signal_dates) else None
         d_next2 = signal_dates[di + 2] if di + 2 < len(signal_dates) else None
 
+        # 稳定排序 + ts_code tie-breaker，保证多次跑结果完全一致
         day_scored = (preds[preds.trade_date == d]
-                      .sort_values("pred", ascending=False)
+                      .sort_values(["pred", "ts_code"],
+                                   ascending=[False, True],
+                                   kind="stable")
                       .reset_index(drop=True))
 
         # 上一日 carry over：先看哪些持仓还在 top_hold_threshold 内
