@@ -47,7 +47,7 @@ jobs:
         run: python build/inference.py
         timeout-minutes: 5
 
-      - name: 3️⃣ Rebuild docs/data/data.json (strategy: 行业分散 top-10 + 滞后带)
+      - name: 3️⃣ Rebuild data.json (行业分散 top-10 + 滞后带)
         run: python build/update_daily.py
 
       - name: 4️⃣ Commit + push if changed
