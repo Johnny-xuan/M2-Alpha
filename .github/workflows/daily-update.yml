@@ -36,13 +36,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 1️⃣ Fetch latest A-share data (AKShare)
-        run: python build/fetch_data.py
+      # 注意：update_daily 是完全重建模式，需要完整历史 (~12 个月) 才能
+      # 重新算出从 2025-07-11 开始的 equity_curve / monthly_returns。
+      # BaoStock 走自家 TCP (data.baostock.com:31322)，不被 GitHub runner 防火墙拦。
+      - name: 1️⃣ Fetch A-share data (BaoStock, ~12 个月)
+        run: python build/fetch_data.py --start 2025-06-15
+        timeout-minutes: 15
 
-      - name: 2️⃣ Run model inference
+      - name: 2️⃣ Run model inference (m2alpha.pt)
         run: python build/inference.py
+        timeout-minutes: 5
 
-      - name: 3️⃣ Update docs/data/data.json
+      - name: 3️⃣ Rebuild docs/data/data.json (strategy: 行业分散 top-10 + 滞后带)
         run: python build/update_daily.py
 
       - name: 4️⃣ Commit + push if changed
