@@ -137,7 +137,15 @@ def get_daily_panel(bs, ts_codes: list[str], start_date: str, end_date: str) -> 
             print(f"  {i+1}/{len(ts_codes)}")
 
     if not rows:
-        raise RuntimeError("BaoStock 没拿到任何数据")
+        print("  ⚠ 该窗口内 BaoStock 没数据（可能是周末/假期），返回空 panel")
+        return pd.DataFrame(columns=[
+            "ts_code", "trade_date", "open", "high", "low", "close",
+            "pre_close", "vol", "amount", "turnover_rate", "pct_chg",
+            "pe_ttm", "pb", "ps_ttm", "vwap", "turnover_rate_f", "volume_ratio",
+            "net_mf_amount", "buy_sm_amount", "buy_md_amount",
+            "buy_lg_amount", "buy_elg_amount", "sell_sm_amount",
+            "sell_md_amount", "sell_lg_amount", "sell_elg_amount",
+        ])
 
     panel = pd.concat(rows, ignore_index=True)
     print(f"  → {len(panel)} 行 (skipped {skipped} 股)")
@@ -196,6 +204,11 @@ def get_csi300_index(bs, start_date: str, end_date: str) -> pd.DataFrame:
     return df[["ts_code", "trade_date", "open", "high", "low", "close"]]
 
 
+def _compact_to_iso(d: str) -> str:
+    """20260529 -> 2026-05-29."""
+    return f"{d[:4]}-{d[4:6]}-{d[6:8]}"
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--days", type=int, default=90,
@@ -204,11 +217,34 @@ def main():
                         help="显式起始日期 YYYY-MM-DD (覆盖 --days)。例如初次回填用 2025-06-15。")
     parser.add_argument("--end", default=None,
                         help="显式结束日期 YYYY-MM-DD (默认今天)。")
+    parser.add_argument("--incremental", action="store_true",
+                        help="增量模式：读已有 panel.parquet 的 max_date，"
+                             "只拉自那之后的新数据，append + dedupe。"
+                             "首次跑请用 --start 全量回填。")
     args = parser.parse_args()
 
     today = datetime.now()
     end_date = args.end or today.strftime("%Y-%m-%d")
-    if args.start:
+
+    if args.incremental:
+        panel_path = CACHE / "panel.parquet"
+        if not panel_path.exists():
+            raise SystemExit(
+                "[fetch] --incremental 需要已有 panel.parquet。"
+                "首次请改用 --start YYYY-MM-DD 全量回填。"
+            )
+        existing_panel = pd.read_parquet(panel_path)
+        existing_panel["trade_date"] = existing_panel["trade_date"].astype(str)
+        max_d = existing_panel["trade_date"].max()
+        # 从 max_d 后一个自然日开始拉
+        from datetime import timedelta as _td
+        next_d = datetime.strptime(max_d, "%Y%m%d") + _td(days=1)
+        start_date = next_d.strftime("%Y-%m-%d")
+        if start_date > end_date:
+            print(f"[fetch] panel 已是最新 (max={max_d})，无需更新。")
+            return
+        print(f"[fetch incremental] panel max={max_d}, 新增窗口 {start_date} → {end_date}")
+    elif args.start:
         start_date = args.start
     else:
         start_date = (today - timedelta(days=args.days)).strftime("%Y-%m-%d")
@@ -222,18 +258,43 @@ def main():
     print(f"  baostock login ok (code={lg.error_code})")
 
     try:
-        # 1. 成分股 + 行业
+        # 1. 成分股 + 行业（每次都刷，membership 可能变）
         comps = get_csi300_components(bs)
         comps.to_csv(CACHE / "basic.csv", index=False)
         print(f"  saved → {CACHE / 'basic.csv'}")
 
         # 2. 全成分股日线 panel
-        panel = get_daily_panel(bs, comps["ts_code"].tolist(), start_date, end_date)
+        new_panel = get_daily_panel(bs, comps["ts_code"].tolist(), start_date, end_date)
+
+        if args.incremental:
+            existing_panel = pd.read_parquet(CACHE / "panel.parquet")
+            existing_panel["trade_date"] = existing_panel["trade_date"].astype(str)
+            if len(new_panel) == 0:
+                panel = existing_panel
+                print(f"  panel 无新增（{start_date}–{end_date} 无交易日），保持 {len(panel)} 行")
+            else:
+                new_panel["trade_date"] = new_panel["trade_date"].astype(str)
+                before = len(existing_panel)
+                panel = pd.concat([existing_panel, new_panel], ignore_index=True)
+                panel = panel.drop_duplicates(subset=["ts_code", "trade_date"], keep="last")
+                panel = panel.sort_values(["ts_code", "trade_date"]).reset_index(drop=True)
+                print(f"  panel merge: {before} + {len(new_panel)} (new) → {len(panel)} after dedupe")
+        else:
+            panel = new_panel
         panel.to_parquet(CACHE / "panel.parquet", index=False)
         print(f"  saved → {CACHE / 'panel.parquet'}  rows={len(panel)}")
 
         # 3. CSI 300 index
-        idx = get_csi300_index(bs, start_date, end_date)
+        new_idx = get_csi300_index(bs, start_date, end_date)
+        if args.incremental and (CACHE / "csi300.parquet").exists():
+            existing_idx = pd.read_parquet(CACHE / "csi300.parquet")
+            existing_idx["trade_date"] = existing_idx["trade_date"].astype(str)
+            new_idx["trade_date"] = new_idx["trade_date"].astype(str)
+            idx = pd.concat([existing_idx, new_idx], ignore_index=True)
+            idx = idx.drop_duplicates(subset=["ts_code", "trade_date"], keep="last")
+            idx = idx.sort_values("trade_date").reset_index(drop=True)
+        else:
+            idx = new_idx
         idx.to_parquet(CACHE / "csi300.parquet", index=False)
         print(f"  saved → {CACHE / 'csi300.parquet'}  rows={len(idx)}")
 

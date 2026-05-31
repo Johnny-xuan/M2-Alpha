@@ -31,10 +31,15 @@ env/
 .env
 
 # Data / cache (raw upstream + intermediate)
-build/cache/
 build/raw/
-*.parquet
 docs/data/*.csv
+
+# build/cache/ 大部分忽略，只保留 incremental 模式作为状态的 4 个生产数据文件
+build/cache/*
+!build/cache/panel.parquet
+!build/cache/preds.parquet
+!build/cache/csi300.parquet
+!build/cache/basic.csv
 
 # Logs
 *.log

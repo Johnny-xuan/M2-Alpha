@@ -36,12 +36,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 注意：update_daily 是完全重建模式，需要完整历史 (~12 个月) 才能
-      # 重新算出从 2025-07-11 开始的 equity_curve / monthly_returns。
+      # 增量模式：仓库内已 commit panel/preds/csi300/basic 作为"状态"，
+      # 每天只 fetch 新增日子 (~3-5 个 ticker × 1-2 个新交易日，几秒内完成)。
       # BaoStock 走自家 TCP (data.baostock.com:31322)，不被 GitHub runner 防火墙拦。
-      - name: 1️⃣ Fetch A-share data (BaoStock, ~12 个月)
-        run: python build/fetch_data.py --start 2025-06-15
-        timeout-minutes: 15
+      # 如需全量回填，本地跑 python build/init.py 并 commit 产物。
+      - name: 1️⃣ Fetch A-share data (BaoStock incremental)
+        run: python build/fetch_data.py --incremental
+        timeout-minutes: 5
 
       - name: 2️⃣ Run model inference (m2alpha.pt)
         run: python build/inference.py
@@ -56,7 +57,9 @@ jobs:
         run: |
           git config user.name  "M²-Alpha Bot"
           git config user.email "actions@users.noreply.github.com"
-          git add docs/data/data.json
+          git add build/cache/panel.parquet build/cache/preds.parquet \
+                  build/cache/csi300.parquet build/cache/basic.csv \
+                  docs/data/data.json
           if git diff --cached --quiet; then
             echo "no changes."
             exit 0
