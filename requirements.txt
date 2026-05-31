@@ -5,8 +5,8 @@ pandas>=2.0
 numpy>=1.24
 pyarrow>=14.0
 
-# A 股数据源（无 token，免费）
-akshare>=1.12.0
+# A 股数据源（无 token，免费，无频次限制）
+baostock>=0.9
 
 # 深度学习推理（CPU only — runner 没 GPU）
 --extra-index-url https://download.pytorch.org/whl/cpu
