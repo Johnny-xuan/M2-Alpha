@@ -43,13 +43,15 @@ export function renderMiniExcess(data) {
   });
 }
 
-/* 最近 7 天命中 chips list */
+/* 最近 7 天命中 chips list (仅显示已结算) */
 export function renderRecentHits(data) {
   const host = $("#recent-hits");
   if (!host) return;
-  const recent = (data.scorecard?.recent || []).slice(-7).reverse();
+  const recent = (data.scorecard?.recent || [])
+    .filter(d => !d.pending && d.avg_ret != null)
+    .slice(-7).reverse();
   if (!recent.length) {
-    host.innerHTML = '<div class="dim" style="font-size:12px">暂无数据</div>';
+    host.innerHTML = '<div class="dim" style="font-size:12px">暂无已结算数据</div>';
     return;
   }
   host.innerHTML = recent.map(day => {
@@ -57,8 +59,8 @@ export function renderRecentHits(data) {
     return `
       <div class="rh-row ${cls}">
         <div class="rh-row__d">${day.d.slice(5)}</div>
-        <div class="rh-row__ret ${cls}">${fmtPct(day.avg_ret || 0, 2)}</div>
-        <div class="rh-row__hit">${day.hits || 0}/${day.n || 10}</div>
+        <div class="rh-row__ret ${cls}">${fmtPct(day.avg_ret, 2)}</div>
+        <div class="rh-row__hit">${day.hits}/${day.n}</div>
       </div>
     `;
   }).join("");

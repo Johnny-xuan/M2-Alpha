@@ -1,30 +1,29 @@
-"""update_daily.py — 增量更新 docs/data/data.json 中"每日变化"的字段。
+"""update_daily.py — 基于仓库自有 preds.parquet **完全重建** docs/data/data.json。
 
-设计：每个交易日只更新以下字段，不重建历史回测部分：
-  · current_holdings      — 最新 Top 10 picks
-  · scorecard.by_date[D]  — 当日预测明细
-  · scorecard.recent      — 最近 10 天滚动窗口
-  · scorecard.all_dates   — 追加当日 (用于 60 天 excess chart)
-  · scorecard.summary     — 滚动更新 (n_days_total, win_rate 等)
-
-历史回测部分（equity_curve / monthly_returns / industry_avg / top_held）
-来自初始 seed data.json，由 MASTER 项目离线生成；本脚本不动它们。
+设计原则（2026-05-31 重写）：
+  · 仓库 100% 自洽：不再读 MASTER seed，所有展示数据 = m2alpha.pt 推理 + 仓库策略回测。
+  · 策略与 MASTER 比赛配置一致：行业分散 top-10 + 滞后带（持仓掉出 top-50 才换）。
+  · open(D+1) → open(D+2) 计算每日收益（T+1，开盘价成交）。
+  · 未结算预测日（缺 sell_d 开盘价）标记 pending，picks 仍展示。
 
 依赖前置脚本:
-  1. python build/fetch_data.py        → 拉最新 panel + 指数 + basic
-  2. python build/inference.py         → 跑模型出 preds.parquet
-  3. python build/update_daily.py      → 增量回写 docs/data/data.json
+  1. python build/fetch_data.py --start 2025-06-15 --end <today>
+  2. python build/inference.py
+  3. python build/update_daily.py
 """
 from __future__ import annotations
 import json
+import sys
 from collections import Counter
 from pathlib import Path
 from datetime import datetime
 import pandas as pd
-import numpy as np
 
 HERE = Path(__file__).resolve().parent
-ROOT = HERE.parent                                # M2-Alpha/
+sys.path.insert(0, str(HERE))
+from strategy import simulate
+
+ROOT = HERE.parent
 CACHE = HERE / "cache"
 DATA_JSON = ROOT / "docs" / "data" / "data.json"
 PANEL = CACHE / "panel.parquet"
@@ -32,277 +31,147 @@ PREDS = CACHE / "preds.parquet"
 CSI300 = CACHE / "csi300.parquet"
 BASIC = CACHE / "basic.csv"
 
-
-def _fmt(d: str) -> str:
-    return f"{d[:4]}-{d[4:6]}-{d[6:8]}"
+INITIAL_NAV = 1_000_000.0
+N_HOLD = 10
+MAX_PER_INDUSTRY = 2
+HOLD_THRESHOLD = 50      # 持仓掉出 top-50 才换
+START_SIGNAL_DATE = "20250710"   # 网站展示起点（业绩历史从此日 +1 开始算）
 
 
 def main():
-    print(f"[update_daily] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    t0 = datetime.now()
+    print(f"[update_daily] {t0.strftime('%Y-%m-%d %H:%M:%S')}  (重建模式)")
 
-    # 1. Load existing data.json (seed)
-    with open(DATA_JSON, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    print(f"  loaded seed data.json (asof={data['summary']['asof']})")
-
-    # 防御性删除不再被前端使用的冗余字段（避免文件膨胀）
-    for k in ("industry_history", "recent_top_picks", "variants"):
-        data.pop(k, None)
-
-    # 2. Load latest preds + panel + index + basic
     preds = pd.read_parquet(PREDS)
-    preds["trade_date"] = preds["trade_date"].astype(str)
     panel = pd.read_parquet(PANEL)
-    panel["trade_date"] = panel["trade_date"].astype(str)
     csi300 = pd.read_parquet(CSI300)
-    csi300["trade_date"] = csi300["trade_date"].astype(str)
     basic = pd.read_csv(BASIC, dtype=str)
-    name_map = dict(zip(basic.ts_code, basic.name))
-    industry_map = dict(zip(basic.ts_code, basic.industry))
+    preds["trade_date"] = preds["trade_date"].astype(str)
+    panel["trade_date"] = panel["trade_date"].astype(str)
+    csi300["trade_date"] = csi300["trade_date"].astype(str)
 
-    latest_date = preds["trade_date"].max()
-    print(f"  latest pred date: {latest_date}")
+    print(f"  preds: {len(preds)} rows, "
+          f"{preds.trade_date.nunique()} dates "
+          f"[{preds.trade_date.min()} → {preds.trade_date.max()}]")
+    print(f"  panel: {len(panel)} rows, {panel.ts_code.nunique()} tickers")
+    print(f"  basic: {len(basic)} tickers, {basic.industry.nunique()} industries")
 
-    # 3. Build current_holdings: Top 10 of latest date
-    latest_close = panel[panel.trade_date == latest_date].set_index("ts_code")["close"]
-    top10 = preds[preds.trade_date == latest_date].nlargest(10, "pred").reset_index(drop=True)
-    NAV = 1_000_000  # 假设组合规模
-    target_w = 1.0 / len(top10)
-    holdings = []
-    for i, r in top10.iterrows():
-        ts = r.ts_code
-        close = float(latest_close.get(ts, 0.0))
-        if close <= 0:
-            shares = 0
-        else:
-            # 整手 (100 股) 向下取整，按 10% 分配
-            shares = int(NAV * target_w / close / 100) * 100
-        amount = shares * close
-        holdings.append({
-            "rank": i + 1,
-            "ts": ts,
-            "name": name_map.get(ts, ts),
-            "industry": industry_map.get(ts, "—"),
-            "score": round(float(r.pred), 3),
-            "close": round(close, 2),
-            "shares": shares,
-            "weight": round(amount / NAV * 100, 1),
-        })
-    data["current_holdings"] = holdings
-    print(f"  current_holdings: {len(holdings)} picks, top = {holdings[0]['name']}")
+    # 跑模拟
+    result = simulate(
+        preds_df=preds,
+        basic_df=basic,
+        panel_df=panel,
+        csi300_df=csi300,
+        initial_nav=INITIAL_NAV,
+        n_hold=N_HOLD,
+        max_per_industry=MAX_PER_INDUSTRY,
+        hold_threshold=HOLD_THRESHOLD,
+        start_signal_date=START_SIGNAL_DATE,
+    )
 
-    # 4. Update scorecard.by_date: compute realized return for each day with D+2 available
-    bench_open = csi300.set_index("trade_date")["open"]
-    panel_open = panel.set_index(["trade_date", "ts_code"])["open"]
-    all_pred_dates = sorted(preds["trade_date"].unique())
+    scorecard_by_date = result["scorecard"]
+    equity = result["equity"]
+    monthly = result["monthly"]
+    summary = result["summary"]
+    holdings_now = result["holdings_now"]
 
-    # CRITICAL: merge into existing by_date, don't replace.
-    # First Action run only has ~60 days of preds (fetch_data --days 90);
-    # the seed data.json has 11 months — must preserve old + add new.
-    scorecard_by_date = data["scorecard"].get("by_date", {})
-    print(f"  existing scorecard.by_date entries: {len(scorecard_by_date)}")
+    n_pending = sum(1 for sc in scorecard_by_date.values() if sc.get("pending"))
+    n_realized = len(scorecard_by_date) - n_pending
+    print(f"  simulation: {len(scorecard_by_date)} signal days "
+          f"({n_realized} realized, {n_pending} pending)")
+    if equity:
+        print(f"  equity: {len(equity)} pts, "
+              f"{equity[0]['d']} → {equity[-1]['d']}, "
+              f"cum={summary['cum_return']:.2f}% (bench {summary['benchmark_cum']:.2f}%), "
+              f"sharpe={summary['sharpe']:.2f}, mdd={summary['max_drawdown']:.2f}%")
 
-    new_count = 0
-    for d in all_pred_dates:
-        di = all_pred_dates.index(d)
-        if di + 2 >= len(all_pred_dates):
-            continue  # not enough future
-        d1, d2 = all_pred_dates[di + 1], all_pred_dates[di + 2]
-        is_new = _fmt(d) not in scorecard_by_date
-        daily = preds[preds.trade_date == d].nlargest(10, "pred")
-        picks_perf = []
-        rets = []
-        for r in daily.itertuples():
-            ts = r.ts_code
-            o1 = panel_open.get((d1, ts))
-            o2 = panel_open.get((d2, ts))
-            if o1 and o2 and o1 > 0:
-                rr = (o2 / o1 - 1) * 100
-                rets.append(rr)
-            else:
-                rr = None
-            picks_perf.append({
-                "ts": ts,
-                "name": name_map.get(ts, ts),
-                "ind": industry_map.get(ts, "—"),
-                "score": round(float(r.pred), 3),
-                "ret": round(rr, 2) if rr is not None else None,
-            })
-        if not rets:
-            continue
-        bo1, bo2 = bench_open.get(d1), bench_open.get(d2)
-        bench_ret = (bo2 / bo1 - 1) * 100 if bo1 and bo2 else None
-        avg_ret = float(np.mean(rets))
-        excess = avg_ret - bench_ret if bench_ret is not None else None
-        hits = sum(1 for r in rets if bench_ret is not None and r > bench_ret)
-
-        scorecard_by_date[_fmt(d)] = {
-            "d": _fmt(d), "buy_d": _fmt(d1), "sell_d": _fmt(d2),
-            "avg_ret": round(avg_ret, 2),
-            "bench_ret": round(bench_ret, 2) if bench_ret is not None else None,
-            "excess": round(excess, 2) if excess is not None else None,
-            "hits": hits, "n": len(rets),
-            "hit_rate": round(hits / len(rets) * 100, 1),
-            "picks": picks_perf,
-        }
-        if is_new:
-            new_count += 1
-
-    data["scorecard"]["by_date"] = scorecard_by_date
-    print(f"  scorecard.by_date: {len(scorecard_by_date)} total (+{new_count} new)")
-
-    # 5. Rebuild all_dates (lightweight chart series) + recent + summary
-    dates_sorted = sorted(scorecard_by_date.keys())
-    data["scorecard"]["all_dates"] = [
-        {
-            "d": d,
-            "avg": scorecard_by_date[d]["avg_ret"],
-            "bench": scorecard_by_date[d]["bench_ret"],
-            "excess": scorecard_by_date[d]["excess"],
-            "hit": scorecard_by_date[d]["hit_rate"],
-        }
-        for d in dates_sorted
-    ]
-    data["scorecard"]["recent"] = [scorecard_by_date[d] for d in dates_sorted[-10:]]
-
-    # summary
-    arr = np.array([scorecard_by_date[d]["avg_ret"] for d in dates_sorted])
-    barr = np.array([scorecard_by_date[d]["bench_ret"] for d in dates_sorted if scorecard_by_date[d]["bench_ret"] is not None])
-    earr = np.array([scorecard_by_date[d]["excess"] for d in dates_sorted if scorecard_by_date[d]["excess"] is not None])
-    harr = np.array([scorecard_by_date[d]["hit_rate"] for d in dates_sorted])
-    data["scorecard"]["summary"] = {
-        "n_days_total": len(dates_sorted),
-        "model_avg_daily": round(float(arr.mean()), 3),
-        "bench_avg_daily": round(float(barr.mean()), 3) if len(barr) else 0.0,
-        "excess_avg": round(float(earr.mean()), 3) if len(earr) else 0.0,
-        "win_rate_vs_bench_daily": round(float((earr > 0).mean() * 100), 1) if len(earr) else 0.0,
-        "avg_hit_rate": round(float(harr.mean()), 1),
-        "best_day": {"d": dates_sorted[int(np.argmax(arr))], "ret": round(float(arr.max()), 2)},
-        "worst_day": {"d": dates_sorted[int(np.argmin(arr))], "ret": round(float(arr.min()), 2)},
-    }
-
-    # 6. 扩展 equity_curve + monthly_returns 到最新 scorecard 日期
-    # (seed equity_curve 来自原始 strategy A 回测; 之后通过 daily avg_ret 复利推算)
-    eq = data.get("equity_curve", [])
-    if eq:
-        last_eq_date = eq[-1]["d"]
-        last_nav = eq[-1]["nav"]
-        last_bench = eq[-1]["bench"]
-        # 找出 scorecard 中比 last_eq_date 更新的日子
-        new_days = [d for d in dates_sorted if d > last_eq_date]
-        for d in new_days:
-            sd = scorecard_by_date[d]
-            if sd.get("avg_ret") is None: continue
-            # daily return → 复利
-            new_nav = last_nav * (1 + sd["avg_ret"] / 100.0)
-            if sd.get("bench_ret") is not None:
-                new_bench = last_bench * (1 + sd["bench_ret"] / 100.0)
-            else:
-                new_bench = last_bench
-            ret_pct = (new_nav / eq[0]["nav"] - 1) * 100
-            bret_pct = (new_bench / eq[0]["bench"] - 1) * 100
-            eq.append({
-                "d": d,
-                "nav": round(new_nav, 2),
-                "bench": round(new_bench, 2),
-                "ret": round(ret_pct, 3),
-                "bret": round(bret_pct, 3),
-            })
-            last_nav, last_bench = new_nav, new_bench
-        if new_days:
-            print(f"  extended equity_curve: +{len(new_days)} days → {eq[-1]['d']}")
-        data["equity_curve"] = eq
-
-        # 同步 summary: cum_return / final_nav / max_drawdown 重算
-        navs = [r["nav"] for r in eq]
-        cum = (navs[-1] / navs[0] - 1) * 100
-        peak = navs[0]; mdd = 0.0
-        for v in navs:
-            if v > peak: peak = v
-            d_pct = (v / peak - 1) * 100
-            if d_pct < mdd: mdd = d_pct
-        data["summary"]["cum_return"] = round(cum, 2)
-        data["summary"]["final_nav"] = round(navs[-1], 2)
-        data["summary"]["max_drawdown"] = round(mdd, 2)
-        bench_cum = (eq[-1]["bench"] / eq[0]["bench"] - 1) * 100
-        data["summary"]["benchmark_cum"] = round(bench_cum, 2)
-        data["summary"]["excess"] = round(cum - bench_cum, 2)
-        data["summary"]["n_days"] = len(eq)
-        # Sharpe (annualized)
-        if len(navs) > 1:
-            rets = np.array([navs[i] / navs[i - 1] - 1 for i in range(1, len(navs))])
-            if rets.std() > 0:
-                sharpe = float(rets.mean() / rets.std() * np.sqrt(252))
-                data["summary"]["sharpe"] = round(sharpe, 2)
-        print(f"  refreshed summary: cum={cum:.2f}% / sharpe={data['summary']['sharpe']:.2f} / mdd={mdd:.2f}% / final_nav={navs[-1]:.0f}")
-
-    # 7. 扩展 monthly_returns
-    mr = data.get("monthly_returns", [])
-    if mr and eq:
-        # 重算最后一个月（可能补了新日子）+ 追加新月
-        from collections import defaultdict
-        nav_by_month = defaultdict(list)
-        bench_by_month = defaultdict(list)
-        for r in eq:
-            m = r["d"][:7]
-            nav_by_month[m].append(r["nav"])
-            bench_by_month[m].append(r["bench"])
-        months_in_data = sorted(nav_by_month.keys())
-        new_mr = []
-        for m in months_in_data:
-            navs_m = nav_by_month[m]; benches_m = bench_by_month[m]
-            if len(navs_m) < 2: continue
-            ret = (navs_m[-1] / navs_m[0] - 1) * 100
-            bret = (benches_m[-1] / benches_m[0] - 1) * 100
-            new_mr.append({"m": m, "model": round(ret, 2), "bench": round(bret, 2), "excess": round(ret - bret, 2)})
-        data["monthly_returns"] = new_mr
-        # update monthly_win_rate in summary
-        win_months = sum(1 for x in new_mr if x["excess"] > 0)
-        data["summary"]["monthly_win_rate"] = round(win_months / max(len(new_mr), 1) * 100, 1)
-        print(f"  refreshed monthly_returns: {len(new_mr)} months, win {win_months}/{len(new_mr)}")
-
-    # 8. Recompute industry_avg + top_held from scorecard picks (live, not seed)
+    # —— 聚合：行业权重 & 高频持仓（基于 scorecard.picks）——
     ind_count = Counter()
     ticker_count = Counter()
-    ticker_info = {}
+    ticker_info: dict[str, dict] = {}
     total_picks = 0
-    for date_data in scorecard_by_date.values():
-        for p in date_data.get("picks", []):
+    for sc in scorecard_by_date.values():
+        for p in sc.get("picks", []):
             ind = p.get("ind", "—")
             ind_count[ind] += 1
             ticker_count[p["ts"]] += 1
             total_picks += 1
             if p["ts"] not in ticker_info:
-                ticker_info[p["ts"]] = {
-                    "name": p.get("name", p["ts"]),
-                    "industry": p.get("ind", "—"),
-                }
+                ticker_info[p["ts"]] = {"name": p.get("name", p["ts"]),
+                                         "industry": p.get("ind", "—")}
     n_days = len(scorecard_by_date)
-
-    data["industry_avg"] = [
+    industry_avg = [
         {"industry": k, "weight": round(v / total_picks * 100, 2)}
         for k, v in ind_count.most_common(12)
-    ]
-    data["top_held"] = [
-        {
-            "ts": ts,
-            "name": ticker_info[ts]["name"],
-            "industry": ticker_info[ts]["industry"],
-            "days": days,
-            "pct": round(days / n_days * 100, 1),
-        }
+    ] if total_picks else []
+    top_held = [
+        {"ts": ts, "name": ticker_info[ts]["name"],
+         "industry": ticker_info[ts]["industry"],
+         "days": days,
+         "pct": round(days / n_days * 100, 1)}
         for ts, days in ticker_count.most_common(15)
     ]
-    print(f"  recomputed industry_avg ({len(data['industry_avg'])} industries) + top_held ({len(data['top_held'])} tickers)")
 
-    # 7. Update top-level summary metadata (asof + counters)
-    data["summary"]["asof"] = _fmt(latest_date)
-    print(f"  updated summary.asof = {data['summary']['asof']}")
+    # —— scorecard wrap ——
+    dates_sorted = sorted(scorecard_by_date.keys())
+    all_dates = [{
+        "d": d,
+        "avg": scorecard_by_date[d]["avg_ret"],
+        "bench": scorecard_by_date[d]["bench_ret"],
+        "excess": scorecard_by_date[d]["excess"],
+        "hit": scorecard_by_date[d]["hit_rate"],
+    } for d in dates_sorted]
+    recent = [scorecard_by_date[d] for d in dates_sorted[-10:]]
 
-    # 7. Save
+    # summary 里展开 scorecard 子统计
+    sc_summary = {
+        "n_days_total": summary["n_realized"],
+        "n_pending": summary["n_pending"],
+        "model_avg_daily": summary["model_avg_daily"],
+        "bench_avg_daily": summary["bench_avg_daily"],
+        "excess_avg": summary["excess_avg"],
+        "win_rate_vs_bench_daily": summary["win_rate_vs_bench_daily"],
+        "avg_hit_rate": summary["avg_hit_rate"],
+        "best_day": summary["best_day"],
+        "worst_day": summary["worst_day"],
+    }
+
+    # —— 拼装最终 data.json ——
+    data = {
+        "summary": {
+            "asof": summary["asof"],
+            "start": summary["start"],
+            "n_days": summary["n_days"],
+            "starting_nav": summary["starting_nav"],
+            "final_nav": summary["final_nav"],
+            "cum_return": summary["cum_return"],
+            "benchmark_cum": summary["benchmark_cum"],
+            "excess": summary["excess"],
+            "sharpe": summary["sharpe"],
+            "max_drawdown": summary["max_drawdown"],
+            "monthly_win_rate": summary["monthly_win_rate"],
+            # 兼容现有前端字段命名
+            "computed_cum_return": summary["cum_return"],
+            "computed_sharpe": summary["sharpe"],
+            "computed_max_drawdown": summary["max_drawdown"],
+        },
+        "equity_curve": equity,
+        "monthly_returns": monthly,
+        "current_holdings": holdings_now,
+        "top_held": top_held,
+        "industry_avg": industry_avg,
+        "scorecard": {
+            "summary": sc_summary,
+            "all_dates": all_dates,
+            "recent": recent,
+            "by_date": scorecard_by_date,
+        },
+    }
+
     with open(DATA_JSON, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
-    print(f"[OK] saved → {DATA_JSON}")
+    dt = (datetime.now() - t0).total_seconds()
+    print(f"[OK] saved → {DATA_JSON}  ({dt:.1f}s)")
 
 
 if __name__ == "__main__":

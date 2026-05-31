@@ -200,11 +200,18 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--days", type=int, default=90,
                         help="往前回溯多少自然日 (默认 90, 覆盖约 60 个交易日 + 30 个 lookback)")
+    parser.add_argument("--start", default=None,
+                        help="显式起始日期 YYYY-MM-DD (覆盖 --days)。例如初次回填用 2025-06-15。")
+    parser.add_argument("--end", default=None,
+                        help="显式结束日期 YYYY-MM-DD (默认今天)。")
     args = parser.parse_args()
 
     today = datetime.now()
-    end_date = today.strftime("%Y-%m-%d")
-    start_date = (today - timedelta(days=args.days)).strftime("%Y-%m-%d")
+    end_date = args.end or today.strftime("%Y-%m-%d")
+    if args.start:
+        start_date = args.start
+    else:
+        start_date = (today - timedelta(days=args.days)).strftime("%Y-%m-%d")
 
     print(f"[fetch] window: {start_date} → {end_date}")
 

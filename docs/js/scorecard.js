@@ -204,6 +204,31 @@ function renderSCDaysVisible(data) {
   host.innerHTML = dates.map((d, idx) => {
     const day = data.scorecard.by_date[d];
     if (!day) return "";
+
+    // —— Pending：未结算（picks 存在但实际涨幅未知）——
+    if (day.pending) {
+      const picksHtml = day.picks.map(p => `
+        <span class="sc-chip sc-chip--pending">
+          <span class="sc-chip__n">${p.name}</span>
+          <span class="sc-chip__r" style="color:var(--ink-mute)">+${p.score.toFixed(2)}</span>
+        </span>
+      `).join("");
+      return `
+        <div class="sc-day sc-day--pending" style="animation: fade-up 0.4s ${0.03 * idx}s backwards cubic-bezier(0.22, 0.61, 0.36, 1)">
+          <div class="sc-day__date">
+            <div class="sc-day__d-main">${day.d}</div>
+            <div class="sc-day__d-sub">买 ${(day.buy_d || "—").slice(5)} → 卖 ${(day.sell_d || "—").slice(5)}</div>
+          </div>
+          <div class="sc-day__chips">${picksHtml}</div>
+          <div class="sc-day__summary">
+            <div class="sc-day__sum-pending">待结算</div>
+            <div class="sc-day__sum-vs">等 ${(day.sell_d || "下一交易日").slice(5)} 开盘卖出</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // —— 已结算 ——
     const picksHtml = day.picks.map(p => {
       if (p.ret == null) return "";
       const cls = (day.bench_ret != null && p.ret > day.bench_ret) ? "gain" : "loss";

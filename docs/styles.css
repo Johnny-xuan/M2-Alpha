@@ -574,6 +574,25 @@ body.light .sc-range__inp { color-scheme: light; }
   transition: all 0.2s;
 }
 .sc-day:hover { border-color: var(--hairline-2); }
+
+/* pending: 未结算预测的视觉区别 */
+.sc-day--pending {
+  border-left: 3px solid var(--amber);
+  background: linear-gradient(180deg, rgba(240, 181, 63, 0.04), transparent);
+}
+.sc-chip--pending {
+  opacity: 0.85;
+  border-style: dashed;
+}
+.sc-day__sum-pending {
+  font-family: var(--f-mono); font-size: 12px; font-weight: 700;
+  color: var(--amber);
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border: 1px solid var(--amber);
+  border-radius: 99px;
+  background: rgba(240, 181, 63, 0.08);
+}
 .sc-day__date {
   display: flex; flex-direction: column; gap: 2px;
   border-right: 1px solid var(--hairline);
