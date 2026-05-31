@@ -1,92 +1,121 @@
 /* ════════════════════════════════════════════════════════════════════════
-   main.js — entry point for M²-Alpha · A 股每日选股参考
+   main.js — entry point
+   4 tab architecture: 今日推荐 / 每日复盘 / 回测业绩 / 关于
    ──────────────────────────────────────────────────────────────────────── */
-import { $ } from "./utils.js";
-import { startNavClock, initNavScrollSpy } from "./navbar.js";
+import { $, $$ } from "./utils.js";
+import { startNavClock } from "./navbar.js";
 import { initTheme } from "./theme.js";
-import { renderFeatured, startCountUps } from "./hero.js";
+import { initRouter } from "./router.js";
+import { startCountUps } from "./hero.js";
 import { renderPicksTable } from "./picks.js";
+import { renderMiniExcess, renderRecentHits } from "./tab-picks.js";
 import { renderScorecardSummary, renderExcessChart, initDateRange } from "./scorecard.js";
-import { initSection3 } from "./section3.js";
+import { initSection3, refreshSection3 } from "./section3.js";
+
+let _data = null;
+const _renderedTabs = new Set(["picks"]);  // already rendered on init
 
 (async function init() {
-  initTheme();                  // before anything else, avoid FOUC
+  initTheme();
   const res = await fetch("data/data.json");
-  const data = await res.json();
-  window._data = data;          // debugging
+  _data = await res.json();
+  window._data = _data;
 
-  populateMeta(data);
+  populateMeta(_data);
   startNavClock();
-  renderFeatured(data);
+
+  // Tab 1 is default - always render immediately
+  renderTabPicks(_data);
+
+  // Init router (sets initial visible tab + listens to clicks/hashchange)
+  initRouter(onTabChange);
+
+  startCountUps();
+})();
+
+/* ──────────── lazy tab rendering ──────────── */
+function onTabChange(tab) {
+  if (_renderedTabs.has(tab)) {
+    // already rendered; just trigger refresh if it has charts that need resize
+    if (tab === "backtest") refreshSection3();
+    return;
+  }
+  _renderedTabs.add(tab);
+
+  if (tab === "scorecard") renderTabScorecard(_data);
+  else if (tab === "backtest") renderTabBacktest(_data);
+  // "about" is static markup, no JS render needed
+}
+
+function renderTabPicks(data) {
   renderPicksTable(data);
+  renderMiniExcess(data);
+  renderRecentHits(data);
+}
+
+function renderTabScorecard(data) {
   renderScorecardSummary(data);
   renderExcessChart(data);
   initDateRange(data);
-  initSection3(data);           // master range + sub-tabs for backtest section
-  startCountUps();
-  initNavScrollSpy();
-})();
+}
 
-/** populate meta-level data: dates, summary stats, scorecard stats, dynamic text */
+function renderTabBacktest(data) {
+  initSection3(data);
+}
+
+/* ──────────── meta + dynamic text ──────────── */
 function populateMeta(data) {
   const s = data.summary;
   const sc = data.scorecard?.summary || {};
   const months = data.monthly_returns || [];
   const latest = s.asof || "—";
 
-  // —— 顶栏 / hero / picks 信号日期 ——
-  document.querySelectorAll("#nav-asof, #qs-asof").forEach(el => el.textContent = latest);
-  const feat = document.getElementById("featured-date");
-  if (feat) feat.textContent = `${latest} 开盘`;
+  // nav / picks date
+  document.querySelectorAll("#nav-asof").forEach(el => el.textContent = latest);
   const picksAsof = document.getElementById("picks-asof");
   if (picksAsof) picksAsof.textContent = latest;
 
-  // —— 衍生量 ——
-  const finalNavMult = s.final_nav && s.starting_nav
-    ? s.final_nav / s.starting_nav
-    : 1 + (s.cum_return || 0) / 100;
-
+  // derived
   const monthsTotal = months.length;
   const monthsWon = months.filter(m => (m.excess || 0) > 0).length;
   const tradingDays = s.n_days || (data.equity_curve?.length ?? 0);
 
-  // —— Hero / Backtest 大数字（data-stat 注入到 data-count-to）——
+  // STAT count-up animation values
   const STAT_MAP = {
     cum_return:        s.cum_return,
     monthly_win_rate:  s.monthly_win_rate,
     max_drawdown:      s.max_drawdown,
     sharpe:            s.sharpe,
     excess:            s.excess,
-    final_nav_mult:    finalNavMult,
   };
   document.querySelectorAll("[data-stat]").forEach(el => {
     const v = STAT_MAP[el.dataset.stat];
     if (v != null) el.dataset.countTo = v;
   });
 
-  // —— 文本占位符 ——
+  // Template texts
+  const fmtPctTxt = (v, d = 2) => (v >= 0 ? "+" : "") + v.toFixed(d) + "%";
   const TPL = {
-    excess_pp:           (s.excess >= 0 ? "+" : "") + s.excess.toFixed(1) + " pp",
-    monthly_win_text:    `${s.monthly_win_rate.toFixed(0)}% (${monthsWon}/${monthsTotal})`,
-    monthly_won_text:    `${monthsTotal} 个月中 ${monthsWon} 个月跑赢`,
-    monthly_won_count:   `${monthsWon} / ${monthsTotal}`,
-    months_total:        monthsTotal,
-    period_range:        `${s.start || "—"} → ${s.asof || "—"}`,
-    start_date:          s.start || "—",
-    trading_days:        tradingDays,
-    benchmark_cum:       (s.benchmark_cum >= 0 ? "+" : "") + (s.benchmark_cum || 0).toFixed(1) + "%",
+    cum_return_text:        fmtPctTxt(s.cum_return, 1),
+    sharpe_text:            s.sharpe.toFixed(2),
+    monthly_win_text_short: s.monthly_win_rate.toFixed(0) + "%",
+    mdd_text:               s.max_drawdown.toFixed(1) + "%",
+    excess_pp:              (s.excess >= 0 ? "+" : "") + s.excess.toFixed(1) + " pp",
+    monthly_win_text:       `${s.monthly_win_rate.toFixed(0)}% (${monthsWon}/${monthsTotal})`,
+    monthly_won_text:       `${monthsTotal} 个月中 ${monthsWon} 个月跑赢`,
+    monthly_won_count:      `${monthsWon} / ${monthsTotal}`,
+    months_total:           monthsTotal,
+    period_range:           `${s.start || "—"} → ${s.asof || "—"}`,
+    start_date:             s.start || "—",
+    trading_days:           tradingDays,
+    benchmark_cum:          (s.benchmark_cum >= 0 ? "+" : "") + (s.benchmark_cum || 0).toFixed(1) + "%",
   };
   document.querySelectorAll("[data-tpl]").forEach(el => {
     const v = TPL[el.dataset.tpl];
     if (v != null) el.textContent = v;
   });
 
-  // Backtest 段里"沪深 300 同期 X%"
-  document.querySelectorAll('[data-stat-text="benchmark_cum"]').forEach(el => {
-    el.textContent = TPL.benchmark_cum;
-  });
-
-  // —— Scorecard summary stats ——
+  // Scorecard summary stats
   const SC_STAT_MAP = {
     excess_avg:               sc.excess_avg,
     win_rate_vs_bench_daily:  sc.win_rate_vs_bench_daily,
@@ -107,4 +136,16 @@ function populateMeta(data) {
     const v = SC_TEXT_MAP[el.dataset.scText];
     if (v != null) el.textContent = v;
   });
+
+  // sc-days header counter
+  const scDays = document.getElementById("sc-days");
+  if (scDays && sc.n_days_total != null) scDays.textContent = sc.n_days_total;
+
+  // sc-best
+  if (sc.best_day) {
+    const bestEl = document.getElementById("sc-best");
+    const bestDEl = document.getElementById("sc-best-d");
+    if (bestEl) bestEl.textContent = (sc.best_day.ret >= 0 ? "+" : "") + sc.best_day.ret.toFixed(2) + "%";
+    if (bestDEl) bestDEl.textContent = sc.best_day.d;
+  }
 }

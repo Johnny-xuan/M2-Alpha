@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>M²-Alpha · A 股每日选股参考</title>
-<meta name="description" content="基于深度学习的 A 股每日选股参考 — 沪深 300 池子里每日筛选 10 只值得关注的股票，过去 11 个月累计跑赢基准 +96%。" />
+<meta name="description" content="基于深度学习的 A 股每日选股参考 — 沪深 300 池子里每日筛选 10 只值得关注的股票。" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,7 @@
 
 <link rel="stylesheet" href="styles.css">
 
-<!-- 早期 inline 主题脚本：防 light-mode 用户首屏闪烁 -->
+<!-- 防止亮色模式首屏闪烁 -->
 <script>
   (function(){
     try {
@@ -26,25 +26,24 @@
 </head>
 <body>
 
-<!-- ─────────── ambient gradient + grid overlay ─────────── -->
+<!-- ambient -->
 <div class="bg-grid" aria-hidden="true"></div>
 <div class="bg-vignette" aria-hidden="true"></div>
 
 <!-- ═══════════════════════════════════════════════════════════════
-     STICKY TOP NAV
+     STICKY NAVBAR — 4 tabs (click-to-switch)
      ═══════════════════════════════════════════════════════════════ -->
 <nav class="navbar">
-  <a class="brand" href="#hero">
+  <a class="brand" href="#picks" data-tab-link="picks">
     <span class="brand__mark">M<sup>2</sup></span>
     <span class="brand__name">α<em>lpha</em></span>
   </a>
 
   <ul class="nav-tabs">
-    <li><a href="#picks" class="nav-tab nav-tab--active" data-tab="picks">今日推荐</a></li>
-    <li><a href="#scorecard" class="nav-tab" data-tab="scorecard">每日复盘</a></li>
-    <li><a href="#performance" class="nav-tab" data-tab="performance">回测业绩</a></li>
-    <li><a href="#strategy" class="nav-tab" data-tab="strategy">交易策略</a></li>
-    <li><a href="#howto" class="nav-tab" data-tab="howto">如何使用</a></li>
+    <li><a href="#picks"     class="nav-tab" data-tab-link="picks">今日推荐</a></li>
+    <li><a href="#scorecard" class="nav-tab" data-tab-link="scorecard">每日复盘</a></li>
+    <li><a href="#backtest"  class="nav-tab" data-tab-link="backtest">回测业绩</a></li>
+    <li><a href="#about"     class="nav-tab" data-tab-link="about">关于</a></li>
   </ul>
 
   <div class="nav-cluster">
@@ -57,474 +56,391 @@
     </div>
     <div class="nav-pill nav-pill--signal" title="模型最新信号日期">
       <span class="nav-pill__dot"></span>
-      <span class="nav-pill__k">最新信号</span>
+      <span class="nav-pill__k">信号</span>
       <span class="nav-pill__v" id="nav-asof">—</span>
     </div>
   </div>
 </nav>
 
 <!-- ═══════════════════════════════════════════════════════════════
-     HERO — brand + value prop + Top 3 picks
+     TAB AREA — 4 mutually-exclusive panels
      ═══════════════════════════════════════════════════════════════ -->
-<header class="hero" id="hero">
-  <div class="hero__left">
-    <div class="eyebrow">
-      <span class="eyebrow__dot"></span>
-      <span class="eyebrow__txt">沪深 300 · 截面 alpha · 每日更新</span>
+<main class="tab-area">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TAB 1 · 今日推荐 (default)
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="tab-panel" data-tab-panel="picks">
+
+    <!-- 概览 banner (在所有 tab 之上保持一致的"项目状态条") -->
+    <div class="brief-banner">
+      <span class="brief-banner__l">M²·Alpha</span>
+      <span class="brief-banner__sep">·</span>
+      <span class="brief-banner__txt">自 <em data-tpl="start_date">—</em> 起</span>
+      <span class="brief-banner__sep">·</span>
+      <span class="brief-banner__txt">已运行 <em data-tpl="trading_days">—</em> 个交易日</span>
+      <span class="brief-banner__grow"></span>
+      <span class="brief-banner__num"><span>累计</span><em class="gain" data-tpl="cum_return_text">+0%</em></span>
+      <span class="brief-banner__num"><span>Sharpe</span><em data-tpl="sharpe_text">0.00</em></span>
+      <span class="brief-banner__num"><span>月胜率</span><em data-tpl="monthly_win_text_short">0%</em></span>
+      <span class="brief-banner__num"><span>最大回撤</span><em class="loss" data-tpl="mdd_text">0%</em></span>
     </div>
 
-    <h1 class="wordmark">
-      <span class="wm-line1">M<sup>2</sup>·<em>Alpha</em></span>
-      <span class="wm-subtitle">Micro-Macro Alpha Engine · 截面选股模型</span>
-    </h1>
+    <div class="tab1-grid">
 
-    <p class="hero__pitch">
-      自研深度学习量化模型，在沪深 300 上做截面 alpha 选股。
-      每个交易日自动给出 <strong class="acc">10 只推荐</strong>，
-      OOS 累计跑赢基准
-      <strong class="gain" data-tpl="excess_pp">+0 pp</strong>，月度超额胜率
-      <strong class="gain" data-tpl="monthly_win_text">0%</strong>。
-    </p>
+      <!-- ─── 主：今日 Top 10 推荐 ─── -->
+      <div class="tab1-main">
+        <header class="block-head">
+          <h1 class="block-title">今日推荐 · <span id="picks-asof">—</span> 收盘后</h1>
+          <p class="block-sub">截面 Top 10 推荐。次日开盘买入、第三日开盘卖出。</p>
+        </header>
 
-    <div class="hero__live">
-      <span class="live-dot"></span>
-      <span class="live-text">
-        自 <em data-tpl="start_date">—</em> 起 · 已运行
-        <em data-tpl="trading_days">—</em> 个交易日 · 持续累积中
-      </span>
-    </div>
+        <table class="picks" id="picks-table">
+          <thead>
+            <tr>
+              <th class="c-rk">#</th>
+              <th class="c-code">代码</th>
+              <th class="c-name">名称</th>
+              <th class="c-ind">行业</th>
+              <th class="c-score">评分</th>
+              <th class="c-bar">信号强度</th>
+              <th class="c-px">参考价</th>
+              <th class="c-w">权重</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
 
-    <div class="hero__ctas">
-      <a class="cta cta--primary" href="#picks">查看今日推荐 →</a>
-      <a class="cta cta--ghost" href="#scorecard">回测命中记录</a>
-    </div>
-
-    <div class="hero__quick-stats">
-      <div class="qs">
-        <div class="qs__k">累计收益</div>
-        <div class="qs__v gain" data-stat="cum_return" data-suffix="%">+0.00%</div>
-      </div>
-      <div class="qs">
-        <div class="qs__k">月胜率</div>
-        <div class="qs__v gain" data-stat="monthly_win_rate" data-suffix="%">0.00%</div>
-      </div>
-      <div class="qs">
-        <div class="qs__k">最大回撤</div>
-        <div class="qs__v loss" data-stat="max_drawdown" data-suffix="%">0.00%</div>
-      </div>
-      <div class="qs">
-        <div class="qs__k">最新信号</div>
-        <div class="qs__v" id="qs-asof">—</div>
-      </div>
-    </div>
-  </div>
-
-  <aside class="hero__right">
-    <div class="featured">
-      <div class="featured__head">
-        <span class="featured__label">今日最看好 · 前 3 只</span>
-        <span class="featured__date" id="featured-date">— · 开盘</span>
-      </div>
-      <div class="featured__cards" id="featured-cards"></div>
-      <a class="featured__more" href="#picks">查看完整 10 只推荐 ↓</a>
-    </div>
-  </aside>
-</header>
-
-<!-- ═══════════════════════════════════════════════════════════════
-     SECTION 01 — 今日完整清单
-     ═══════════════════════════════════════════════════════════════ -->
-<section class="section" id="picks">
-  <header class="section-head">
-    <div class="section-num">01 / 今 日 推 荐</div>
-    <h2 class="section-title">当 日 推 荐 · <span id="picks-asof">—</span></h2>
-    <p class="section-sub">
-      下列 10 只为模型当日收盘后输出的截面 Top 10 推荐。策略：<strong>等权 10% / 只</strong>，
-      同一行业 ≤ 2 只，次日开盘买入 / 第三日开盘卖出，掉出 Top 50 才卖。
-    </p>
-  </header>
-
-  <table class="picks" id="picks-table">
-    <thead>
-      <tr>
-        <th class="c-rk">#</th>
-        <th class="c-code">代码</th>
-        <th class="c-name">名称</th>
-        <th class="c-ind">行业</th>
-        <th class="c-score">评分</th>
-        <th class="c-bar">信号强度</th>
-        <th class="c-px">参考价</th>
-        <th class="c-w">权重</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-
-  <div class="picks__note">
-    <span class="ico-i">i</span>
-    <div>
-      <strong>评分</strong>：模型给出的当日截面 z-score，数值越大表示相对同期被看好程度越高。
-      <strong>参考价</strong>：模型计算时所用的最新收盘价，实际开盘价可能 ±2–3% 滑动。
-      <strong>权重</strong>：按等权 10 万 / 只反算股数（整手向下取整），高价股可能因不可拆分单手略有偏离。
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════════════════════════════════
-     SECTION 02 — 预测复盘 / Scorecard
-     ═══════════════════════════════════════════════════════════════ -->
-<section class="section section--scorecard" id="scorecard">
-  <header class="section-head">
-    <div class="section-num">02 / 每 日 复 盘</div>
-    <h2 class="section-title">每 日 OOS 实 战 记 录 · 共 <span id="sc-days">—</span> 个 样 本</h2>
-    <p class="section-sub">
-      每个交易日的截面 Top 10 推荐，按"次日开盘买、第三日开盘卖"执行，
-      复盘实际平均收益 vs 沪深 300 同期表现。<strong>每过一个交易日，新增一个 OOS 样本</strong>，
-      自动 commit 进 git history。
-    </p>
-  </header>
-
-  <!-- 关键数字 -->
-  <div class="sc-stats">
-    <div class="sc-stat">
-      <div class="sc-stat__k">日均超额</div>
-      <div class="sc-stat__v gain" data-sc-stat="excess_avg" data-suffix="%">+0.00%</div>
-      <div class="sc-stat__d">Top 10 平均收益 − 同期沪深 300</div>
-    </div>
-    <div class="sc-stat">
-      <div class="sc-stat__k">日级胜率</div>
-      <div class="sc-stat__v gain" data-sc-stat="win_rate_vs_bench_daily" data-suffix="%">0.00%</div>
-      <div class="sc-stat__d"><span data-sc-text="win_days">—</span> / <span data-sc-text="n_days_total">—</span> 天 Top 10 跑赢基准</div>
-    </div>
-    <div class="sc-stat">
-      <div class="sc-stat__k">个股命中</div>
-      <div class="sc-stat__v gain" data-sc-stat="avg_hit_rate" data-suffix="%">0.00%</div>
-      <div class="sc-stat__d">每只推荐跑赢基准的比例</div>
-    </div>
-    <div class="sc-stat">
-      <div class="sc-stat__k">最佳一天</div>
-      <div class="sc-stat__v gain" id="sc-best">+0.00%</div>
-      <div class="sc-stat__d" id="sc-best-d">—</div>
-    </div>
-  </div>
-
-  <!-- 滚动命中率走势图 -->
-  <div class="sc-chart-host">
-    <h3 class="sub-h">
-      <span>最近 60 天 · 每日 Top-10 vs 沪深 300</span>
-      <span class="sub-h__legend">
-        <span class="lg lg--gain"><i></i>跑赢</span>
-        <span class="lg lg--loss"><i></i>跑输</span>
-      </span>
-    </h3>
-    <svg id="excess-chart" class="excess-chart" viewBox="0 0 1400 280" preserveAspectRatio="none" aria-label="每日超额走势"></svg>
-  </div>
-
-  <!-- 单日复盘 / 日期范围选择器 -->
-  <div class="sc-detail">
-    <div class="sub-h sub-h--ctrl">
-      <span id="sc-detail-title">最近 10 天 · 每日推荐与实际表现</span>
-      <div class="sc-counter" id="sc-counter"></div>
-    </div>
-
-    <div class="sc-rangebar">
-      <div class="sc-chips" role="tablist">
-        <button class="sc-chip-btn sc-chip-btn--active" data-preset="10">最近 10 天</button>
-        <button class="sc-chip-btn" data-preset="30">近 30 天</button>
-        <button class="sc-chip-btn" data-preset="60">近 60 天</button>
-        <button class="sc-chip-btn" data-preset="all">全 部 208 天</button>
+        <div class="strategy-inline">
+          <span class="strategy-inline__ico">📋</span>
+          <div>
+            <strong>策略</strong>：等权 10% / 只 · 同行业 ≤ 2 只 · 次日开盘买、第三日开盘卖 · 双边 0.13% 手续费
+            <a href="#about" data-tab-link="about" class="inline-link">详细规则 →</a>
+          </div>
+        </div>
       </div>
 
-      <div class="sc-range">
-        <label class="sc-range__l">
-          <span>起</span>
-          <input type="date" id="date-start" class="sc-range__inp">
-        </label>
-        <span class="sc-range__arrow">→</span>
-        <label class="sc-range__l">
-          <span>止</span>
-          <input type="date" id="date-end" class="sc-range__inp">
-        </label>
-        <button class="sc-range__btn" id="date-apply">查 看 →</button>
+      <!-- ─── 侧栏：近期表现 ─── -->
+      <aside class="tab1-side">
+
+        <div class="side-block">
+          <h3 class="side-block__h">最近 60 天 · 每日超额</h3>
+          <svg id="mini-excess-chart" class="mini-chart" viewBox="0 0 600 140" preserveAspectRatio="none" aria-label="超额走势"></svg>
+          <div class="side-stats">
+            <div class="side-stat">
+              <span class="side-stat__k">日均超额</span>
+              <span class="side-stat__v gain" data-sc-stat="excess_avg" data-suffix="%">+0.00%</span>
+            </div>
+            <div class="side-stat">
+              <span class="side-stat__k">日级胜率</span>
+              <span class="side-stat__v gain" data-sc-stat="win_rate_vs_bench_daily" data-suffix="%">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="side-block">
+          <h3 class="side-block__h">最近 7 天命中 <a href="#scorecard" data-tab-link="scorecard" class="inline-link">查看全部 →</a></h3>
+          <div class="recent-hits" id="recent-hits"></div>
+        </div>
+
+      </aside>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TAB 2 · 每日复盘
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="tab-panel" data-tab-panel="scorecard" hidden>
+    <header class="block-head">
+      <h1 class="block-title">每日 OOS 实战记录 · 共 <span id="sc-days">—</span> 个样本</h1>
+      <p class="block-sub">
+        每日 Top 10 推荐按"次日开盘买、第三日开盘卖"执行，复盘实际收益 vs 沪深 300 同期。
+        <strong>每过一个交易日，新增一行 OOS 样本</strong>，自动 commit 进 git history。
+      </p>
+    </header>
+
+    <!-- 关键数字 -->
+    <div class="sc-stats">
+      <div class="sc-stat">
+        <div class="sc-stat__k">日均超额</div>
+        <div class="sc-stat__v gain" data-sc-stat="excess_avg" data-suffix="%">+0.00%</div>
+        <div class="sc-stat__d">Top 10 平均收益 − 同期沪深 300</div>
+      </div>
+      <div class="sc-stat">
+        <div class="sc-stat__k">日级胜率</div>
+        <div class="sc-stat__v gain" data-sc-stat="win_rate_vs_bench_daily" data-suffix="%">0.00%</div>
+        <div class="sc-stat__d"><span data-sc-text="win_days">—</span> / <span data-sc-text="n_days_total">—</span> 天 Top 10 跑赢基准</div>
+      </div>
+      <div class="sc-stat">
+        <div class="sc-stat__k">个股命中</div>
+        <div class="sc-stat__v gain" data-sc-stat="avg_hit_rate" data-suffix="%">0.00%</div>
+        <div class="sc-stat__d">每只推荐跑赢基准的比例</div>
+      </div>
+      <div class="sc-stat">
+        <div class="sc-stat__k">最佳一天</div>
+        <div class="sc-stat__v gain" id="sc-best">+0.00%</div>
+        <div class="sc-stat__d" id="sc-best-d">—</div>
       </div>
     </div>
 
-    <div class="sc-days" id="sc-days-list"></div>
-
-    <!-- 翻页（仅在结果多于一页时显示） -->
-    <div class="sc-pager" id="sc-pager" hidden>
-      <button class="sc-pager__btn" id="sc-pager-prev" aria-label="上一页">←</button>
-      <span class="sc-pager__info" id="sc-pager-info">— / —</span>
-      <button class="sc-pager__btn" id="sc-pager-next" aria-label="下一页">→</button>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════════════════════════════════
-     SECTION 03 — 历史业绩
-     ═══════════════════════════════════════════════════════════════ -->
-<section class="section section--perf" id="performance">
-  <header class="section-head">
-    <div class="section-num">03 / 回 测 业 绩</div>
-    <h2 class="section-title">OOS 回 测 · 100 万 起 步 · 滚 动 累 积 中</h2>
-    <p class="section-sub">
-      按下方"交易策略"严格执行（开盘买卖 / 等权 Top 10 / 行业 ≤ 2 / 双边 0.13% 手续费），
-      在沪深 300 真实历史数据上的滚动 OOS 回测结果。下方所有内容均按选定时间范围动态计算。
-    </p>
-  </header>
-
-  <!-- 统一时间范围控件 (控制下方所有 sub-tab 的数据) -->
-  <div class="section-controls">
-    <div class="sc-chips" role="tablist">
-      <button class="sc-chip-btn" data-s3-preset="1m">近 1 月</button>
-      <button class="sc-chip-btn" data-s3-preset="3m">近 3 月</button>
-      <button class="sc-chip-btn" data-s3-preset="6m">近 6 月</button>
-      <button class="sc-chip-btn" data-s3-preset="1y">近 1 年</button>
-      <button class="sc-chip-btn sc-chip-btn--active" data-s3-preset="all">全 部</button>
-    </div>
-    <div class="sc-range">
-      <label class="sc-range__l"><span>起</span><input type="date" id="s3-start" class="sc-range__inp"></label>
-      <span class="sc-range__arrow">→</span>
-      <label class="sc-range__l"><span>止</span><input type="date" id="s3-end" class="sc-range__inp"></label>
-      <button class="sc-range__btn" id="s3-apply">查 看 →</button>
-    </div>
-  </div>
-
-  <div class="section-meta" id="s3-meta">
-    <span class="section-meta__k">范围</span>
-    <span class="section-meta__v" id="s3-range-text">— → —</span>
-    <span class="section-meta__sep">·</span>
-    <span class="section-meta__v"><em id="s3-meta-days">—</em> 个交易日</span>
-    <span class="section-meta__sep">·</span>
-    <span class="section-meta__v"><em id="s3-meta-months">—</em> 个月</span>
-  </div>
-
-  <!-- Sub-tabs -->
-  <nav class="section-tabs" role="tablist">
-    <button class="section-tab section-tab--active" data-stab="overview">概览</button>
-    <button class="section-tab" data-stab="equity">净值曲线</button>
-    <button class="section-tab" data-stab="monthly">月度收益</button>
-    <button class="section-tab" data-stab="holdings">模型偏好</button>
-  </nav>
-
-  <!-- Panel: 概览 -->
-  <div class="section-panel" data-stab-panel="overview">
-    <div class="perf-stats">
-      <div class="perf-stat">
-        <div class="perf-stat__k">期末净值</div>
-        <div class="perf-stat__v" id="s3-final-nav-mult">0.00x</div>
-        <div class="perf-stat__d">100 万起步 → 区间末</div>
-      </div>
-      <div class="perf-stat">
-        <div class="perf-stat__k">区间累计</div>
-        <div class="perf-stat__v gain" id="s3-cum-return">+0.00%</div>
-        <div class="perf-stat__d">沪深 300 同期 <span id="s3-bench-cum">—</span></div>
-      </div>
-      <div class="perf-stat">
-        <div class="perf-stat__k">超越基准</div>
-        <div class="perf-stat__v gain" id="s3-excess">+0.00pp</div>
-        <div class="perf-stat__d">已扣除双边手续费</div>
-      </div>
-      <div class="perf-stat">
-        <div class="perf-stat__k">月度胜率</div>
-        <div class="perf-stat__v gain" id="s3-monthly-win-rate">0%</div>
-        <div class="perf-stat__d" id="s3-monthly-win-text">—</div>
-      </div>
-      <div class="perf-stat">
-        <div class="perf-stat__k">最大回撤</div>
-        <div class="perf-stat__v loss" id="s3-mdd">0.00%</div>
-        <div class="perf-stat__d">区间内最大回撤</div>
-      </div>
-      <div class="perf-stat">
-        <div class="perf-stat__k">Sharpe（年化）</div>
-        <div class="perf-stat__v gain" id="s3-sharpe">0.00</div>
-        <div class="perf-stat__d">收益 / 波动 · 年化</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Panel: 净值曲线 -->
-  <div class="section-panel" data-stab-panel="equity" hidden>
-    <div class="chart-host">
+    <!-- 60 天超额 chart -->
+    <div class="sc-chart-host">
       <h3 class="sub-h">
-        <span>净 值 曲 线 · 模型组合 vs 沪深 300</span>
+        <span>最近 60 天 · 每日 Top 10 vs 沪深 300</span>
         <span class="sub-h__legend">
-          <span class="lg lg--model"><i></i>M²-Alpha 组合</span>
-          <span class="lg lg--bench"><i></i>沪深 300</span>
-          <span class="lg lg--dd"><i></i>回撤区</span>
+          <span class="lg lg--gain"><i></i>跑赢</span>
+          <span class="lg lg--loss"><i></i>跑输</span>
         </span>
       </h3>
-      <svg id="equity-chart" class="chart" viewBox="0 0 1400 420" preserveAspectRatio="none" aria-label="净值曲线"></svg>
-      <div id="equity-tooltip" class="tooltip" hidden></div>
+      <svg id="excess-chart" class="excess-chart" viewBox="0 0 1400 280" preserveAspectRatio="none" aria-label="每日超额"></svg>
     </div>
-  </div>
 
-  <!-- Panel: 月度收益 -->
-  <div class="section-panel" data-stab-panel="monthly" hidden>
-    <div class="monthly-host">
-      <h3 class="sub-h">
-        <span>每 月 收 益 · 模型 vs 沪深 300</span>
-        <span class="ctrl">月超额胜率 <em class="gain" id="s3-monthly-win-frac">— / —</em></span>
-      </h3>
-      <div id="monthly-bars" class="monthly"></div>
-    </div>
-  </div>
+    <!-- 单日复盘 + 翻页 -->
+    <div class="sc-detail">
+      <div class="sub-h sub-h--ctrl">
+        <span id="sc-detail-title">最近 10 天 · 每日推荐与实际表现</span>
+        <div class="sc-counter" id="sc-counter"></div>
+      </div>
 
-  <!-- Panel: 模型偏好 (holdings) -->
-  <div class="section-panel" data-stab-panel="holdings" hidden>
-    <div class="holdings-host">
-      <h3 class="sub-h">
-        <span>模 型 偏 好 · 基 于 区间内全部 Top 10 picks</span>
-      </h3>
-      <div class="holdings">
-        <div class="holdings__left">
-          <h4 class="sub-sub">Top 10 行 业 分 布</h4>
-          <div class="industry-bars" id="industry-bars"></div>
+      <div class="sc-rangebar">
+        <div class="sc-chips" role="tablist">
+          <button class="sc-chip-btn sc-chip-btn--active" data-preset="10">最近 10 天</button>
+          <button class="sc-chip-btn" data-preset="30">近 30 天</button>
+          <button class="sc-chip-btn" data-preset="60">近 60 天</button>
+          <button class="sc-chip-btn" data-preset="all">全部</button>
         </div>
-        <div class="holdings__right">
-          <h4 class="sub-sub">Top 10 出 现 最 多 的 12 支</h4>
-          <ol class="top-held" id="top-held"></ol>
+        <div class="sc-range">
+          <label class="sc-range__l"><span>起</span><input type="date" id="date-start" class="sc-range__inp"></label>
+          <span class="sc-range__arrow">→</span>
+          <label class="sc-range__l"><span>止</span><input type="date" id="date-end" class="sc-range__inp"></label>
+          <button class="sc-range__btn" id="date-apply">查看 →</button>
         </div>
       </div>
+
+      <div class="sc-days" id="sc-days-list"></div>
+
+      <div class="sc-pager" id="sc-pager" hidden>
+        <button class="sc-pager__btn" id="sc-pager-prev" aria-label="上一页">←</button>
+        <span class="sc-pager__info" id="sc-pager-info">— / —</span>
+        <button class="sc-pager__btn" id="sc-pager-next" aria-label="下一页">→</button>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- ═══════════════════════════════════════════════════════════════
-     SECTION 04 — 交易策略
-     ═══════════════════════════════════════════════════════════════ -->
-<section class="section section--strategy" id="strategy">
-  <header class="section-head">
-    <div class="section-num">04 / 交 易 策 略</div>
-    <h2 class="section-title">6 条规则 · 透 明 可 复 现</h2>
-    <p class="section-sub">
-      模型输出的是截面排序信号 —— 真正可执行的收益来自下面这套确定性策略。
-      回测的 +121% 完全基于此规则严格执行。
-    </p>
-  </header>
+  <!-- ═══════════════════════════════════════════════════════════
+       TAB 3 · 回测业绩 (master range + sub-tabs)
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="tab-panel" data-tab-panel="backtest" hidden>
+    <header class="block-head">
+      <h1 class="block-title">OOS 回测 · 100 万起步 · 滚动累积</h1>
+      <p class="block-sub">
+        按交易策略严格执行（开盘买卖 / 等权 Top 10 / 行业 ≤ 2 / 双边 0.13% 手续费），
+        在沪深 300 真实历史数据上的滚动 OOS 回测结果。下方所有内容均按选定时间范围动态计算。
+      </p>
+    </header>
 
-  <div class="rules-grid">
-    <article class="rule">
-      <div class="rule__n">01</div>
-      <h3 class="rule__h">候选池 · 沪深 300</h3>
-      <p>仅在沪深 300 成分股内选股 — 流动性充足、可融券、信息披露透明，不涉及小盘 / ST / 新股。</p>
-    </article>
-
-    <article class="rule">
-      <div class="rule__n">02</div>
-      <h3 class="rule__h">每日 Top 10 推荐</h3>
-      <p>从模型当日评分前 30 的候选里筛出 10 只作为次日组合。位次稳定有助于降低换手率。</p>
-    </article>
-
-    <article class="rule">
-      <div class="rule__n">03</div>
-      <h3 class="rule__h">等权 10% / 只</h3>
-      <p>每只配置 10% 资金，<strong>不</strong>按评分加权。避免集中暴露；100 万即每只 10 万。</p>
-    </article>
-
-    <article class="rule">
-      <div class="rule__n">04</div>
-      <h3 class="rule__h">每行业 ≤ 2 只</h3>
-      <p>同一申万一级行业最多 2 只 — 强制分散到至少 5 个行业，极端行情下避免集中爆破。</p>
-    </article>
-
-    <article class="rule">
-      <div class="rule__n">05</div>
-      <h3 class="rule__h">滞后卖出 · 掉出 Top 50 才卖</h3>
-      <p>已持仓的股票只要还在<strong>当日评分前 50</strong>就继续持有 — 避免频繁交易吃手续费。</p>
-    </article>
-
-    <article class="rule">
-      <div class="rule__n">06</div>
-      <h3 class="rule__h">次日开盘买 / 第三日开盘卖</h3>
-      <p>09:30 集合竞价成交 — 不参与盘中博弈、不追涨杀跌。<br>双边手续费按 0.13% 计算（已扣除）。</p>
-    </article>
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════════════════════════════════
-     SECTION 05 — 如何使用
-     ═══════════════════════════════════════════════════════════════ -->
-<section class="section section--howto" id="howto">
-  <header class="section-head">
-    <div class="section-num">05 / 如 何 使 用</div>
-    <h2 class="section-title">三 步 参 考 流 程</h2>
-    <p class="section-sub">
-      本站每个交易日北京时间 <strong>18:30</strong> 后自动更新次日推荐。
-      如果你想跟随模型模拟交易，按下面流程操作。
-    </p>
-  </header>
-
-  <ol class="steps">
-    <li class="step">
-      <div class="step__n">①</div>
-      <div class="step__body">
-        <h3>每晚 18:30 后来本站</h3>
-        <p>
-          A 股当日收盘后，模型用最新数据重新算出次日推荐 —
-          本站在 <strong>18:30 前后</strong>自动更新清单，打开本页面就能看到。
-        </p>
+    <div class="section-controls">
+      <div class="sc-chips" role="tablist">
+        <button class="sc-chip-btn" data-s3-preset="1m">近 1 月</button>
+        <button class="sc-chip-btn" data-s3-preset="3m">近 3 月</button>
+        <button class="sc-chip-btn" data-s3-preset="6m">近 6 月</button>
+        <button class="sc-chip-btn" data-s3-preset="1y">近 1 年</button>
+        <button class="sc-chip-btn sc-chip-btn--active" data-s3-preset="all">全部</button>
       </div>
-    </li>
-
-    <li class="step">
-      <div class="step__n">②</div>
-      <div class="step__body">
-        <h3>次日 09:25 录入买单</h3>
-        <p>
-          在自己的券商软件里按 10 只清单录入"市价委托"，
-          09:30 集合竞价成交。每只按净值的 <strong>10%</strong> 分配资金（100 万 → 每只 10 万）。
-        </p>
+      <div class="sc-range">
+        <label class="sc-range__l"><span>起</span><input type="date" id="s3-start" class="sc-range__inp"></label>
+        <span class="sc-range__arrow">→</span>
+        <label class="sc-range__l"><span>止</span><input type="date" id="s3-end" class="sc-range__inp"></label>
+        <button class="sc-range__btn" id="s3-apply">查看 →</button>
       </div>
-    </li>
-
-    <li class="step">
-      <div class="step__n">③</div>
-      <div class="step__body">
-        <h3>持有一天，第三日开盘卖出</h3>
-        <p>
-          A 股 T+1：买入后第二个交易日 09:30 开盘卖出，回笼资金。
-          同时来本站看<strong>新的清单</strong>，按新清单建仓。如此循环。
-        </p>
-      </div>
-    </li>
-  </ol>
-
-  <div class="howto-warn">
-    <div class="warn-head">
-      <span class="warn-ico">!</span>
-      <strong>风险提示 · 务必阅读</strong>
     </div>
-    <ul>
-      <li>本站为模型预测的公开展示，<strong>不构成任何形式的投资建议</strong>。</li>
-      <li><strong>过去的收益不代表未来表现</strong> — 模型有效性可能随市场结构变化而衰减。</li>
-      <li>历史回测中也曾出现单日 <span class="loss">-9.21%</span> 的最差日（2025-10-09），跟单需有承受短期回撤的心理准备。</li>
-      <li>严格按规则执行 — 如果只买其中几只 / 不按权重 / 隔几天才轮换 — 实际效果将<strong>与回测显著不同</strong>。</li>
-      <li>建议至少配置 <strong>10 万元以上</strong>本金参与，否则手续费占比过高吞噬收益。</li>
-    </ul>
-  </div>
-</section>
 
-<!-- ═══════════════════════════════════════════════════════════════
-     FOOTER
-     ═══════════════════════════════════════════════════════════════ -->
-<footer class="footer">
-  <div class="footer__brand">
-    <span class="footer__mark">M²·Alpha</span>
-    <span class="footer__tag">Micro-Macro Alpha Engine</span>
-  </div>
-  <div class="footer__txt">
-    本站所有数字均为真实历史回测与每日 OOS 实测结果。仅供参考与研究，
-    <strong>不构成投资建议、要约或诱导</strong>。据此进行的任何交易决策，请自行承担风险。
-  </div>
-  <div class="footer__meta">
-    <a href="https://github.com/Johnny-xuan/M2-Alpha" target="_blank" rel="noopener" class="footer__link">GitHub</a>
-    <span class="sep">·</span>
-    <span>© 2026</span>
-    <span class="sep">·</span>
-    <span>仅供研究与展示</span>
-  </div>
-</footer>
+    <div class="section-meta">
+      <span class="section-meta__k">范围</span>
+      <span class="section-meta__v" id="s3-range-text">— → —</span>
+      <span class="section-meta__sep">·</span>
+      <span class="section-meta__v"><em id="s3-meta-days">—</em> 个交易日</span>
+      <span class="section-meta__sep">·</span>
+      <span class="section-meta__v"><em id="s3-meta-months">—</em> 个月</span>
+    </div>
+
+    <nav class="section-tabs" role="tablist">
+      <button class="section-tab section-tab--active" data-stab="overview">概览</button>
+      <button class="section-tab" data-stab="equity">净值曲线</button>
+      <button class="section-tab" data-stab="monthly">月度收益</button>
+      <button class="section-tab" data-stab="holdings">模型偏好</button>
+    </nav>
+
+    <!-- 概览 -->
+    <div class="section-panel" data-stab-panel="overview">
+      <div class="perf-stats">
+        <div class="perf-stat">
+          <div class="perf-stat__k">期末净值</div>
+          <div class="perf-stat__v" id="s3-final-nav-mult">0.00x</div>
+          <div class="perf-stat__d">100 万起步 → 区间末</div>
+        </div>
+        <div class="perf-stat">
+          <div class="perf-stat__k">区间累计</div>
+          <div class="perf-stat__v gain" id="s3-cum-return">+0.00%</div>
+          <div class="perf-stat__d">沪深 300 同期 <span id="s3-bench-cum">—</span></div>
+        </div>
+        <div class="perf-stat">
+          <div class="perf-stat__k">超越基准</div>
+          <div class="perf-stat__v gain" id="s3-excess">+0.00pp</div>
+          <div class="perf-stat__d">已扣除双边手续费</div>
+        </div>
+        <div class="perf-stat">
+          <div class="perf-stat__k">月度胜率</div>
+          <div class="perf-stat__v gain" id="s3-monthly-win-rate">0%</div>
+          <div class="perf-stat__d" id="s3-monthly-win-text">—</div>
+        </div>
+        <div class="perf-stat">
+          <div class="perf-stat__k">最大回撤</div>
+          <div class="perf-stat__v loss" id="s3-mdd">0.00%</div>
+          <div class="perf-stat__d">区间内最大回撤</div>
+        </div>
+        <div class="perf-stat">
+          <div class="perf-stat__k">Sharpe（年化）</div>
+          <div class="perf-stat__v gain" id="s3-sharpe">0.00</div>
+          <div class="perf-stat__d">收益 / 波动 · 年化</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 净值曲线 -->
+    <div class="section-panel" data-stab-panel="equity" hidden>
+      <div class="chart-host">
+        <h3 class="sub-h">
+          <span>净值曲线 · 模型组合 vs 沪深 300</span>
+          <span class="sub-h__legend">
+            <span class="lg lg--model"><i></i>M²-Alpha 组合</span>
+            <span class="lg lg--bench"><i></i>沪深 300</span>
+            <span class="lg lg--dd"><i></i>回撤区</span>
+          </span>
+        </h3>
+        <svg id="equity-chart" class="chart" viewBox="0 0 1400 420" preserveAspectRatio="none" aria-label="净值曲线"></svg>
+        <div id="equity-tooltip" class="tooltip" hidden></div>
+      </div>
+    </div>
+
+    <!-- 月度收益 -->
+    <div class="section-panel" data-stab-panel="monthly" hidden>
+      <div class="monthly-host">
+        <h3 class="sub-h">
+          <span>每月收益 · 模型 vs 沪深 300</span>
+          <span class="ctrl">月超额胜率 <em class="gain" id="s3-monthly-win-frac">— / —</em></span>
+        </h3>
+        <div id="monthly-bars" class="monthly"></div>
+      </div>
+    </div>
+
+    <!-- 模型偏好 -->
+    <div class="section-panel" data-stab-panel="holdings" hidden>
+      <div class="holdings-host">
+        <h3 class="sub-h">模型偏好 · 基于区间内全部 Top 10 推荐</h3>
+        <div class="holdings">
+          <div class="holdings__left">
+            <h4 class="sub-sub">Top 10 行业分布</h4>
+            <div class="industry-bars" id="industry-bars"></div>
+          </div>
+          <div class="holdings__right">
+            <h4 class="sub-sub">出现最多的 12 支</h4>
+            <ol class="top-held" id="top-held"></ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TAB 4 · 关于
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="tab-panel" data-tab-panel="about" hidden>
+    <div class="about-grid">
+
+      <article class="about-block">
+        <h2 class="about-h">M²·Alpha 是什么</h2>
+        <p>
+          <strong>M²-Alpha (Micro-Macro Alpha Engine)</strong> 是一个自研的深度学习 A 股
+          截面 alpha 选股模型，配套一套完全公开的执行策略，并通过 GitHub Actions 每日
+          自动更新数据。模型权重、策略规则、回测代码、数据 pipeline 全部开源在
+          <a href="https://github.com/Johnny-xuan/M2-Alpha" target="_blank" rel="noopener" class="inline-link">GitHub</a>。
+        </p>
+        <p class="dim">
+          区别于一次性回测展示，本项目的实证记录通过 daily live tracking 持续累积 ——
+          每过一个交易日，OOS 记录在 git history 中新增一条，删不掉、改不了，谁都能审计。
+        </p>
+      </article>
+
+      <article class="about-block">
+        <h2 class="about-h">交易策略 · 6 条规则</h2>
+        <ol class="rules-compact">
+          <li><span class="rk">候选池</span>仅在沪深 300 成分股内选股</li>
+          <li><span class="rk">推荐数</span>每日 Top 10（从评分前 30 候选筛出）</li>
+          <li><span class="rk">权重</span>等权 10% / 只，不按评分加权</li>
+          <li><span class="rk">行业上限</span>同一申万一级行业 ≤ 2 只</li>
+          <li><span class="rk">卖出规则</span>掉出当日评分 Top 50 才卖（滞后带）</li>
+          <li><span class="rk">成交</span>09:30 集合竞价，双边 0.13% 手续费</li>
+        </ol>
+      </article>
+
+      <article class="about-block">
+        <h2 class="about-h">如何参考使用 · 3 步</h2>
+        <ol class="steps-compact">
+          <li>
+            <strong>每晚 18:30 后</strong>来本站查看次日推荐
+            <span class="dim">（数据自动更新）</span>
+          </li>
+          <li>
+            <strong>次日 09:25</strong> 在券商软件按 10 只清单录入"市价委托"，
+            09:30 集合竞价撮合。每只配净值 10%
+          </li>
+          <li>
+            <strong>第三日 09:30</strong> 开盘卖出，回笼资金。再来本站看新清单
+          </li>
+        </ol>
+      </article>
+
+      <article class="about-block">
+        <h2 class="about-h">数据更新机制</h2>
+        <p>每个交易日北京时间 18:30，GitHub Actions cron 自动执行：</p>
+        <ol class="pipeline-compact">
+          <li>BaoStock 拉取沪深 300 当日量价 + 基本面</li>
+          <li>加载 <code>ml/m2alpha.pt</code> 计算今日截面评分</li>
+          <li>增量更新 <code>docs/data/data.json</code></li>
+          <li>commit + push → GitHub Pages 自动重新部署</li>
+        </ol>
+        <p class="dim">
+          周末与节假日自动跳过（数据没更新就不 commit）。哪天跑挂大概率是 BaoStock 字段微调，到 GitHub Action 里看日志。
+        </p>
+      </article>
+
+      <article class="about-block about-block--warn">
+        <h2 class="about-h">风险提示 · 务必阅读</h2>
+        <ul>
+          <li><strong>不构成任何形式的投资建议</strong> — 本站为模型预测的公开展示</li>
+          <li><strong>过去的回测不代表未来</strong> — 模型有效性可能随市场结构衰减</li>
+          <li>历史回测中曾出现单日 <span class="loss">-9.21%</span> 的最差日（2025-10-09），跟单需有承受短期回撤的心理准备</li>
+          <li>严格按规则执行 — 只买几只 / 不按权重 / 隔几天才换 — 实际效果会与回测<strong>显著不同</strong></li>
+          <li>建议至少配置 <strong>10 万以上</strong>本金参与，否则手续费占比过高吞噬收益</li>
+          <li>据此操作的任何决策，<strong>由使用者自行承担风险</strong></li>
+        </ul>
+      </article>
+
+    </div>
+
+    <footer class="footer footer--about">
+      <span class="footer__mark">M²·Alpha</span>
+      <span class="footer__sep">·</span>
+      <a href="https://github.com/Johnny-xuan/M2-Alpha" target="_blank" rel="noopener" class="footer__link">GitHub</a>
+      <span class="footer__sep">·</span>
+      <span>© 2026</span>
+      <span class="footer__sep">·</span>
+      <span>Apache License 2.0</span>
+    </footer>
+  </section>
+
+</main>
 
 <script type="module" src="js/main.js"></script>
 </body>

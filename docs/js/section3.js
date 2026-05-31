@@ -62,11 +62,25 @@ function switchTab(name) {
   });
   // re-render the now-visible panel (charts need to size correctly after un-hiding)
   if (name === "equity") {
-    const slice = filterEquity();
-    drawEquityChart(slice);
+    drawEquityChart(filterEquity());
   } else if (name === "monthly") {
-    renderMonthlyBars(filterMonthly(slice => slice));
+    renderMonthlyBars({ monthly_returns: filterMonthly() });
+    const monthlySlice = filterMonthly();
+    const won = monthlySlice.filter(m => (m.excess || 0) > 0).length;
+    const fracEl = document.getElementById("s3-monthly-win-frac");
+    if (fracEl) fracEl.textContent = `${won} / ${monthlySlice.length}`;
+  } else if (name === "holdings") {
+    const subdata = recomputeHoldings(filterScorecardPicks());
+    renderHoldingsPanel(subdata);
   }
+}
+
+/** External refresh entry — called when tab "backtest" gets re-shown
+ *  (charts that were sized inside hidden panels may need redraw) */
+export function refreshSection3() {
+  // refresh whichever sub-tab is currently active
+  const active = document.querySelector('.section-tab--active');
+  if (active) switchTab(active.dataset.stab);
 }
 
 function applyPreset(preset) {
