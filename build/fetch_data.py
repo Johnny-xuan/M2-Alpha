@@ -24,6 +24,7 @@ import pandas as pd
 HERE = Path(__file__).resolve().parent
 CACHE = HERE / "cache"
 CACHE.mkdir(exist_ok=True)
+INDUSTRY_MAP_CSV = HERE / "industry_map.csv"     # tushare 申万行业映射 (committed in repo)
 
 
 def _bs_code_to_ts(bs_code: str) -> str:
@@ -87,15 +88,29 @@ def get_csi300_components(bs) -> pd.DataFrame:
     rs = bs.query_hs300_stocks()
     comps = _bs_query_to_df(rs)
     comps["ts_code"] = comps["code"].apply(_bs_code_to_ts)
+    comps["name"] = comps["code_name"]
     print(f"  → {len(comps)} 只成分股")
 
-    print("  补充行业分类 ...")
+    # 优先用 repo 里的 tushare 申万 mapping（短名 + 细分二级，如"通信设备/元器件/半导体"）
+    primary_map = {}
+    if INDUSTRY_MAP_CSV.exists():
+        df_map = pd.read_csv(INDUSTRY_MAP_CSV, dtype=str).dropna(subset=["industry"])
+        primary_map = dict(zip(df_map["ts_code"], df_map["industry"]))
+        print(f"  loaded primary industry mapping ({len(primary_map)} tickers)")
+
+    # Fallback: BaoStock 证监会分类（粗一些，需要 shorten）
     rs = bs.query_stock_industry()
     ind = _bs_query_to_df(rs)
     ind["ts_code"] = ind["code"].apply(_bs_code_to_ts)
-    ind_map = dict(zip(ind["ts_code"], ind["industry"]))
-    comps["industry"] = comps["ts_code"].map(ind_map).fillna("").apply(shorten_industry)
-    comps["name"] = comps["code_name"]
+    fallback_map = dict(zip(ind["ts_code"], ind["industry"].apply(shorten_industry)))
+
+    def _resolve_industry(ts):
+        return primary_map.get(ts) or fallback_map.get(ts) or "—"
+
+    comps["industry"] = comps["ts_code"].apply(_resolve_industry)
+    missing = (comps["industry"] == "—").sum()
+    if missing:
+        print(f"  ⚠️ {missing} 只成分股 industry 缺失（mapping 都没匹配上）")
     return comps[["ts_code", "name", "industry"]]
 
 
