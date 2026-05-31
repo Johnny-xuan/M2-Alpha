@@ -16,7 +16,7 @@ BaoStock 优势：
 """
 
 from __future__ import annotations
-import argparse, sys
+import argparse, re, sys
 from pathlib import Path
 from datetime import datetime, timedelta
 import pandas as pd
@@ -54,6 +54,33 @@ def _bs_query_to_df(rs) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=rs.fields)
 
 
+def shorten_industry(s: str) -> str:
+    """Normalize 证监会行业分类长名 → 短名 (用于 UI 显示)。
+
+    Examples:
+      'C39计算机、通信和其他电子设备制造业' → '计算机'
+      'C38电气机械和器材制造业'             → '电气机械'
+      'J66货币金融服务'                    → '货币金融'
+      'C32有色金属冶炼和压延加工业'         → '有色金属冶炼'
+      ''                                  → '—'
+    """
+    if not s or not isinstance(s, str):
+        return "—"
+    # Strip leading "C39" / "J66" 等代码前缀
+    s = re.sub(r'^[A-Z]\d+', '', s).strip()
+    # 按"、和及与"切第一个名词块
+    for sep in ['、', '和', '及', '与']:
+        if sep in s:
+            s = s.split(sep)[0]
+            break
+    # 去常见后缀
+    for suffix in ['制造业', '服务业', '加工业', '业', '服务']:
+        if s.endswith(suffix):
+            s = s[:-len(suffix)]
+            break
+    return s.strip() or "—"
+
+
 def get_csi300_components(bs) -> pd.DataFrame:
     """获取沪深 300 成分股清单 + 行业。"""
     print("[1/4] 拉取沪深 300 成分股 ...")
@@ -67,7 +94,7 @@ def get_csi300_components(bs) -> pd.DataFrame:
     ind = _bs_query_to_df(rs)
     ind["ts_code"] = ind["code"].apply(_bs_code_to_ts)
     ind_map = dict(zip(ind["ts_code"], ind["industry"]))
-    comps["industry"] = comps["ts_code"].map(ind_map).fillna("—")
+    comps["industry"] = comps["ts_code"].map(ind_map).fillna("").apply(shorten_industry)
     comps["name"] = comps["code_name"]
     return comps[["ts_code", "name", "industry"]]
 
