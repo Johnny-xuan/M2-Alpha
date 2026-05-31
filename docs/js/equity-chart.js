@@ -1,13 +1,13 @@
 /* ────────────────────────────────────────────────────────────
-   equity-chart.js — NAV curve vs benchmark, with crosshair tooltip
+   equity-chart.js — pure NAV chart renderer (range comes from outside)
    ──────────────────────────────────────────────────────────── */
 import { $, svg, fmtPct, fmtInt } from "./utils.js";
 
-export function renderEquityChart(data) {
+/** Draw equity chart for a given slice of equity_curve. */
+export function drawEquityChart(series) {
   const svgEl = $("#equity-chart");
-  if (!svgEl) return;
+  if (!svgEl || !series || series.length < 2) return;
   const tooltip = $("#equity-tooltip");
-  const series = data.equity_curve;
 
   const W = 1400, H = 420;
   const padL = 64, padR = 24, padT = 24, padB = 40;
@@ -35,20 +35,18 @@ export function renderEquityChart(data) {
   for (let i = 1; i < n; i++) areaPath += ` L ${xAt(i)} ${yAt(navs[i])}`;
   areaPath += ` L ${xAt(n - 1)} ${H - padB} Z`;
 
-  // ticks
   const yTicks = [];
   for (let k = 0; k <= 4; k++) {
     const v = yMin + ((yMax - yMin) * k) / 4;
     yTicks.push({ y: yAt(v), v });
   }
   const xTicks = [];
-  const nTicks = 8;
+  const nTicks = Math.min(8, Math.max(3, Math.floor(n / 10)));
   for (let k = 0; k <= nTicks; k++) {
     const i = Math.round((k / nTicks) * (n - 1));
     xTicks.push({ x: xAt(i), d: series[i].d });
   }
 
-  // drawdown regions
   let runMax = navs[0], inDD = false, ddStart = 0;
   let ddRegions = [];
   for (let i = 1; i < n; i++) {
@@ -59,10 +57,10 @@ export function renderEquityChart(data) {
   }
   if (inDD) ddRegions.push([ddStart, n - 1]);
   ddRegions = ddRegions.filter(([a, b]) => {
-    if (b - a < 8) return false;
+    if (b - a < 5) return false;
     const peak = Math.max(...navs.slice(Math.max(0, a - 1), a + 1));
     const trough = Math.min(...navs.slice(a, b + 1));
-    return (peak - trough) / peak > 0.03;
+    return (peak - trough) / peak > 0.025;
   });
 
   svgEl.innerHTML = "";
@@ -77,7 +75,6 @@ export function renderEquityChart(data) {
   `;
   svgEl.appendChild(defs);
 
-  // y-axis: percent change from start
   const startNav = navs[0];
   yTicks.forEach(t => {
     svgEl.appendChild(svg("line", { x1: padL, x2: W - padR, y1: t.y, y2: t.y, class: "grid-line" }));
@@ -92,25 +89,22 @@ export function renderEquityChart(data) {
     svgEl.appendChild(lab);
   });
 
-  // drawdown regions
   ddRegions.forEach(([a, b]) => {
     svgEl.appendChild(svg("rect", {
       x: xAt(a), y: padT, width: xAt(b) - xAt(a), height: h, class: "dd-region",
     }));
   });
 
-  // benchmark, then model area + line
   svgEl.appendChild(svg("path", { d: benchPath, class: "bench-line" }));
   svgEl.appendChild(svg("path", { d: areaPath, class: "model-area" }));
   const modelEl = svg("path", { d: modelPath, class: "model-line" });
   svgEl.appendChild(modelEl);
 
-  // animate stroke draw-in
   const len = modelEl.getTotalLength ? modelEl.getTotalLength() : 4000;
   modelEl.style.strokeDasharray = len;
   modelEl.style.strokeDashoffset = len;
   requestAnimationFrame(() => {
-    modelEl.style.transition = "stroke-dashoffset 1.8s cubic-bezier(0.22, 0.61, 0.36, 1)";
+    modelEl.style.transition = "stroke-dashoffset 1.2s cubic-bezier(0.22, 0.61, 0.36, 1)";
     modelEl.style.strokeDashoffset = 0;
   });
 
@@ -123,7 +117,11 @@ export function renderEquityChart(data) {
   svgEl.appendChild(dot);
 
   const host = svgEl.parentElement;
-  svgEl.addEventListener("mousemove", (ev) => {
+  function hide() {
+    crossV.classList.remove("show"); crossH.classList.remove("show"); dot.classList.remove("show");
+    if (tooltip) tooltip.hidden = true;
+  }
+  svgEl.onmousemove = (ev) => {
     const rect = svgEl.getBoundingClientRect();
     const px = ((ev.clientX - rect.left) / rect.width) * W;
     if (px < padL || px > W - padR) return hide();
@@ -137,13 +135,16 @@ export function renderEquityChart(data) {
     dot.setAttribute("cx", xv); dot.setAttribute("cy", yv);
     crossV.classList.add("show"); crossH.classList.add("show"); dot.classList.add("show");
 
+    const pctFromStart = ((d.nav / startNav) - 1) * 100;
+    const benchPctFromStart = ((d.bench / series[0].bench) - 1) * 100;
+    if (!tooltip) return;
     tooltip.hidden = false;
     tooltip.innerHTML = `
       <div class="tt-d">${d.d}</div>
       <div class="tt-row"><span class="tt-k">净 值</span><span class="tt-v">¥${fmtInt(Math.round(d.nav))}</span></div>
-      <div class="tt-row"><span class="tt-k">模型涨幅</span><span class="tt-v ${d.ret >= 0 ? "gain" : "loss"}">${fmtPct(d.ret)}</span></div>
-      <div class="tt-row"><span class="tt-k">沪深 300</span><span class="tt-v ${d.bret >= 0 ? "gain" : "loss"}">${fmtPct(d.bret)}</span></div>
-      <div class="tt-row"><span class="tt-k">超额收益</span><span class="tt-v ${(d.ret - d.bret) >= 0 ? "gain" : "loss"}">${fmtPct(d.ret - d.bret)}</span></div>
+      <div class="tt-row"><span class="tt-k">区间收益</span><span class="tt-v ${pctFromStart >= 0 ? "gain" : "loss"}">${fmtPct(pctFromStart)}</span></div>
+      <div class="tt-row"><span class="tt-k">沪深 300</span><span class="tt-v ${benchPctFromStart >= 0 ? "gain" : "loss"}">${fmtPct(benchPctFromStart)}</span></div>
+      <div class="tt-row"><span class="tt-k">超额收益</span><span class="tt-v ${(pctFromStart - benchPctFromStart) >= 0 ? "gain" : "loss"}">${fmtPct(pctFromStart - benchPctFromStart)}</span></div>
     `;
     const hostRect = host.getBoundingClientRect();
     const tx = ev.clientX - hostRect.left + 16;
@@ -152,11 +153,6 @@ export function renderEquityChart(data) {
     const maxX = hostRect.width - ttRect.width - 8;
     tooltip.style.left = Math.min(maxX, tx) + "px";
     tooltip.style.top = ty + "px";
-  });
-
-  function hide() {
-    crossV.classList.remove("show"); crossH.classList.remove("show"); dot.classList.remove("show");
-    tooltip.hidden = true;
-  }
-  svgEl.addEventListener("mouseleave", hide);
+  };
+  svgEl.onmouseleave = hide;
 }

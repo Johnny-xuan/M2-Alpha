@@ -17,6 +17,7 @@
 """
 from __future__ import annotations
 import json
+from collections import Counter
 from pathlib import Path
 from datetime import datetime
 import pandas as pd
@@ -176,7 +177,41 @@ def main():
         "worst_day": {"d": dates_sorted[int(np.argmin(arr))], "ret": round(float(arr.min()), 2)},
     }
 
-    # 6. Update top-level summary metadata (asof + counters)
+    # 6. Recompute industry_avg + top_held from scorecard picks (live, not seed)
+    ind_count = Counter()
+    ticker_count = Counter()
+    ticker_info = {}
+    total_picks = 0
+    for date_data in scorecard_by_date.values():
+        for p in date_data.get("picks", []):
+            ind = p.get("ind", "—")
+            ind_count[ind] += 1
+            ticker_count[p["ts"]] += 1
+            total_picks += 1
+            if p["ts"] not in ticker_info:
+                ticker_info[p["ts"]] = {
+                    "name": p.get("name", p["ts"]),
+                    "industry": p.get("ind", "—"),
+                }
+    n_days = len(scorecard_by_date)
+
+    data["industry_avg"] = [
+        {"industry": k, "weight": round(v / total_picks * 100, 2)}
+        for k, v in ind_count.most_common(12)
+    ]
+    data["top_held"] = [
+        {
+            "ts": ts,
+            "name": ticker_info[ts]["name"],
+            "industry": ticker_info[ts]["industry"],
+            "days": days,
+            "pct": round(days / n_days * 100, 1),
+        }
+        for ts, days in ticker_count.most_common(15)
+    ]
+    print(f"  recomputed industry_avg ({len(data['industry_avg'])} industries) + top_held ({len(data['top_held'])} tickers)")
+
+    # 7. Update top-level summary metadata (asof + counters)
     data["summary"]["asof"] = _fmt(latest_date)
     print(f"  updated summary.asof = {data['summary']['asof']}")
 

@@ -6,7 +6,8 @@
    ──────────────────────────────────────────────────────────── */
 import { $, $$, svg, fmtPct } from "./utils.js";
 
-let _scState = null;     // { dates: [...], visible: N }
+const PAGE_SIZE = 10;
+let _scState = null;     // { dates: [...], page: N }
 
 /* ─── populate scorecard sub-header stats (best day) ─── */
 export function renderScorecardSummary(data) {
@@ -112,9 +113,17 @@ export function initDateRange(data) {
       if (e.key === "Enter") $("#date-apply").click();
     });
   });
-  $("#sc-loadmore-btn").addEventListener("click", () => loadMore(data));
+  $("#sc-pager-prev").addEventListener("click", () => goPage(data, -1));
+  $("#sc-pager-next").addEventListener("click", () => goPage(data, +1));
 
   applyPreset(data, "10", allDates);
+}
+
+function goPage(data, delta) {
+  if (!_scState) return;
+  const totalPages = Math.max(1, Math.ceil(_scState.dates.length / PAGE_SIZE));
+  _scState.page = Math.min(totalPages - 1, Math.max(0, _scState.page + delta));
+  renderSCDaysVisible(data);
 }
 
 function applyPreset(data, preset, allDates) {
@@ -150,7 +159,7 @@ function applyRange(data, startD, endD, allDates) {
 
 function renderDateRange(data, dates) {
   const sorted = dates.slice().sort().reverse();
-  _scState = { dates: sorted, visible: Math.min(10, sorted.length) };
+  _scState = { dates: sorted, page: 0 };
 
   const titleEl = $("#sc-detail-title");
   const counterEl = $("#sc-counter");
@@ -185,9 +194,12 @@ function aggregateRange(data, dates) {
 
 function renderSCDaysVisible(data) {
   const host = $("#sc-days-list");
-  const lm = $("#sc-loadmore");
+  const pager = $("#sc-pager");
   if (!_scState) return;
-  const dates = _scState.dates.slice(0, _scState.visible);
+  const totalPages = Math.max(1, Math.ceil(_scState.dates.length / PAGE_SIZE));
+  if (_scState.page >= totalPages) _scState.page = totalPages - 1;
+  const start = _scState.page * PAGE_SIZE;
+  const dates = _scState.dates.slice(start, start + PAGE_SIZE);
 
   host.innerHTML = dates.map((d, idx) => {
     const day = data.scorecard.by_date[d];
@@ -220,16 +232,13 @@ function renderSCDaysVisible(data) {
     `;
   }).join("");
 
-  if (_scState.visible < _scState.dates.length) {
-    lm.hidden = false;
-    $("#sc-loadmore-btn").textContent = `显 示 更 多 (剩 ${_scState.dates.length - _scState.visible} 天) →`;
+  // pager visibility + state
+  if (totalPages > 1) {
+    pager.hidden = false;
+    $("#sc-pager-info").innerHTML = `<em>${_scState.page + 1}</em> / ${totalPages} 页 · 共 ${_scState.dates.length} 天`;
+    $("#sc-pager-prev").disabled = _scState.page === 0;
+    $("#sc-pager-next").disabled = _scState.page >= totalPages - 1;
   } else {
-    lm.hidden = true;
+    pager.hidden = true;
   }
-}
-
-function loadMore(data) {
-  if (!_scState) return;
-  _scState.visible = Math.min(_scState.dates.length, _scState.visible + 20);
-  renderSCDaysVisible(data);
 }
