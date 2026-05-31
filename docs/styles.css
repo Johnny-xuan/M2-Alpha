@@ -154,6 +154,21 @@ body.light .navbar {
   font-variation-settings: "opsz" 60, "SOFT" 80, "WONK" 1;
 }
 .brand__name em { font-style: italic; color: var(--ink); font-weight: 400; }
+.brand__ver {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-family: var(--f-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  border: 1px solid var(--hairline-2);
+  border-radius: 3px;
+  vertical-align: middle;
+  background: rgba(255,255,255,0.03);
+}
+body.light .brand__ver { background: rgba(0,0,0,0.04); }
 
 .nav-tabs { list-style: none; display: flex; gap: 0; justify-content: center; }
 .nav-tab {
@@ -895,12 +910,125 @@ body.light .tooltip { box-shadow: 0 4px 18px rgba(0,0,0,0.12), 0 0 12px var(--li
   background: var(--bg-2);
   border: 1px solid var(--hairline-2);
   border-radius: var(--r-md);
-  padding: 20px 22px;
+  padding: 22px 24px;
 }
+.about-block--wide { grid-column: 1 / -1; }
 .about-block--warn {
   grid-column: 1 / -1;
   border-left: 3px solid var(--coral);
   background: linear-gradient(180deg, rgba(255, 107, 60, 0.04), rgba(255, 107, 60, 0.01));
+}
+
+/* h2 + version chip header row */
+.about-h2 {
+  display: flex; align-items: baseline; gap: 10px;
+  margin-bottom: 12px;
+}
+.about-h2 .about-h { margin-bottom: 0; }
+.ver-chip {
+  display: inline-block;
+  padding: 2px 9px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--lime);
+  border: 1px solid var(--lime);
+  border-radius: 3px;
+  background: rgba(200, 249, 61, 0.08);
+  font-weight: 500;
+  vertical-align: middle;
+}
+body.light .ver-chip { background: rgba(79, 122, 8, 0.08); }
+
+/* subtle divider with label, e.g. "35 个输入因子" inside the model block */
+.sub-divider {
+  position: relative;
+  margin: 22px 0 14px;
+  text-align: center;
+}
+.sub-divider::before {
+  content: "";
+  position: absolute; left: 0; right: 0; top: 50%;
+  border-top: 1px solid var(--hairline);
+}
+.sub-divider span {
+  position: relative;
+  display: inline-block;
+  padding: 0 14px;
+  background: var(--bg-2);
+  font-family: var(--f-display);
+  font-variation-settings: "opsz" 40, "SOFT" 30, "WONK" 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+/* 35 features grid (inside model block) */
+.feat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 4px;
+}
+.feat-group {
+  padding: 10px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  background: var(--bg);
+}
+.feat-group--warn {
+  grid-column: 1 / -1;
+  border-color: var(--amber);
+  background: rgba(240, 181, 63, 0.06);
+}
+body.light .feat-group--warn { background: rgba(181, 128, 32, 0.05); }
+.feat-h {
+  margin: 0 0 6px;
+  font-family: var(--f-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--ink);
+  display: flex; align-items: center; gap: 8px;
+}
+.feat-cnt {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  font-weight: 400;
+  padding: 1px 6px;
+  border-radius: 2px;
+  color: var(--ink-mute);
+  background: var(--bg-2);
+  border: 1px solid var(--hairline);
+}
+.feat-cnt--warn {
+  color: var(--amber);
+  border-color: var(--amber);
+  background: rgba(240, 181, 63, 0.1);
+}
+.feat-warn { color: var(--amber); font-weight: 700; }
+.feat-list {
+  display: block;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  line-height: 1.75;
+  color: var(--ink-dim);
+  word-break: break-word;
+  padding: 0; background: none;
+  border-radius: 0;
+}
+.feat-list .dim { color: var(--ink-mute); font-size: 10.5px; }
+.feat-note {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--ink-mute);
+  line-height: 1.55;
+}
+
+@media (max-width: 720px) {
+  .feat-grid { grid-template-columns: 1fr; }
+  .about-grid { grid-template-columns: 1fr; }
 }
 .about-h {
   font-family: var(--f-display);

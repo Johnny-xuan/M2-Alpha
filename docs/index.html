@@ -57,6 +57,7 @@
   <a class="brand" href="#picks" data-tab-link="picks">
     <span class="brand__mark">M<sup>2</sup></span>
     <span class="brand__name">α<em>lpha</em></span>
+    <span class="brand__ver">v2.0</span>
   </a>
 
   <ul class="nav-tabs">
@@ -384,12 +385,13 @@
   <section class="tab-panel" data-tab-panel="about" hidden>
     <div class="about-grid">
 
-      <article class="about-block">
+      <!-- ─── 1. 项目介绍 (全宽) ─── -->
+      <article class="about-block about-block--wide">
         <h2 class="about-h">M²·Alpha 是什么</h2>
         <p>
           <strong>M²-Alpha (Micro-Macro Alpha Engine)</strong> 是一个自研的深度学习 A 股
           截面 alpha 选股模型，配套一套完全公开的执行策略，并通过 GitHub Actions 每日
-          自动更新数据。模型权重、策略规则、回测代码、数据 pipeline 全部开源在
+          自动更新数据。权重、策略规则、回测代码、数据 pipeline 全部开源在
           <a href="https://github.com/Johnny-xuan/M2-Alpha" target="_blank" rel="noopener" class="inline-link">GitHub</a>。
         </p>
         <p class="dim">
@@ -398,6 +400,65 @@
         </p>
       </article>
 
+      <!-- ─── 2. 模型 + 35 因子 (全宽合并) ─── -->
+      <article class="about-block about-block--wide">
+        <header class="about-h2">
+          <h2 class="about-h">模型</h2>
+          <span class="ver-chip">v2.0</span>
+        </header>
+        <p>
+          当前线上是 <strong>M²-Alpha v2.0</strong>：自研深度学习模型 ·
+          35 个 basic 因子做沪深 300 截面排名 · CPU 推理（~600K 参数 / 2.4 MB ckpt）。
+          架构细节不公开，权重 / 因子 / 策略 / 数据 pipeline 全部开源，更高版本敬请期待。
+        </p>
+
+        <div class="sub-divider"><span>35 个输入因子</span></div>
+        <p class="dim" style="margin-top:0;margin-bottom:14px">
+          每个因子按个股时序计算，再做截面 robust z-score 后喂模型。
+          带 <span class="feat-warn">⚠</span> 的因子目前用 BaoStock 数据无法填实数（恒为 0，等价于中性信号），后续数据源升级后可补齐。
+        </p>
+        <div class="feat-grid">
+          <div class="feat-group">
+            <h4 class="feat-h">动量 <span class="feat-cnt">8</span></h4>
+            <code class="feat-list">f_ret_1 · f_ret_2 · f_ret_3 · f_ret_5 · f_ret_10 · f_ret_20 · f_ret_30 · f_ret_60</code>
+          </div>
+          <div class="feat-group">
+            <h4 class="feat-h">均线偏离 <span class="feat-cnt">5</span></h4>
+            <code class="feat-list">f_close_ma_5 · f_close_ma_10 · f_close_ma_20 · f_close_ma_30 · f_close_ma_60</code>
+          </div>
+          <div class="feat-group">
+            <h4 class="feat-h">波动率 <span class="feat-cnt">5</span></h4>
+            <code class="feat-list">f_vol_5 · f_vol_10 · f_vol_20 · f_vol_30 · f_vol_60</code>
+          </div>
+          <div class="feat-group">
+            <h4 class="feat-h">K 线形态 <span class="feat-cnt">4</span></h4>
+            <code class="feat-list">f_kmid · f_klen · f_kup · f_klow</code>
+          </div>
+          <div class="feat-group">
+            <h4 class="feat-h">成交量 <span class="feat-cnt">5</span></h4>
+            <code class="feat-list">f_vol_ratio_5 · f_vol_ratio_10 · f_vol_ratio_20 · f_vol_chg_1 · f_amount_chg_1</code>
+          </div>
+          <div class="feat-group">
+            <h4 class="feat-h">换手 <span class="feat-cnt">2</span></h4>
+            <code class="feat-list">f_turnover_rate · f_turnover_rate_f</code>
+          </div>
+          <div class="feat-group">
+            <h4 class="feat-h">估值 <span class="feat-cnt">3</span></h4>
+            <code class="feat-list">f_pe_ttm · f_pb · f_ps_ttm</code>
+          </div>
+          <div class="feat-group feat-group--warn">
+            <h4 class="feat-h">数据源限制 <span class="feat-cnt feat-cnt--warn">3 <span class="feat-warn">⚠</span></span></h4>
+            <code class="feat-list">
+              f_volume_ratio <span class="dim">(量比)</span> ·
+              f_mf_net_ratio <span class="dim">(资金净流入率)</span> ·
+              f_mf_big_small_diff <span class="dim">(大单-小单差)</span>
+            </code>
+            <p class="feat-note">BaoStock 不暴露这 3 个字段，当前用 0 占位 → 模型实际只有 32 个有效信号。</p>
+          </div>
+        </div>
+      </article>
+
+      <!-- ─── 3. 策略 + 用法 (2 列) ─── -->
       <article class="about-block">
         <h2 class="about-h">交易策略 · 6 条规则</h2>
         <ol class="rules-compact">
@@ -427,7 +488,8 @@
         </ol>
       </article>
 
-      <article class="about-block">
+      <!-- ─── 4. 数据机制 (全宽) ─── -->
+      <article class="about-block about-block--wide">
         <h2 class="about-h">数据更新机制</h2>
         <p>每个交易日北京时间 20:00，GitHub Actions cron 自动执行：</p>
         <ol class="pipeline-compact">
@@ -442,7 +504,8 @@
         </p>
       </article>
 
-      <article class="about-block about-block--warn">
+      <!-- ─── 5. 风险提示 (全宽，warn) ─── -->
+      <article class="about-block about-block--wide about-block--warn">
         <h2 class="about-h">风险提示 · 务必阅读</h2>
         <ul>
           <li><strong>不构成任何形式的投资建议</strong> — 本站为模型预测的公开展示</li>
