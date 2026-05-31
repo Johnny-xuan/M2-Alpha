@@ -40,11 +40,11 @@
   <g transform="translate(80, 430)" font-family="JetBrains Mono, monospace">
     <g>
       <text font-size="14" fill="#5b5e68" letter-spacing="1">OOS SHARPE</text>
-      <text y="48" font-size="56" font-weight="700" fill="#c8f93d">2.93</text>
+      <text y="48" font-size="56" font-weight="700" fill="#c8f93d">3.12</text>
     </g>
     <g transform="translate(260, 0)">
       <text font-size="14" fill="#5b5e68" letter-spacing="1">CUM. RETURN</text>
-      <text y="48" font-size="56" font-weight="700" fill="#c8f93d">+121%</text>
+      <text y="48" font-size="56" font-weight="700" fill="#c8f93d">+138%</text>
     </g>
     <g transform="translate(560, 0)">
       <text font-size="14" fill="#5b5e68" letter-spacing="1">MAX DRAWDOWN</text>

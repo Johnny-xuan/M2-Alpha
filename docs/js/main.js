@@ -148,6 +148,8 @@ function populateMeta(data) {
     start_date:             s.start || "—",
     trading_days:           tradingDays,
     benchmark_cum:          (s.benchmark_cum >= 0 ? "+" : "") + (s.benchmark_cum || 0).toFixed(1) + "%",
+    worst_day_ret:          sc.worst_day ? fmtPctTxt(sc.worst_day.ret, 2) : "—",
+    worst_day_d:            sc.worst_day?.d || "—",
   };
   document.querySelectorAll("[data-tpl]").forEach(el => {
     const v = TPL[el.dataset.tpl];
