@@ -18,3 +18,17 @@ export function svg(tag, attrs = {}) {
   for (const k in attrs) el.setAttribute(k, attrs[k]);
   return el;
 }
+
+/** 从给定日期算下一个交易日（仅跳过周末，未处理节假日）。
+ *  dateStr: "YYYY-MM-DD" → returns "YYYY-MM-DD" */
+export function nextTradingDay(dateStr) {
+  if (!dateStr || dateStr === "—") return "—";
+  const d = new Date(dateStr + "T00:00:00");
+  if (isNaN(d.getTime())) return "—";
+  do { d.setDate(d.getDate() + 1); }
+  while (d.getDay() === 0 || d.getDay() === 6);   // skip Sun(0), Sat(6)
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+}

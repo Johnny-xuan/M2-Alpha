@@ -12,14 +12,15 @@
 
 <link rel="stylesheet" href="styles.css">
 
-<!-- 防止亮色模式首屏闪烁 -->
+<!-- 默认亮色主题 + 防首屏闪烁 -->
 <script>
   (function(){
     try {
-      var t = localStorage.getItem("m2alpha-theme");
-      if (!t) t = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+      var t = localStorage.getItem("m2alpha-theme") || "light";   // ← default light
       if (t === "light") document.documentElement.classList.add("preload-light");
-    } catch(e){}
+    } catch(e){
+      document.documentElement.classList.add("preload-light");
+    }
   })();
 </script>
 <style>html.preload-light body { background: #faf6ee; }</style>
@@ -54,10 +55,10 @@
       <span class="nav-pill__k" id="nav-today">— —</span>
       <span class="nav-pill__t" id="nav-clock">— : — : —</span>
     </div>
-    <div class="nav-pill nav-pill--signal" title="模型最新信号日期">
+    <div class="nav-pill nav-pill--signal" title="下一交易日 (基于最新收盘数据的预测目标)">
       <span class="nav-pill__dot"></span>
-      <span class="nav-pill__k">信号</span>
-      <span class="nav-pill__v" id="nav-asof">—</span>
+      <span class="nav-pill__k">建仓</span>
+      <span class="nav-pill__v" id="nav-next-day">—</span>
     </div>
   </div>
 </nav>
@@ -88,11 +89,16 @@
 
     <div class="tab1-grid">
 
-      <!-- ─── 主：今日 Top 10 推荐 ─── -->
+      <!-- ─── 主：下一交易日推荐 ─── -->
       <div class="tab1-main">
         <header class="block-head">
-          <h1 class="block-title">今日推荐 · <span id="picks-asof">—</span> 收盘后</h1>
-          <p class="block-sub">截面 Top 10 推荐。次日开盘买入、第三日开盘卖出。</p>
+          <h1 class="block-title">
+            建仓 · <em id="next-trading-day">—</em> · 开盘买入
+          </h1>
+          <p class="block-sub">
+            截面 Top 10 推荐 · 基于 <strong id="picks-asof">—</strong> 收盘数据 ·
+            次日 (建仓日) 09:30 集合竞价买入 · 第三日开盘卖出
+          </p>
         </header>
 
         <table class="picks" id="picks-table">

@@ -2,7 +2,7 @@
    main.js — entry point
    4 tab architecture: 今日推荐 / 每日复盘 / 回测业绩 / 关于
    ──────────────────────────────────────────────────────────────────────── */
-import { $, $$ } from "./utils.js";
+import { $, $$, nextTradingDay } from "./utils.js";
 import { startNavClock } from "./navbar.js";
 import { initTheme } from "./theme.js";
 import { initRouter } from "./router.js";
@@ -70,8 +70,16 @@ function populateMeta(data) {
   const months = data.monthly_returns || [];
   const latest = s.asof || "—";
 
-  // nav / picks date
-  document.querySelectorAll("#nav-asof").forEach(el => el.textContent = latest);
+  // 下一交易日 = picks 的真正"建仓日"
+  const nextDay = nextTradingDay(latest);
+
+  // navbar pill: 显示建仓日 (不是数据截止日)
+  const navNextEl = document.getElementById("nav-next-day");
+  if (navNextEl) navNextEl.textContent = nextDay;
+
+  // picks 标题: 建仓日 (大) + 数据截止 (小字)
+  const ntd = document.getElementById("next-trading-day");
+  if (ntd) ntd.textContent = nextDay;
   const picksAsof = document.getElementById("picks-asof");
   if (picksAsof) picksAsof.textContent = latest;
 

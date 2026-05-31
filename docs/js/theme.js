@@ -20,9 +20,7 @@ export function initTheme() {
   try {
     theme = localStorage.getItem(KEY);
   } catch (e) { theme = null; }
-  if (!theme) {
-    theme = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
-  }
+  if (!theme) theme = "light";   // 默认亮色（用户偏好后会持久化覆盖）
   apply(theme);
 
   const btn = $("#theme-toggle");
