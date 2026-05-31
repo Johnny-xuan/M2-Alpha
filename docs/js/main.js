@@ -75,7 +75,33 @@ function onTabChange(tab) {
 
   if (tab === "scorecard") renderTabScorecard(_data);
   else if (tab === "backtest") renderTabBacktest(_data);
-  // "about" is static markup, no JS render needed
+  else if (tab === "about") initAboutTOC();
+}
+
+/* ─── About 页 sidebar TOC scroll-spy（首次切到该 tab 时挂上）─── */
+let _tocObserver = null;
+function initAboutTOC() {
+  if (_tocObserver) return;
+  const sections = [...document.querySelectorAll('.about-sec[id]')];
+  const links = [...document.querySelectorAll('.about-toc__a')];
+  if (!sections.length || !links.length) return;
+
+  const linkBy = new Map(links.map(a => [a.getAttribute('href').slice(1), a]));
+  const setActive = (id) => {
+    links.forEach(a => a.classList.toggle('about-toc__a--active', a.getAttribute('href') === '#' + id));
+  };
+
+  _tocObserver = new IntersectionObserver((entries) => {
+    // 选择最靠上的、当前可见的 section 作为 active
+    const visible = entries.filter(e => e.isIntersecting)
+      .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (visible.length) setActive(visible[0].target.id);
+  }, {
+    rootMargin: "-15% 0px -65% 0px",
+    threshold: 0,
+  });
+  sections.forEach(s => _tocObserver.observe(s));
+  setActive(sections[0].id);
 }
 
 function renderTabPicks(data) {
