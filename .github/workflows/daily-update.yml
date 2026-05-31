@@ -2,9 +2,10 @@ name: 每日数据更新 · Daily Update
 
 on:
   schedule:
-    # 北京时间 18:30 = UTC 10:30；周一到周五 (1-5)
-    # 注意：GitHub cron 可能延迟 5–30 分钟（非保证）
-    - cron: '30 10 * * 1-5'
+    # 北京时间 20:00 = UTC 12:00；周一到周五 (1-5)
+    # 选 20:00 是因为 BaoStock 当日数据 17:30 之后陆续更新，
+    # 留 2.5 小时缓冲确保 300 只成分股全就绪；GitHub cron 还可能延迟 5–30 分钟。
+    - cron: '0 12 * * 1-5'
   workflow_dispatch:    # 允许手动触发
 
 permissions:
