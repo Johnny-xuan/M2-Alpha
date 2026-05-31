@@ -45,6 +45,10 @@ def main():
         data = json.load(f)
     print(f"  loaded seed data.json (asof={data['summary']['asof']})")
 
+    # 防御性删除不再被前端使用的冗余字段（避免文件膨胀）
+    for k in ("industry_history", "recent_top_picks", "variants"):
+        data.pop(k, None)
+
     # 2. Load latest preds + panel + index + basic
     preds = pd.read_parquet(PREDS)
     preds["trade_date"] = preds["trade_date"].astype(str)

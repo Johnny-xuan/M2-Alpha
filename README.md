@@ -87,7 +87,7 @@ stop-loss overlay，均未采纳。equal-weight + lazy sell 在多种 market reg
 每个交易日北京时间 18:30：
 
   ①  GitHub Actions cron 触发
-  ②  fetch_data.py    拉今日 OHLCV + fundamentals（AKShare）
+  ②  fetch_data.py    拉今日 OHLCV + fundamentals（BaoStock）
   ③  inference.py     加载 m2alpha.pt 计算今日 cross-sectional scores
   ④  update_daily.py  增量更新 docs/data/data.json
   ⑤  git commit + push
@@ -95,7 +95,7 @@ stop-loss overlay，均未采纳。equal-weight + lazy sell 在多种 market reg
 ```
 
 GitHub cron 不是严格准时，通常延迟 5–15 分钟。Daily pipeline 最常见的
-breakage 来自 AKShare 字段 schema 变更 —— 这是公开数据爬虫接口的本质风险，
+breakage 来自 BaoStock 字段 schema 变更 —— 这是公开数据爬虫接口的本质风险，
 能修但无法彻底防。
 
 ---
@@ -107,7 +107,7 @@ git clone https://github.com/Johnny-xuan/M2-Alpha.git
 cd M2-Alpha
 pip install -r requirements.txt
 
-python build/fetch_data.py        # AKShare 拉数据，约 3 分钟
+python build/fetch_data.py        # BaoStock 拉数据，约 3 分钟
 python build/inference.py         # CPU 推理，约 30 秒
 python build/update_daily.py      # 增量更新 docs/data/data.json
 
@@ -136,7 +136,7 @@ M2-Alpha/
 │   │   ├── model.py              架构定义 + load_alpha_model()
 │   │   ├── features.py           35 个 basic features
 │   │   └── normalize.py          cross-sectional robust z-score
-│   ├── fetch_data.py             AKShare → cache/*.parquet
+│   ├── fetch_data.py             BaoStock → cache/*.parquet
 │   ├── inference.py              checkpoint → preds.parquet
 │   └── update_daily.py           preds → docs/data/data.json（增量）
 ├── .github/workflows/
@@ -149,14 +149,14 @@ M2-Alpha/
 
 ## Known Caveats
 
-- **Sample size 有限**：11 个月 OOS 数据 suggestive，但远未达到 conclusive
-  的程度。需要更长 live track record 才能形成更可靠的结论。
+- **Sample size 持续累积中**：初始 OOS 段（2025-07 → 2026-05）约 11 个月，
+  之后每个交易日通过 live tracking 新增一个样本 —— 时间越久样本越具说服力，
+  当前结论仍为 suggestive 而非 conclusive。
 - **单一市场**：仅在 CSI 300 universe 上训练与验证，未做 cross-market generalization 测试。
 - **Slippage / market impact 仅做基础建模**。真实 execution 会与回测存在系统性差异。
 - **Regime decay**：所有训练得到的模型最终都会随 market structure 演变而衰减；
   本模型也不例外。这也是项目坚持 live tracking 而非停留在静态回测的核心动机。
-- **数据源风险**：AKShare 走公开 endpoint 爬取，字段 schema 变更会直接中断
-  daily pipeline。
+- **数据源风险**：BaoStock 走自家协议，字段 schema 变更会直接中断 daily pipeline。
 
 ---
 

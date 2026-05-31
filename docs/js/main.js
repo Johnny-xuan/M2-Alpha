@@ -17,9 +17,14 @@ const _renderedTabs = new Set(["picks"]);  // already rendered on init
 
 (async function init() {
   initTheme();
-  const res = await fetch("data/data.json");
-  _data = await res.json();
-  window._data = _data;
+  try {
+    const res = await fetch("data/data.json", { cache: "no-cache" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    _data = await res.json();
+    window._data = _data;
+  } catch (e) {
+    return showFatalError(e);
+  }
 
   populateMeta(_data);
   startNavClock();
@@ -32,6 +37,32 @@ const _renderedTabs = new Set(["picks"]);  // already rendered on init
 
   startCountUps();
 })();
+
+/** 数据加载失败时的兜底 UI */
+function showFatalError(err) {
+  const main = document.querySelector(".tab-area");
+  if (!main) return;
+  main.innerHTML = `
+    <div style="
+      max-width:520px; margin:80px auto; padding:32px;
+      background:var(--bg-2); border:1px solid var(--coral);
+      border-left:3px solid var(--coral); border-radius:6px;
+      text-align:center; color:var(--ink-dim); font-size:14px; line-height:1.7;
+    ">
+      <h2 style="color:var(--coral); margin-bottom:14px; font-size:18px;">数据加载失败</h2>
+      <p>无法加载 <code>data/data.json</code>，请检查网络后刷新页面。</p>
+      <p style="margin-top:12px; font-size:12px; color:var(--ink-mute);">
+        Error: <code>${(err && err.message) || err}</code>
+      </p>
+      <p style="margin-top:20px;">
+        <a href="https://github.com/Johnny-xuan/M2-Alpha/actions" target="_blank" rel="noopener"
+           style="color:var(--lime); text-decoration:none; font-weight:600;">
+          查看 GitHub Actions 状态 →
+        </a>
+      </p>
+    </div>
+  `;
+}
 
 /* ──────────── lazy tab rendering ──────────── */
 function onTabChange(tab) {
