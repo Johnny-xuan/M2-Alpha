@@ -182,6 +182,33 @@ function populateMeta(data) {
     if (v != null) el.textContent = v;
   });
 
+  // 给"可正可负的数字"动态贴 gain/loss class（约定：>0 绿，<0 红）
+  const SIGN_KEYS = {
+    cum_return:       s.cum_return,
+    excess:           s.excess,
+    excess_avg:       sc.excess_avg,
+  };
+  document.querySelectorAll("[data-stat]").forEach(el => {
+    const k = el.dataset.stat;
+    if (!(k in SIGN_KEYS)) return;
+    const v = SIGN_KEYS[k];
+    el.classList.remove("gain", "loss");
+    if (v != null) el.classList.add(v >= 0 ? "gain" : "loss");
+  });
+  document.querySelectorAll("[data-sc-stat]").forEach(el => {
+    const k = el.dataset.scStat;
+    if (!(k in SIGN_KEYS)) return;
+    const v = SIGN_KEYS[k];
+    el.classList.remove("gain", "loss");
+    if (v != null) el.classList.add(v >= 0 ? "gain" : "loss");
+  });
+  // cum_return_text 是 data-tpl，单独处理
+  const cumEl = document.querySelector('[data-tpl="cum_return_text"]');
+  if (cumEl) {
+    cumEl.classList.remove("gain", "loss");
+    cumEl.classList.add(s.cum_return >= 0 ? "gain" : "loss");
+  }
+
   // Scorecard summary stats
   const SC_STAT_MAP = {
     excess_avg:               sc.excess_avg,

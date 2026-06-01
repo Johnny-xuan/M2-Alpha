@@ -234,9 +234,10 @@ function renderSCDaysVisible(data) {
     }
 
     // —— 已结算 ——
+    // 着色约定：单只股票实际涨幅 > 0 = 绿，< 0 = 红（看绝对涨跌，不跟 bench 比）
     const picksHtml = day.picks.map(p => {
       if (p.ret == null) return "";
-      const cls = (day.bench_ret != null && p.ret > day.bench_ret) ? "gain" : "loss";
+      const cls = p.ret >= 0 ? "gain" : "loss";
       return `<span class="sc-chip ${cls}">
         <span class="sc-chip__n">${p.name}</span>
         <span class="sc-chip__r ${cls}">${fmtPct(p.ret, 1)}</span>

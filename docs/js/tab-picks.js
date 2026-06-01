@@ -55,7 +55,8 @@ export function renderRecentHits(data) {
     return;
   }
   host.innerHTML = recent.map(day => {
-    const cls = (day.excess || 0) >= 0 ? "gain" : "loss";
+    // 着色按"当日 Top10 平均收益的绝对正负"，不按 vs bench
+    const cls = (day.avg_ret || 0) >= 0 ? "gain" : "loss";
     return `
       <div class="rh-row ${cls}">
         <div class="rh-row__d">${day.d.slice(5)}</div>
