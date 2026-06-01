@@ -57,26 +57,41 @@ def run_inference(panel: pd.DataFrame, ckpt_path: Path, tau: int = 8,
 
     # 5. 对每一日（从第 tau 天起）跑推理
     print("  running inference ...")
-    results = []
-    feat_arr = panel.pivot(index="ts_code", columns="trade_date", values=fc[0]).fillna(0.0).values
-    # build a (S, T, F) tensor for the full date range, then slide
+    # 关键：每天只把"当天实际有 panel 数据"的股票喂给模型；零填充行不进 batch。
+    # 否则带 inter-stock attention 的模型会被 padding 污染（peer-set 变了 → 所有 pred 跟着变），
+    # 导致历史回测不稳定（每次 fetch 拉到的 universe 大小不同就会改一遍）。
+    # 用 (ts_code, trade_date) 元组的集合来判断 raw 行是否存在。
+    raw_keys = set(zip(panel["ts_code"].to_numpy(), panel["trade_date"].to_numpy()))
+    has_data = np.array(
+        [[(ts, d) in raw_keys for d in all_dates] for ts in all_codes]
+    )  # (S, T) bool
+
     pivoted = {}
     for col in fc:
         pivoted[col] = panel.pivot(index="ts_code", columns="trade_date", values=col).reindex(
-            index=all_codes, columns=all_dates).fillna(0.0).values  # (S, T)
+            index=all_codes, columns=all_dates).fillna(0.0).values
     X_full = np.stack([pivoted[c] for c in fc], axis=-1)             # (S, T, F)
 
+    results = []
     with torch.no_grad():
         for t in range(tau - 1, len(all_dates)):
-            X_win = torch.tensor(X_full[:, t - tau + 1:t + 1, :], dtype=torch.float32, device=device)
-            out = model(X_win)                                       # (S, τ)
-            scores = out[:, -1].cpu().numpy()                         # last-step signal
             d = all_dates[t]
-            for code, s in zip(all_codes, scores):
-                results.append({"trade_date": d, "ts_code": code, "pred": float(s)})
+            mask = has_data[:, t]                                    # 当天有数据的股票
+            if not mask.any():
+                continue
+            sel_idx = np.flatnonzero(mask)
+            X_win = torch.tensor(
+                X_full[sel_idx, t - tau + 1:t + 1, :],
+                dtype=torch.float32, device=device,
+            )                                                        # (S_d, τ, F)
+            out = model(X_win)                                       # (S_d, τ)
+            scores = out[:, -1].cpu().numpy()                         # last-step signal
+            for i, s in zip(sel_idx, scores):
+                results.append({"trade_date": d, "ts_code": all_codes[i], "pred": float(s)})
 
     df = pd.DataFrame(results)
-    print(f"  → {len(df)} predictions across {len(all_dates) - tau + 1} dates")
+    print(f"  → {len(df)} predictions across {len(all_dates) - tau + 1} dates"
+          f" (per-day avg {len(df) / max(len(all_dates) - tau + 1, 1):.0f} stocks)")
     return df
 
 
