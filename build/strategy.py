@@ -176,6 +176,8 @@ def simulate(preds_df: pd.DataFrame,
                 if len(target_holdings) >= n_hold:
                     break
 
+        target_set = set(target_holdings)
+
         # —— 2) 计算"信号日 d → 实际持仓 d+1 开盘 → d+2 开盘卖出"的当日收益 ——
         if d_next is None:
             # 没有下一交易日数据 → pending；buy_d / sell_d 估算为下一/再下一交易日
@@ -183,6 +185,8 @@ def simulate(preds_df: pd.DataFrame,
             est_d2 = _next_weekday(est_d1)
             picks_perf = _build_pending_picks(target_holdings, name_map,
                                               industry_map, pred_lookup, d)
+            top30 = _build_top30(day_scored, target_set, name_map, industry_map,
+                                  open_by, None, None)
             scorecard[_fmt(d)] = {
                 "d": _fmt(d),
                 "buy_d": _fmt(est_d1),
@@ -190,6 +194,7 @@ def simulate(preds_df: pd.DataFrame,
                 "avg_ret": None, "bench_ret": None, "excess": None,
                 "hits": None, "n": None, "hit_rate": None,
                 "picks": picks_perf,
+                "top30": top30,
                 "pending": True,
             }
             pending_count += 1
@@ -201,6 +206,8 @@ def simulate(preds_df: pd.DataFrame,
             est_d2 = _next_weekday(d_next)
             picks_perf = _build_pending_picks(target_holdings, name_map,
                                               industry_map, pred_lookup, d)
+            top30 = _build_top30(day_scored, target_set, name_map, industry_map,
+                                  open_by, d_next, None)
             scorecard[_fmt(d)] = {
                 "d": _fmt(d),
                 "buy_d": _fmt(d_next),
@@ -208,6 +215,7 @@ def simulate(preds_df: pd.DataFrame,
                 "avg_ret": None, "bench_ret": None, "excess": None,
                 "hits": None, "n": None, "hit_rate": None,
                 "picks": picks_perf,
+                "top30": top30,
                 "pending": True,
             }
             pending_count += 1
@@ -234,6 +242,9 @@ def simulate(preds_df: pd.DataFrame,
                 "ret": round(rr, 2) if rr is not None else None,
             })
 
+        top30 = _build_top30(day_scored, target_set, name_map, industry_map,
+                              open_by, d_next, d_next2)
+
         bo1 = bench_open.get(d_next); bo2 = bench_open.get(d_next2)
         bench_ret = (bo2 / bo1 - 1) * 100 if bo1 and bo2 else None
         avg_ret = float(np.mean(rets)) if rets else None
@@ -251,6 +262,7 @@ def simulate(preds_df: pd.DataFrame,
             "hits": hits, "n": n_avail,
             "hit_rate": round(hits / n_avail * 100, 1) if n_avail else None,
             "picks": picks_perf,
+            "top30": top30,
             "pending": False,
         }
         realized_count += 1
@@ -358,6 +370,32 @@ def _build_pending_picks(target_holdings, name_map, industry_map, pred_lookup, d
             "ind": industry_map.get(ts, "—"),
             "score": round(float(pred_lookup.get((d, ts), 0.0)), 3),
             "ret": None,
+        })
+    return out
+
+
+def _build_top30(day_scored, target_holdings_set, name_map, industry_map,
+                  open_by, d_next, d_next2, n_top=30):
+    """对 day_scored 取前 N 只（默认 30），逐只查 D+1→D+2 开盘价计实际收益、
+    并标记是否被策略选中（in_portfolio）。"""
+    out = []
+    head = day_scored.head(n_top)
+    for rank_i, r in enumerate(head.itertuples(index=False), 1):
+        ts = r.ts_code
+        rr = None
+        if d_next is not None and d_next2 is not None:
+            o1 = open_by.get((d_next, ts))
+            o2 = open_by.get((d_next2, ts))
+            if o1 and o2 and o1 > 0:
+                rr = (o2 / o1 - 1) * 100
+        out.append({
+            "rank": rank_i,
+            "ts": ts,
+            "name": name_map.get(ts, ts),
+            "ind": industry_map.get(ts, "—"),
+            "score": round(float(r.pred), 3),
+            "ret": round(rr, 2) if rr is not None else None,
+            "in_portfolio": ts in target_holdings_set,
         })
     return out
 

@@ -205,6 +205,10 @@ function renderSCDaysVisible(data) {
     const day = data.scorecard.by_date[d];
     if (!day) return "";
 
+    const top30Btn = day.top30?.length
+      ? `<button class="sc-day__top30-btn" data-sc-top30="${d}" title="查看模型原始预测 Top 30">Top 30 ↗</button>`
+      : "";
+
     // —— Pending：未结算（picks 存在但实际涨幅未知）——
     if (day.pending) {
       const picksHtml = day.picks.map(p => `
@@ -218,6 +222,7 @@ function renderSCDaysVisible(data) {
           <div class="sc-day__date">
             <div class="sc-day__d-main">${day.d}</div>
             <div class="sc-day__d-sub">买 ${(day.buy_d || "—").slice(5)} → 卖 ${(day.sell_d || "—").slice(5)}</div>
+            ${top30Btn}
           </div>
           <div class="sc-day__chips">${picksHtml}</div>
           <div class="sc-day__summary">
@@ -246,6 +251,7 @@ function renderSCDaysVisible(data) {
         <div class="sc-day__date">
           <div class="sc-day__d-main">${day.d}</div>
           <div class="sc-day__d-sub">买 ${day.buy_d.slice(5)} → 卖 ${day.sell_d.slice(5)}</div>
+          ${top30Btn}
         </div>
         <div class="sc-day__chips">${picksHtml}</div>
         <div class="sc-day__summary">
@@ -257,6 +263,16 @@ function renderSCDaysVisible(data) {
     `;
   }).join("");
 
+  // wire top30 buttons (delegated, idempotent)
+  if (!host.dataset.top30Wired) {
+    host.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-sc-top30]");
+      if (!btn) return;
+      openTop30Modal(data, btn.dataset.scTop30);
+    });
+    host.dataset.top30Wired = "1";
+  }
+
   // pager visibility + state
   if (totalPages > 1) {
     pager.hidden = false;
@@ -266,4 +282,107 @@ function renderSCDaysVisible(data) {
   } else {
     pager.hidden = true;
   }
+}
+
+/* ─── Top 30 模型原始预测 Modal ─── */
+function ensureTop30Modal() {
+  let modal = document.getElementById("top30-modal");
+  if (modal) return modal;
+  modal = document.createElement("div");
+  modal.id = "top30-modal";
+  modal.className = "t30-modal";
+  modal.hidden = true;
+  modal.innerHTML = `
+    <div class="t30-backdrop" data-t30-close></div>
+    <div class="t30-panel" role="dialog" aria-modal="true">
+      <header class="t30-head">
+        <div>
+          <div class="t30-title"></div>
+          <div class="t30-sub"></div>
+        </div>
+        <button class="t30-close" data-t30-close aria-label="关闭">×</button>
+      </header>
+      <div class="t30-body"></div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener("click", (e) => {
+    if (e.target.closest("[data-t30-close]")) closeTop30Modal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !modal.hidden) closeTop30Modal();
+  });
+  return modal;
+}
+
+function closeTop30Modal() {
+  const modal = document.getElementById("top30-modal");
+  if (modal) modal.hidden = true;
+  document.body.style.overflow = "";
+}
+
+function openTop30Modal(data, dateIso) {
+  const day = data.scorecard.by_date[dateIso];
+  if (!day || !day.top30) return;
+  const modal = ensureTop30Modal();
+  const realized = !day.pending && day.top30.some(t => t.ret != null);
+
+  modal.querySelector(".t30-title").innerHTML =
+    `${day.d} · 模型原始预测 <em>Top 30</em>`;
+  modal.querySelector(".t30-sub").innerHTML = `
+    买 ${(day.buy_d || "—").slice(5)} → 卖 ${(day.sell_d || "—").slice(5)} ·
+    ${day.pending ? '<span class="t30-pending">待结算</span>' :
+      `策略命中 <em>${day.hits}/${day.n}</em> · 持仓平均 <em class="${day.avg_ret>=0?'gain':'loss'}">${fmtPct(day.avg_ret,2)}</em>`}
+  `;
+
+  // build table
+  let inSel = 0;
+  const rowsHtml = day.top30.map(t => {
+    if (t.in_portfolio) inSel++;
+    const retCls = t.ret == null ? "" : t.ret >= 0 ? "gain" : "loss";
+    const retTxt = t.ret == null ? '<span class="t30-pending">—</span>' : fmtPct(t.ret, 2);
+    const selBadge = t.in_portfolio
+      ? '<span class="t30-badge t30-badge--in" title="被策略选中">✓ 持仓</span>'
+      : '<span class="t30-badge t30-badge--out" title="未被策略选中">·</span>';
+    return `
+      <tr class="${t.in_portfolio ? 't30-row--in' : ''}">
+        <td class="t30-rk">${t.rank}</td>
+        <td class="t30-ts mono">${t.ts}</td>
+        <td class="t30-name">${t.name}</td>
+        <td class="t30-ind">${t.ind}</td>
+        <td class="t30-score mono">+${t.score.toFixed(3)}</td>
+        <td class="t30-ret mono ${retCls}">${retTxt}</td>
+        <td class="t30-sel">${selBadge}</td>
+      </tr>
+    `;
+  }).join("");
+
+  modal.querySelector(".t30-body").innerHTML = `
+    <div class="t30-stats">
+      <span>共 <em>30</em> 只 raw 预测</span>
+      <span class="t30-sep">·</span>
+      <span>其中 <em class="gain">${inSel}</em> 只被策略选入持仓</span>
+      <span class="t30-sep">·</span>
+      <span>${realized ? `已结算 (D+1→D+2 open-to-open)` : '待结算 (D+2 开盘价未知)'}</span>
+    </div>
+    <div class="t30-table-wrap">
+      <table class="t30-table">
+        <thead>
+          <tr>
+            <th class="t30-rk">#</th>
+            <th>代码</th>
+            <th>名称</th>
+            <th>行业</th>
+            <th>评分</th>
+            <th>实际涨幅</th>
+            <th class="t30-sel">策略</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+  `;
+
+  modal.hidden = false;
+  document.body.style.overflow = "hidden";
 }
