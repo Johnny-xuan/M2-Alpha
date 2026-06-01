@@ -2,10 +2,12 @@ name: 每日数据更新 · Daily Update
 
 on:
   schedule:
-    # 北京时间 20:00 = UTC 12:00；周一到周五 (1-5)
-    # 选 20:00 是因为 BaoStock 当日数据 17:30 之后陆续更新，
-    # 留 2.5 小时缓冲确保 300 只成分股全就绪；GitHub cron 还可能延迟 5–30 分钟。
-    - cron: '0 12 * * 1-5'
+    # 北京时间 20:07 + 20:27 (= UTC 12:07 + 12:27)，周一到周五 (1-5)。
+    # 为何两个窗口：GitHub cron 在繁忙时段经常跳过单次触发（实测从未自动跑过），
+    # 错峰非整点 + 加一个 20 min 后的兜底窗口让"任一被触发"即可工作。
+    # concurrency group 防重复跑、git diff 防重复 commit，所以两次都触发也无害。
+    - cron: '7 12 * * 1-5'
+    - cron: '27 12 * * 1-5'
   workflow_dispatch:    # 允许手动触发
 
 permissions:
