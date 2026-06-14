@@ -44,8 +44,12 @@ jobs:
       # BaoStock 走自家 TCP (data.baostock.com:31322)，不被 GitHub runner 防火墙拦。
       # 如需全量回填，本地跑 python build/init.py 并 commit 产物。
       - name: 1️⃣ Fetch A-share data (BaoStock incremental)
+        # fetch_data.py 内部已设 socket 超时 (BAOSTOCK_SOCKET_TIMEOUT=30) + 单只重试，
+        # 单次 query 不会再无限挂死；这里给 8min 余量覆盖偶发重试。
         run: python build/fetch_data.py --incremental
-        timeout-minutes: 5
+        env:
+          BAOSTOCK_SOCKET_TIMEOUT: '30'
+        timeout-minutes: 8
 
       - name: 2️⃣ Run model inference (m2alpha.pt)
         run: python build/inference.py

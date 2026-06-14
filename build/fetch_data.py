@@ -16,7 +16,7 @@ BaoStock 优势：
 """
 
 from __future__ import annotations
-import argparse, re, sys
+import argparse, os, re, socket, sys, time
 from pathlib import Path
 from datetime import datetime, timedelta
 import pandas as pd
@@ -25,6 +25,46 @@ HERE = Path(__file__).resolve().parent
 CACHE = HERE / "cache"
 CACHE.mkdir(exist_ok=True)
 INDUSTRY_MAP_CSV = HERE / "industry_map.csv"     # tushare 申万行业映射 (committed in repo)
+
+# --- BaoStock hang 防护 -------------------------------------------------------
+# BaoStock 走自家阻塞 TCP socket，本身没有任何超时。只要服务端一次 recv 不返回
+# （连上了但不回数据），整个脚本就永久阻塞，直到 CI step 5min timeout 被杀。
+# 这是 daily pipeline 偶发 failure 的根因（6/9–6/12 多次撞上）。
+# 给所有 socket recv 设一个进程级默认超时，单次 query 卡住会抛 socket.timeout，
+# 由下面的重试逻辑接管，而不是无限挂死。
+SOCKET_TIMEOUT = float(os.environ.get("BAOSTOCK_SOCKET_TIMEOUT", "30"))
+socket.setdefaulttimeout(SOCKET_TIMEOUT)
+
+
+def _bs_login(bs, retries: int = 3):
+    """带重试的 baostock 登录；socket 超时下重试可重建连接。"""
+    last_msg = ""
+    for attempt in range(1, retries + 1):
+        try:
+            lg = bs.login()
+            if lg.error_code == "0":
+                print(f"  baostock login ok (code={lg.error_code})")
+                return lg
+            last_msg = lg.error_msg
+        except (socket.timeout, OSError) as e:
+            last_msg = repr(e)
+        print(f"  baostock login failed (attempt {attempt}/{retries}): {last_msg}")
+        if attempt < retries:
+            time.sleep(3 * attempt)
+    raise RuntimeError(f"baostock login failed after {retries} attempts: {last_msg}")
+
+
+def _relogin(bs):
+    """超时后重建 socket 连接：先 logout（忽略异常）再 login。"""
+    try:
+        bs.logout()
+    except Exception:
+        pass
+    time.sleep(2)
+    try:
+        bs.login()
+    except Exception:
+        pass
 
 
 def _bs_code_to_ts(bs_code: str) -> str:
@@ -114,20 +154,42 @@ def get_csi300_components(bs) -> pd.DataFrame:
     return comps[["ts_code", "name", "industry"]]
 
 
+def _query_kdata_with_retry(bs, bs_code, fields, start_date, end_date,
+                            adjustflag="2", retries: int = 3) -> pd.DataFrame | None:
+    """单只股票 k 线查询，带 socket 超时重试 + 重建连接。
+
+    返回 DataFrame；连重试都失败返回 None（由调用方决定 skip 还是 abort）。
+    """
+    for attempt in range(1, retries + 1):
+        try:
+            rs = bs.query_history_k_data_plus(
+                bs_code, fields,
+                start_date=start_date, end_date=end_date,
+                frequency="d", adjustflag=adjustflag,
+            )
+            if rs.error_code != "0":
+                raise RuntimeError(f"error_code={rs.error_code} {rs.error_msg}")
+            return _bs_query_to_df(rs)   # rs.next() 的 socket recv 也可能超时，一并包住
+        except (socket.timeout, OSError, RuntimeError) as e:
+            print(f"    ⚠ {bs_code} query attempt {attempt}/{retries} failed: {e}")
+            if attempt < retries:
+                _relogin(bs)
+    return None
+
+
 def get_daily_panel(bs, ts_codes: list[str], start_date: str, end_date: str) -> pd.DataFrame:
     """拉每只股票日线 OHLCV + PE/PB/PS/turnover (一次 query 全拿)。"""
     print(f"[2/4] 拉取 {len(ts_codes)} 只股票 [{start_date}~{end_date}] 日线 ...")
     fields = "date,code,open,high,low,close,preclose,volume,amount,turn,pctChg,peTTM,pbMRQ,psTTM"
     rows = []
     skipped = 0
+    failed = []
     for i, ts_code in enumerate(ts_codes):
         bs_code = _ts_to_bs_code(ts_code)
-        rs = bs.query_history_k_data_plus(
-            bs_code, fields,
-            start_date=start_date, end_date=end_date,
-            frequency="d", adjustflag="2",   # 2 = 前复权
-        )
-        df = _bs_query_to_df(rs)
+        df = _query_kdata_with_retry(bs, bs_code, fields, start_date, end_date)
+        if df is None:
+            failed.append(ts_code)
+            continue
         if df.empty:
             skipped += 1
             continue
@@ -135,6 +197,13 @@ def get_daily_panel(bs, ts_codes: list[str], start_date: str, end_date: str) -> 
         rows.append(df)
         if (i + 1) % 50 == 0:
             print(f"  {i+1}/{len(ts_codes)}")
+
+    if failed:
+        # 增量模式下只新增 1-2 天，少数股票拉失败可容忍（下次增量会补齐）；
+        # 但全员失败说明连接彻底坏了，必须 abort 让 CI 标红而不是 commit 残缺数据。
+        print(f"  ⚠️ {len(failed)} 只股票重试后仍失败: {failed[:10]}{' ...' if len(failed) > 10 else ''}")
+        if len(failed) == len(ts_codes):
+            raise RuntimeError("BaoStock 全部股票查询失败，连接不可用，中止本次更新")
 
     if not rows:
         print("  ⚠ 该窗口内 BaoStock 没数据（可能是周末/假期），返回空 panel")
@@ -188,13 +257,13 @@ def get_daily_panel(bs, ts_codes: list[str], start_date: str, end_date: str) -> 
 def get_csi300_index(bs, start_date: str, end_date: str) -> pd.DataFrame:
     """获取沪深 300 指数日线作为基准。"""
     print("[3/4] 拉取沪深 300 指数日线 ...")
-    rs = bs.query_history_k_data_plus(
-        "sh.000300",
+    df = _query_kdata_with_retry(
+        bs, "sh.000300",
         "date,open,high,low,close,preclose,volume,amount,pctChg",
-        start_date=start_date, end_date=end_date,
-        frequency="d", adjustflag="3",   # 3 = 不复权 (指数)
+        start_date, end_date, adjustflag="3",   # 3 = 不复权 (指数)
     )
-    df = _bs_query_to_df(rs)
+    if df is None:
+        raise RuntimeError("BaoStock 沪深300指数查询失败")
     df = df.rename(columns={"date": "trade_date"})
     df["trade_date"] = df["trade_date"].apply(_date_to_compact)
     df["ts_code"] = "000300.SH"
@@ -252,10 +321,7 @@ def main():
     print(f"[fetch] window: {start_date} → {end_date}")
 
     import baostock as bs
-    lg = bs.login()
-    if lg.error_code != "0":
-        raise RuntimeError(f"baostock login failed: {lg.error_msg}")
-    print(f"  baostock login ok (code={lg.error_code})")
+    _bs_login(bs)
 
     try:
         # 1. 成分股 + 行业（每次都刷，membership 可能变）
