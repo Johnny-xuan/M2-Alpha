@@ -16,7 +16,8 @@ BaoStock 优势：
 """
 
 from __future__ import annotations
-import argparse, os, re, socket, sys, time
+import argparse, os, re, signal, socket, sys, time
+from contextlib import contextmanager
 from pathlib import Path
 from datetime import datetime, timedelta
 import pandas as pd
@@ -27,28 +28,57 @@ CACHE.mkdir(exist_ok=True)
 INDUSTRY_MAP_CSV = HERE / "industry_map.csv"     # tushare 申万行业映射 (committed in repo)
 
 # --- BaoStock hang 防护 -------------------------------------------------------
-# BaoStock 走自家阻塞 TCP socket，本身没有任何超时。只要服务端一次 recv 不返回
-# （连上了但不回数据），整个脚本就永久阻塞，直到 CI step 5min timeout 被杀。
-# 这是 daily pipeline 偶发 failure 的根因（6/9–6/12 多次撞上）。
-# 给所有 socket recv 设一个进程级默认超时，单次 query 卡住会抛 socket.timeout，
-# 由下面的重试逻辑接管，而不是无限挂死。
+# BaoStock 走自家阻塞 TCP socket，本身没有任何超时。两种挂死实测都出现过：
+#   1) 服务端连上但 recv 一直滴字节不结束 → socket.setdefaulttimeout（单次 recv
+#      超时）形同虚设，永远不触发；
+#   2) 对"窗口内无交易日"（周末/数据未就绪）的 k 线 query 直接永久阻塞。
+# 这是 daily pipeline 偶发 failure 的根因（6/9–6/12 多次撞上，6/12 双窗口全挂）。
+#
+# 根治：用 SIGALRM 给每个 baostock 调用套一个进程级"硬墙钟超时"——它能中断 C 层
+# 阻塞的 recv 并在 Python 抛 TimeoutError，无论服务端怎么 dribble 都逃不掉。
+# socket 默认超时保留为第二层网兜。
 SOCKET_TIMEOUT = float(os.environ.get("BAOSTOCK_SOCKET_TIMEOUT", "30"))
 socket.setdefaulttimeout(SOCKET_TIMEOUT)
+HARD_TIMEOUT = int(float(os.environ.get("BAOSTOCK_HARD_TIMEOUT", "25")))
+_HAS_ALARM = hasattr(signal, "SIGALRM")
+
+
+@contextmanager
+def _hard_deadline(seconds: int):
+    """SIGALRM 硬超时：seconds 内未完成则抛 TimeoutError，中断阻塞的 socket recv。
+
+    仅 Unix 主线程可用；不支持时（理论上 CI/本地都支持）退化为无超时。
+    """
+    if not _HAS_ALARM or seconds <= 0:
+        yield
+        return
+
+    def _on_alarm(signum, frame):
+        raise TimeoutError(f"baostock call exceeded {seconds}s hard deadline")
+
+    old = signal.signal(signal.SIGALRM, _on_alarm)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old)
 
 
 def _bs_login(bs, retries: int = 3):
-    """带重试的 baostock 登录；socket 超时下重试可重建连接。"""
+    """带硬超时 + 重试的 baostock 登录。"""
     last_msg = ""
     for attempt in range(1, retries + 1):
         try:
-            lg = bs.login()
+            with _hard_deadline(HARD_TIMEOUT):
+                lg = bs.login()
             if lg.error_code == "0":
-                print(f"  baostock login ok (code={lg.error_code})")
+                print(f"  baostock login ok (code={lg.error_code})", flush=True)
                 return lg
             last_msg = lg.error_msg
-        except (socket.timeout, OSError) as e:
+        except (TimeoutError, socket.timeout, OSError) as e:
             last_msg = repr(e)
-        print(f"  baostock login failed (attempt {attempt}/{retries}): {last_msg}")
+        print(f"  baostock login failed (attempt {attempt}/{retries}): {last_msg}", flush=True)
         if attempt < retries:
             time.sleep(3 * attempt)
     raise RuntimeError(f"baostock login failed after {retries} attempts: {last_msg}")
@@ -57,14 +87,34 @@ def _bs_login(bs, retries: int = 3):
 def _relogin(bs):
     """超时后重建 socket 连接：先 logout（忽略异常）再 login。"""
     try:
-        bs.logout()
+        with _hard_deadline(HARD_TIMEOUT):
+            bs.logout()
     except Exception:
         pass
     time.sleep(2)
     try:
-        bs.login()
+        with _hard_deadline(HARD_TIMEOUT):
+            bs.login()
     except Exception:
         pass
+
+
+def _has_trading_day(bs, start_date: str, end_date: str) -> bool:
+    """前置检查：窗口内是否有交易日。周末/假期/数据未就绪时返回 False，
+    避免对"无交易日区间"的 k 线 query 触发 BaoStock 永久阻塞。"""
+    try:
+        with _hard_deadline(HARD_TIMEOUT):
+            rs = bs.query_trade_dates(start_date=start_date, end_date=end_date)
+            if rs.error_code != "0":
+                # 查不了就乐观放行，让后续带超时的 query 自己兜底
+                return True
+            df = _bs_query_to_df(rs)
+    except (TimeoutError, socket.timeout, OSError) as e:
+        print(f"  ⚠ query_trade_dates 超时/失败 ({e})，乐观放行", flush=True)
+        return True
+    if df.empty or "is_trading_day" not in df.columns:
+        return True
+    return (df["is_trading_day"].astype(str) == "1").any()
 
 
 def _bs_code_to_ts(bs_code: str) -> str:
@@ -125,8 +175,9 @@ def shorten_industry(s: str) -> str:
 def get_csi300_components(bs) -> pd.DataFrame:
     """获取沪深 300 成分股清单 + 行业。"""
     print("[1/4] 拉取沪深 300 成分股 ...")
-    rs = bs.query_hs300_stocks()
-    comps = _bs_query_to_df(rs)
+    with _hard_deadline(HARD_TIMEOUT):
+        rs = bs.query_hs300_stocks()
+        comps = _bs_query_to_df(rs)
     comps["ts_code"] = comps["code"].apply(_bs_code_to_ts)
     comps["name"] = comps["code_name"]
     print(f"  → {len(comps)} 只成分股")
@@ -139,8 +190,9 @@ def get_csi300_components(bs) -> pd.DataFrame:
         print(f"  loaded primary industry mapping ({len(primary_map)} tickers)")
 
     # Fallback: BaoStock 证监会分类（粗一些，需要 shorten）
-    rs = bs.query_stock_industry()
-    ind = _bs_query_to_df(rs)
+    with _hard_deadline(HARD_TIMEOUT):
+        rs = bs.query_stock_industry()
+        ind = _bs_query_to_df(rs)
     ind["ts_code"] = ind["code"].apply(_bs_code_to_ts)
     fallback_map = dict(zip(ind["ts_code"], ind["industry"].apply(shorten_industry)))
 
@@ -162,16 +214,17 @@ def _query_kdata_with_retry(bs, bs_code, fields, start_date, end_date,
     """
     for attempt in range(1, retries + 1):
         try:
-            rs = bs.query_history_k_data_plus(
-                bs_code, fields,
-                start_date=start_date, end_date=end_date,
-                frequency="d", adjustflag=adjustflag,
-            )
-            if rs.error_code != "0":
-                raise RuntimeError(f"error_code={rs.error_code} {rs.error_msg}")
-            return _bs_query_to_df(rs)   # rs.next() 的 socket recv 也可能超时，一并包住
-        except (socket.timeout, OSError, RuntimeError) as e:
-            print(f"    ⚠ {bs_code} query attempt {attempt}/{retries} failed: {e}")
+            with _hard_deadline(HARD_TIMEOUT):
+                rs = bs.query_history_k_data_plus(
+                    bs_code, fields,
+                    start_date=start_date, end_date=end_date,
+                    frequency="d", adjustflag=adjustflag,
+                )
+                if rs.error_code != "0":
+                    raise RuntimeError(f"error_code={rs.error_code} {rs.error_msg}")
+                return _bs_query_to_df(rs)   # rs.next() 的 socket recv 也包进硬超时
+        except (TimeoutError, socket.timeout, OSError, RuntimeError) as e:
+            print(f"    ⚠ {bs_code} query attempt {attempt}/{retries} failed: {e}", flush=True)
             if attempt < retries:
                 _relogin(bs)
     return None
@@ -292,6 +345,12 @@ def main():
                              "首次跑请用 --start 全量回填。")
     args = parser.parse_args()
 
+    # CI 非 TTY 下 stdout 默认块缓冲，step 被 kill 时日志全丢；改行缓冲方便定位 hang。
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except Exception:
+        pass
+
     today = datetime.now()
     end_date = args.end or today.strftime("%Y-%m-%d")
 
@@ -324,6 +383,12 @@ def main():
     _bs_login(bs)
 
     try:
+        # 0. 前置检查：窗口内无交易日（周末/假期/数据未就绪）则干净退出，
+        #    避免对"无交易日区间"的 k 线 query 触发 BaoStock 永久阻塞。
+        if not _has_trading_day(bs, start_date, end_date):
+            print(f"[fetch] {start_date}–{end_date} 窗口内无交易日，无需更新，跳过。", flush=True)
+            return
+
         # 1. 成分股 + 行业（每次都刷，membership 可能变）
         comps = get_csi300_components(bs)
         comps.to_csv(CACHE / "basic.csv", index=False)
