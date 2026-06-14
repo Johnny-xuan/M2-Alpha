@@ -1,18 +1,18 @@
 {
   "summary": {
-    "asof": "2026-06-11",
+    "asof": "2026-06-12",
     "start": "2025-07-11",
-    "n_days": 222,
+    "n_days": 223,
     "starting_nav": 1000000.0,
-    "final_nav": 2312369.7,
-    "cum_return": 131.24,
-    "benchmark_cum": 17.88,
-    "excess": 113.36,
-    "sharpe": 2.89,
+    "final_nav": 2389140.38,
+    "cum_return": 138.91,
+    "benchmark_cum": 19.24,
+    "excess": 119.68,
+    "sharpe": 2.98,
     "max_drawdown": -14.58,
     "monthly_win_rate": 75.0,
-    "computed_cum_return": 131.24,
-    "computed_sharpe": 2.89,
+    "computed_cum_return": 138.91,
+    "computed_sharpe": 2.98,
     "computed_max_drawdown": -14.58
   },
   "equity_curve": [
@@ -1569,6 +1569,13 @@
       "bench": 1178814.68,
       "ret": 131.237,
       "bret": 17.881
+    },
+    {
+      "d": "2026-06-12",
+      "nav": 2389140.38,
+      "bench": 1192371.04,
+      "ret": 138.914,
+      "bret": 19.237
     }
   ],
   "monthly_returns": [
@@ -1640,9 +1647,9 @@
     },
     {
       "m": "2026-06",
-      "model": -2.71,
-      "bench": -3.43,
-      "excess": 0.72
+      "model": 0.52,
+      "bench": -2.32,
+      "excess": 2.84
     }
   ],
   "current_holdings": [
@@ -1651,8 +1658,8 @@
       "ts": "002384.SZ",
       "name": "东山精密",
       "industry": "元器件",
-      "score": 0.328,
-      "close": 210.99,
+      "score": 0.521,
+      "close": 217.55,
       "shares": 1000,
       "weight": 9.1
     },
@@ -1661,89 +1668,89 @@
       "ts": "300866.SZ",
       "name": "安克创新",
       "industry": "元器件",
-      "score": 0.126,
-      "close": 111.99,
+      "score": 0.215,
+      "close": 115.05,
       "shares": 2000,
-      "weight": 9.7
+      "weight": 9.6
     },
     {
       "rank": 3,
       "ts": "688256.SH",
       "name": "寒武纪",
       "industry": "半导体",
-      "score": 0.276,
-      "close": 1219.5,
+      "score": 0.343,
+      "close": 1240.0,
       "shares": 100,
-      "weight": 5.3
+      "weight": 5.2
     },
     {
       "rank": 4,
-      "ts": "300502.SZ",
-      "name": "新易盛",
-      "industry": "通信设备",
-      "score": 0.072,
-      "close": 526.0,
-      "shares": 400,
-      "weight": 9.1
-    },
-    {
-      "rank": 5,
       "ts": "688008.SH",
       "name": "澜起科技",
       "industry": "半导体",
-      "score": 0.271,
-      "close": 228.7,
+      "score": 0.456,
+      "close": 224.88,
       "shares": 1000,
-      "weight": 9.9
+      "weight": 9.4
     },
     {
-      "rank": 6,
+      "rank": 5,
       "ts": "300308.SZ",
       "name": "中际旭创",
       "industry": "通信设备",
-      "score": 0.23,
-      "close": 1124.0,
+      "score": 0.386,
+      "close": 1149.0,
       "shares": 200,
-      "weight": 9.7
-    },
-    {
-      "rank": 7,
-      "ts": "300750.SZ",
-      "name": "宁德时代",
-      "industry": "电气设备",
-      "score": 0.105,
-      "close": 382.2,
-      "shares": 600,
-      "weight": 9.9
-    },
-    {
-      "rank": 8,
-      "ts": "605117.SH",
-      "name": "德业股份",
-      "industry": "电气设备",
-      "score": 0.171,
-      "close": 101.2,
-      "shares": 2200,
       "weight": 9.6
     },
     {
-      "rank": 9,
+      "rank": 6,
+      "ts": "605117.SH",
+      "name": "德业股份",
+      "industry": "电气设备",
+      "score": 0.127,
+      "close": 103.79,
+      "shares": 2300,
+      "weight": 10.0
+    },
+    {
+      "rank": 7,
       "ts": "300442.SZ",
       "name": "润泽科技",
       "industry": "软件服务",
-      "score": 0.137,
-      "close": 74.02,
-      "shares": 3100,
+      "score": 0.055,
+      "close": 73.53,
+      "shares": 3200,
+      "weight": 9.8
+    },
+    {
+      "rank": 8,
+      "ts": "600176.SH",
+      "name": "中国巨石",
+      "industry": "玻璃",
+      "score": 0.351,
+      "close": 41.61,
+      "shares": 5700,
       "weight": 9.9
     },
     {
+      "rank": 9,
+      "ts": "601138.SH",
+      "name": "工业富联",
+      "industry": "通信设备",
+      "score": 0.286,
+      "close": 70.13,
+      "shares": 3400,
+      "weight": 10.0
+    },
+    {
       "rank": 10,
-      "ts": "002493.SZ",
-      "name": "荣盛石化",
-      "industry": "化纤",
-      "score": 0.126,
-      "close": 10.75,
-      "shares": 21500,
+      "ts": "688303.SH",
+      "name": "大全能源",
+      "industry": "电气设备",
+      "score": 0.163,
+      "close": 20.95,
+      "shares": 11400,
       "weight": 10.0
     }
   ],
@@ -1753,77 +1760,77 @@
       "name": "思源电气",
       "industry": "电气设备",
       "days": 58,
-      "pct": 26.0
+      "pct": 25.9
     },
     {
       "ts": "600482.SH",
       "name": "中国动力",
       "industry": "船舶",
       "days": 55,
-      "pct": 24.7
+      "pct": 24.6
     },
     {
       "ts": "600489.SH",
       "name": "中金黄金",
       "industry": "黄金",
       "days": 53,
-      "pct": 23.8
+      "pct": 23.7
     },
     {
       "ts": "600875.SH",
       "name": "东方电气",
       "industry": "电气设备",
       "days": 53,
-      "pct": 23.8
+      "pct": 23.7
+    },
+    {
+      "ts": "600176.SH",
+      "name": "中国巨石",
+      "industry": "玻璃",
+      "days": 50,
+      "pct": 22.3
     },
     {
       "ts": "300274.SZ",
       "name": "阳光电源",
       "industry": "电气设备",
       "days": 50,
-      "pct": 22.4
-    },
-    {
-      "ts": "600176.SH",
-      "name": "中国巨石",
-      "industry": "玻璃",
-      "days": 49,
-      "pct": 22.0
+      "pct": 22.3
     },
     {
       "ts": "603993.SH",
       "name": "洛阳钼业",
       "industry": "小金属",
       "days": 49,
-      "pct": 22.0
+      "pct": 21.9
     },
     {
       "ts": "000338.SZ",
       "name": "潍柴动力",
       "industry": "汽车配件",
       "days": 47,
-      "pct": 21.1
+      "pct": 21.0
     },
     {
       "ts": "600522.SH",
       "name": "中天科技",
       "industry": "通信设备",
       "days": 46,
-      "pct": 20.6
+      "pct": 20.5
     },
     {
       "ts": "601899.SH",
       "name": "紫金矿业",
       "industry": "铜",
       "days": 45,
-      "pct": 20.2
+      "pct": 20.1
     },
     {
       "ts": "601872.SH",
       "name": "招商轮船",
       "industry": "水运",
       "days": 41,
-      "pct": 18.4
+      "pct": 18.3
     },
     {
       "ts": "600346.SH",
@@ -1837,82 +1844,82 @@
       "name": "立讯精密",
       "industry": "元器件",
       "days": 35,
-      "pct": 15.7
+      "pct": 15.6
     },
     {
       "ts": "002384.SZ",
       "name": "东山精密",
       "industry": "元器件",
-      "days": 34,
-      "pct": 15.2
+      "days": 35,
+      "pct": 15.6
     },
     {
       "ts": "601600.SH",
       "name": "中国铝业",
       "industry": "铝",
       "days": 33,
-      "pct": 14.8
+      "pct": 14.7
     }
   ],
   "industry_avg": [
     {
       "industry": "电气设备",
-      "weight": 13.32
+      "weight": 13.35
     },
     {
       "industry": "元器件",
-      "weight": 8.07
+      "weight": 8.12
     },
     {
       "industry": "通信设备",
-      "weight": 7.13
+      "weight": 7.19
     },
     {
       "industry": "汽车配件",
-      "weight": 5.34
+      "weight": 5.31
     },
     {
       "industry": "化工原料",
-      "weight": 5.02
+      "weight": 5.0
     },
     {
       "industry": "半导体",
-      "weight": 4.3
+      "weight": 4.38
     },
     {
       "industry": "小金属",
-      "weight": 3.41
+      "weight": 3.39
     },
     {
       "industry": "铜",
-      "weight": 3.36
+      "weight": 3.35
     },
     {
       "industry": "船舶",
-      "weight": 3.32
+      "weight": 3.3
     },
     {
       "industry": "建筑工程",
-      "weight": 3.0
+      "weight": 2.99
     },
     {
       "industry": "水运",
-      "weight": 2.96
+      "weight": 2.95
     },
     {
       "industry": "保险",
-      "weight": 2.74
+      "weight": 2.72
     }
   ],
   "scorecard": {
     "summary": {
-      "n_days_total": 221,
+      "n_days_total": 222,
       "n_pending": 2,
-      "model_avg_daily": 0.405,
-      "bench_avg_daily": 0.08,
-      "excess_avg": 0.325,
-      "win_rate_vs_bench_daily": 57.9,
-      "avg_hit_rate": 50.8,
+      "model_avg_daily": 0.418,
+      "bench_avg_daily": 0.085,
+      "excess_avg": 0.333,
+      "win_rate_vs_bench_daily": 58.1,
+      "avg_hit_rate": 50.9,
       "best_day": {
         "d": "2025-10-10",
         "ret": 8.05
@@ -3472,10 +3479,10 @@
       },
       {
         "d": "2026-06-10",
-        "avg": null,
-        "bench": null,
-        "excess": null,
-        "hit": null
+        "avg": 3.32,
+        "bench": 1.15,
+        "excess": 2.17,
+        "hit": 70.0
       },
       {
         "d": "2026-06-11",
@@ -3483,365 +3490,16 @@
         "bench": null,
         "excess": null,
         "hit": null
+      },
+      {
+        "d": "2026-06-12",
+        "avg": null,
+        "bench": null,
+        "excess": null,
+        "hit": null
       }
     ],
     "recent": [
-      {
-        "d": "2026-05-29",
-        "buy_d": "2026-06-01",
-        "sell_d": "2026-06-02",
-        "avg_ret": -4.27,
-        "bench_ret": -0.76,
-        "excess": -3.51,
-        "hits": 1,
-        "n": 10,
-        "hit_rate": 10.0,
-        "picks": [
-          {
-            "ts": "002920.SZ",
-            "name": "德赛西威",
-            "ind": "汽车配件",
-            "score": 0.1,
-            "ret": 0.14
-          },
-          {
-            "ts": "600522.SH",
-            "name": "中天科技",
-            "ind": "通信设备",
-            "score": 0.346,
-            "ret": -7.07
-          },
-          {
-            "ts": "002384.SZ",
-            "name": "东山精密",
-            "ind": "元器件",
-            "score": 0.426,
-            "ret": -4.41
-          },
-          {
-            "ts": "002475.SZ",
-            "name": "立讯精密",
-            "ind": "元器件",
-            "score": 0.365,
-            "ret": -4.55
-          },
-          {
-            "ts": "300661.SZ",
-            "name": "圣邦股份",
-            "ind": "半导体",
-            "score": 0.36,
-            "ret": -8.56
-          },
-          {
-            "ts": "605117.SH",
-            "name": "德业股份",
-            "ind": "电气设备",
-            "score": 0.307,
-            "ret": -2.26
-          },
-          {
-            "ts": "300502.SZ",
-            "name": "新易盛",
-            "ind": "通信设备",
-            "score": 0.304,
-            "ret": -1.85
-          },
-          {
-            "ts": "688008.SH",
-            "name": "澜起科技",
-            "ind": "半导体",
-            "score": 0.303,
-            "ret": -5.92
-          },
-          {
-            "ts": "300274.SZ",
-            "name": "阳光电源",
-            "ind": "电气设备",
-            "score": 0.233,
-            "ret": -2.08
-          },
-          {
-            "ts": "000338.SZ",
-            "name": "潍柴动力",
-            "ind": "汽车配件",
-            "score": 0.175,
-            "ret": -6.11
-          }
-        ],
-        "top30": [
-          {
-            "rank": 1,
-            "ts": "002384.SZ",
-            "name": "东山精密",
-            "ind": "元器件",
-            "score": 0.426,
-            "ret": -4.41,
-            "in_portfolio": true
-          },
-          {
-            "rank": 2,
-            "ts": "002475.SZ",
-            "name": "立讯精密",
-            "ind": "元器件",
-            "score": 0.365,
-            "ret": -4.55,
-            "in_portfolio": true
-          },
-          {
-            "rank": 3,
-            "ts": "300661.SZ",
-            "name": "圣邦股份",
-            "ind": "半导体",
-            "score": 0.36,
-            "ret": -8.56,
-            "in_portfolio": true
-          },
-          {
-            "rank": 4,
-            "ts": "600522.SH",
-            "name": "中天科技",
-            "ind": "通信设备",
-            "score": 0.346,
-            "ret": -7.07,
-            "in_portfolio": true
-          },
-          {
-            "rank": 5,
-            "ts": "300408.SZ",
-            "name": "三环集团",
-            "ind": "元器件",
-            "score": 0.307,
-            "ret": -2.4,
-            "in_portfolio": false
-          },
-          {
-            "rank": 6,
-            "ts": "605117.SH",
-            "name": "德业股份",
-            "ind": "电气设备",
-            "score": 0.307,
-            "ret": -2.26,
-            "in_portfolio": true
-          },
-          {
-            "rank": 7,
-            "ts": "300502.SZ",
-            "name": "新易盛",
-            "ind": "通信设备",
-            "score": 0.304,
-            "ret": -1.85,
-            "in_portfolio": true
-          },
-          {
-            "rank": 8,
-            "ts": "688008.SH",
-            "name": "澜起科技",
-            "ind": "半导体",
-            "score": 0.303,
-            "ret": -5.92,
-            "in_portfolio": true
-          },
-          {
-            "rank": 9,
-            "ts": "601138.SH",
-            "name": "工业富联",
-            "ind": "通信设备",
-            "score": 0.302,
-            "ret": -0.27,
-            "in_portfolio": false
-          },
-          {
-            "rank": 10,
-            "ts": "002463.SZ",
-            "name": "沪电股份",
-            "ind": "元器件",
-            "score": 0.301,
-            "ret": -6.09,
-            "in_portfolio": false
-          },
-          {
-            "rank": 11,
-            "ts": "002938.SZ",
-            "name": "鹏鼎控股",
-            "ind": "元器件",
-            "score": 0.298,
-            "ret": -7.72,
-            "in_portfolio": false
-          },
-          {
-            "rank": 12,
-            "ts": "002916.SZ",
-            "name": "深南电路",
-            "ind": "元器件",
-            "score": 0.274,
-            "ret": -6.29,
-            "in_portfolio": false
-          },
-          {
-            "rank": 13,
-            "ts": "688126.SH",
-            "name": "沪硅产业",
-            "ind": "半导体",
-            "score": 0.263,
-            "ret": -4.15,
-            "in_portfolio": false
-          },
-          {
-            "rank": 14,
-            "ts": "300308.SZ",
-            "name": "中际旭创",
-            "ind": "通信设备",
-            "score": 0.252,
-            "ret": -0.64,
-            "in_portfolio": false
-          },
-          {
-            "rank": 15,
-            "ts": "300782.SZ",
-            "name": "卓胜微",
-            "ind": "半导体",
-            "score": 0.245,
-            "ret": -8.87,
-            "in_portfolio": false
-          },
-          {
-            "rank": 16,
-            "ts": "688256.SH",
-            "name": "寒武纪",
-            "ind": "半导体",
-            "score": 0.238,
-            "ret": -6.03,
-            "in_portfolio": false
-          },
-          {
-            "rank": 17,
-            "ts": "688082.SH",
-            "name": "盛美上海",
-            "ind": "半导体",
-            "score": 0.237,
-            "ret": -4.19,
-            "in_portfolio": false
-          },
-          {
-            "rank": 18,
-            "ts": "600584.SH",
-            "name": "长电科技",
-            "ind": "半导体",
-            "score": 0.237,
-            "ret": -4.04,
-            "in_portfolio": false
-          },
-          {
-            "rank": 19,
-            "ts": "002371.SZ",
-            "name": "北方华创",
-            "ind": "半导体",
-            "score": 0.234,
-            "ret": -6.22,
-            "in_portfolio": false
-          },
-          {
-            "rank": 20,
-            "ts": "300274.SZ",
-            "name": "阳光电源",
-            "ind": "电气设备",
-            "score": 0.233,
-            "ret": -2.08,
-            "in_portfolio": true
-          },
-          {
-            "rank": 21,
-            "ts": "300433.SZ",
-            "name": "蓝思科技",
-            "ind": "元器件",
-            "score": 0.231,
-            "ret": 2.38,
-            "in_portfolio": false
-          },
-          {
-            "rank": 22,
-            "ts": "603296.SH",
-            "name": "华勤技术",
-            "ind": "元器件",
-            "score": 0.231,
-            "ret": 8.55,
-            "in_portfolio": false
-          },
-          {
-            "rank": 23,
-            "ts": "603986.SH",
-            "name": "兆易创新",
-            "ind": "半导体",
-            "score": 0.221,
-            "ret": -1.05,
-            "in_portfolio": false
-          },
-          {
-            "rank": 24,
-            "ts": "300476.SZ",
-            "name": "胜宏科技",
-            "ind": "元器件",
-            "score": 0.19,
-            "ret": -8.67,
-            "in_portfolio": false
-          },
-          {
-            "rank": 25,
-            "ts": "300394.SZ",
-            "name": "天孚通信",
-            "ind": "通信设备",
-            "score": 0.19,
-            "ret": -5.37,
-            "in_portfolio": false
-          },
-          {
-            "rank": 26,
-            "ts": "688012.SH",
-            "name": "中微公司",
-            "ind": "半导体",
-            "score": 0.188,
-            "ret": -3.98,
-            "in_portfolio": false
-          },
-          {
-            "rank": 27,
-            "ts": "300866.SZ",
-            "name": "安克创新",
-            "ind": "元器件",
-            "score": 0.179,
-            "ret": -1.92,
-            "in_portfolio": false
-          },
-          {
-            "rank": 28,
-            "ts": "000338.SZ",
-            "name": "潍柴动力",
-            "ind": "汽车配件",
-            "score": 0.175,
-            "ret": -6.11,
-            "in_portfolio": true
-          },
-          {
-            "rank": 29,
-            "ts": "688187.SH",
-            "name": "时代电气",
-            "ind": "运输设备",
-            "score": 0.167,
-            "ret": -2.23,
-            "in_portfolio": false
-          },
-          {
-            "rank": 30,
-            "ts": "688047.SH",
-            "name": "龙芯中科",
-            "ind": "半导体",
-            "score": 0.164,
-            "ret": -2.02,
-            "in_portfolio": false
-          }
-        ],
-        "pending": false
-      },
       {
         "d": "2026-06-01",
         "buy_d": "2026-06-02",
@@ -5205,7 +4863,7 @@
             "ts": "601939.SH",
             "name": "建设银行",
             "ind": "银行",
-            "score": 0.082,
+            "score": 0.081,
             "ret": 1.99,
             "in_portfolio": false
           },
@@ -6338,82 +5996,82 @@
         "d": "2026-06-10",
         "buy_d": "2026-06-11",
         "sell_d": "2026-06-12",
-        "avg_ret": null,
-        "bench_ret": null,
-        "excess": null,
-        "hits": null,
-        "n": null,
-        "hit_rate": null,
+        "avg_ret": 3.32,
+        "bench_ret": 1.15,
+        "excess": 2.17,
+        "hits": 7,
+        "n": 10,
+        "hit_rate": 70.0,
         "picks": [
           {
             "ts": "300274.SZ",
             "name": "阳光电源",
             "ind": "电气设备",
             "score": 0.114,
-            "ret": null
+            "ret": 3.71
           },
           {
             "ts": "002384.SZ",
             "name": "东山精密",
             "ind": "元器件",
             "score": 0.426,
-            "ret": null
+            "ret": 2.56
           },
           {
             "ts": "300866.SZ",
             "name": "安克创新",
             "ind": "元器件",
             "score": 0.202,
-            "ret": null
+            "ret": 7.25
           },
           {
             "ts": "300124.SZ",
             "name": "汇川技术",
             "ind": "电器仪表",
             "score": 0.167,
-            "ret": null
+            "ret": -0.17
           },
           {
             "ts": "688256.SH",
             "name": "寒武纪",
             "ind": "半导体",
             "score": 0.383,
-            "ret": null
+            "ret": 2.95
           },
           {
             "ts": "300502.SZ",
             "name": "新易盛",
             "ind": "通信设备",
             "score": 0.324,
-            "ret": null
+            "ret": -2.17
           },
           {
             "ts": "688008.SH",
             "name": "澜起科技",
             "ind": "半导体",
             "score": 0.306,
-            "ret": null
+            "ret": 5.62
           },
           {
             "ts": "600176.SH",
             "name": "中国巨石",
             "ind": "玻璃",
             "score": 0.302,
-            "ret": null
+            "ret": 8.67
           },
           {
             "ts": "300308.SZ",
             "name": "中际旭创",
             "ind": "通信设备",
             "score": 0.268,
-            "ret": null
+            "ret": 4.05
           },
           {
             "ts": "300750.SZ",
             "name": "宁德时代",
             "ind": "电气设备",
             "score": 0.118,
-            "ret": null
+            "ret": 0.78
           }
         ],
         "top30": [
@@ -6423,7 +6081,7 @@
             "name": "东山精密",
             "ind": "元器件",
             "score": 0.426,
-            "ret": null,
+            "ret": 2.56,
             "in_portfolio": true
           },
           {
@@ -6432,7 +6090,7 @@
             "name": "寒武纪",
             "ind": "半导体",
             "score": 0.383,
-            "ret": null,
+            "ret": 2.95,
             "in_portfolio": true
           },
           {
@@ -6441,7 +6099,7 @@
             "name": "三环集团",
             "ind": "元器件",
             "score": 0.362,
-            "ret": null,
+            "ret": 2.89,
             "in_portfolio": false
           },
           {
@@ -6450,7 +6108,7 @@
             "name": "生益科技",
             "ind": "元器件",
             "score": 0.361,
-            "ret": null,
+            "ret": 6.14,
             "in_portfolio": false
           },
           {
@@ -6459,7 +6117,7 @@
             "name": "新易盛",
             "ind": "通信设备",
             "score": 0.324,
-            "ret": null,
+            "ret": -2.17,
             "in_portfolio": true
           },
           {
@@ -6468,7 +6126,7 @@
             "name": "立讯精密",
             "ind": "元器件",
             "score": 0.311,
-            "ret": null,
+            "ret": 1.78,
             "in_portfolio": false
           },
           {
@@ -6477,7 +6135,7 @@
             "name": "澜起科技",
             "ind": "半导体",
             "score": 0.306,
-            "ret": null,
+            "ret": 5.62,
             "in_portfolio": true
           },
           {
@@ -6486,7 +6144,7 @@
             "name": "中国巨石",
             "ind": "玻璃",
             "score": 0.302,
-            "ret": null,
+            "ret": 8.67,
             "in_portfolio": true
           },
           {
@@ -6495,7 +6153,7 @@
             "name": "沪电股份",
             "ind": "元器件",
             "score": 0.292,
-            "ret": null,
+            "ret": 2.01,
             "in_portfolio": false
           },
           {
@@ -6504,7 +6162,7 @@
             "name": "深南电路",
             "ind": "元器件",
             "score": 0.29,
-            "ret": null,
+            "ret": 2.07,
             "in_portfolio": false
           },
           {
@@ -6513,7 +6171,7 @@
             "name": "中际旭创",
             "ind": "通信设备",
             "score": 0.268,
-            "ret": null,
+            "ret": 4.05,
             "in_portfolio": true
           },
           {
@@ -6522,7 +6180,7 @@
             "name": "兆易创新",
             "ind": "半导体",
             "score": 0.266,
-            "ret": null,
+            "ret": 5.72,
             "in_portfolio": false
           },
           {
@@ -6531,7 +6189,7 @@
             "name": "鹏鼎控股",
             "ind": "元器件",
             "score": 0.26,
-            "ret": null,
+            "ret": -1.16,
             "in_portfolio": false
           },
           {
@@ -6540,7 +6198,7 @@
             "name": "长电科技",
             "ind": "半导体",
             "score": 0.258,
-            "ret": null,
+            "ret": 3.31,
             "in_portfolio": false
           },
           {
@@ -6549,7 +6207,7 @@
             "name": "工业富联",
             "ind": "通信设备",
             "score": 0.24,
-            "ret": null,
+            "ret": 3.04,
             "in_portfolio": false
           },
           {
@@ -6558,7 +6216,7 @@
             "name": "华大九天",
             "ind": "半导体",
             "score": 0.203,
-            "ret": null,
+            "ret": 3.86,
             "in_portfolio": false
           },
           {
@@ -6567,7 +6225,7 @@
             "name": "安克创新",
             "ind": "元器件",
             "score": 0.202,
-            "ret": null,
+            "ret": 7.25,
             "in_portfolio": true
           },
           {
@@ -6576,7 +6234,7 @@
             "name": "沪硅产业",
             "ind": "半导体",
             "score": 0.192,
-            "ret": null,
+            "ret": 6.97,
             "in_portfolio": false
           },
           {
@@ -6585,7 +6243,7 @@
             "name": "卓胜微",
             "ind": "半导体",
             "score": 0.184,
-            "ret": null,
+            "ret": 0.48,
             "in_portfolio": false
           },
           {
@@ -6594,7 +6252,7 @@
             "name": "圣邦股份",
             "ind": "半导体",
             "score": 0.181,
-            "ret": null,
+            "ret": 2.18,
             "in_portfolio": false
           },
           {
@@ -6603,7 +6261,7 @@
             "name": "盛美上海",
             "ind": "半导体",
             "score": 0.175,
-            "ret": null,
+            "ret": 14.92,
             "in_portfolio": false
           },
           {
@@ -6612,7 +6270,7 @@
             "name": "汇川技术",
             "ind": "电器仪表",
             "score": 0.167,
-            "ret": null,
+            "ret": -0.17,
             "in_portfolio": true
           },
           {
@@ -6621,7 +6279,7 @@
             "name": "天孚通信",
             "ind": "通信设备",
             "score": 0.163,
-            "ret": null,
+            "ret": -26.54,
             "in_portfolio": false
           },
           {
@@ -6630,7 +6288,7 @@
             "name": "北方华创",
             "ind": "半导体",
             "score": 0.146,
-            "ret": null,
+            "ret": 6.62,
             "in_portfolio": false
           },
           {
@@ -6639,7 +6297,7 @@
             "name": "中微公司",
             "ind": "半导体",
             "score": 0.14,
-            "ret": null,
+            "ret": 6.09,
             "in_portfolio": false
           },
           {
@@ -6648,7 +6306,7 @@
             "name": "海光信息",
             "ind": "半导体",
             "score": 0.138,
-            "ret": null,
+            "ret": 6.18,
             "in_portfolio": false
           },
           {
@@ -6657,7 +6315,7 @@
             "name": "龙芯中科",
             "ind": "半导体",
             "score": 0.137,
-            "ret": null,
+            "ret": 4.96,
             "in_portfolio": false
           },
           {
@@ -6666,7 +6324,7 @@
             "name": "胜宏科技",
             "ind": "元器件",
             "score": 0.134,
-            "ret": null,
+            "ret": 3.05,
             "in_portfolio": false
           },
           {
@@ -6675,7 +6333,7 @@
             "name": "华润微",
             "ind": "半导体",
             "score": 0.134,
-            "ret": null,
+            "ret": 2.89,
             "in_portfolio": false
           },
           {
@@ -6684,11 +6342,11 @@
             "name": "瑞芯微",
             "ind": "半导体",
             "score": 0.13,
-            "ret": null,
+            "ret": 0.73,
             "in_portfolio": false
           }
         ],
-        "pending": true
+        "pending": false
       },
       {
         "d": "2026-06-11",
@@ -7040,6 +6698,362 @@
             "name": "中信建投",
             "ind": "证券",
             "score": 0.09,
+            "ret": null,
+            "in_portfolio": false
+          }
+        ],
+        "pending": true
+      },
+      {
+        "d": "2026-06-12",
+        "buy_d": "2026-06-15",
+        "sell_d": "2026-06-16",
+        "avg_ret": null,
+        "bench_ret": null,
+        "excess": null,
+        "hits": null,
+        "n": null,
+        "hit_rate": null,
+        "picks": [
+          {
+            "ts": "002384.SZ",
+            "name": "东山精密",
+            "ind": "元器件",
+            "score": 0.521,
+            "ret": null
+          },
+          {
+            "ts": "300866.SZ",
+            "name": "安克创新",
+            "ind": "元器件",
+            "score": 0.215,
+            "ret": null
+          },
+          {
+            "ts": "688256.SH",
+            "name": "寒武纪",
+            "ind": "半导体",
+            "score": 0.343,
+            "ret": null
+          },
+          {
+            "ts": "688008.SH",
+            "name": "澜起科技",
+            "ind": "半导体",
+            "score": 0.456,
+            "ret": null
+          },
+          {
+            "ts": "300308.SZ",
+            "name": "中际旭创",
+            "ind": "通信设备",
+            "score": 0.386,
+            "ret": null
+          },
+          {
+            "ts": "605117.SH",
+            "name": "德业股份",
+            "ind": "电气设备",
+            "score": 0.127,
+            "ret": null
+          },
+          {
+            "ts": "300442.SZ",
+            "name": "润泽科技",
+            "ind": "软件服务",
+            "score": 0.055,
+            "ret": null
+          },
+          {
+            "ts": "600176.SH",
+            "name": "中国巨石",
+            "ind": "玻璃",
+            "score": 0.351,
+            "ret": null
+          },
+          {
+            "ts": "601138.SH",
+            "name": "工业富联",
+            "ind": "通信设备",
+            "score": 0.286,
+            "ret": null
+          },
+          {
+            "ts": "688303.SH",
+            "name": "大全能源",
+            "ind": "电气设备",
+            "score": 0.163,
+            "ret": null
+          }
+        ],
+        "top30": [
+          {
+            "rank": 1,
+            "ts": "002384.SZ",
+            "name": "东山精密",
+            "ind": "元器件",
+            "score": 0.521,
+            "ret": null,
+            "in_portfolio": true
+          },
+          {
+            "rank": 2,
+            "ts": "600183.SH",
+            "name": "生益科技",
+            "ind": "元器件",
+            "score": 0.494,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 3,
+            "ts": "688008.SH",
+            "name": "澜起科技",
+            "ind": "半导体",
+            "score": 0.456,
+            "ret": null,
+            "in_portfolio": true
+          },
+          {
+            "rank": 4,
+            "ts": "300408.SZ",
+            "name": "三环集团",
+            "ind": "元器件",
+            "score": 0.41,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 5,
+            "ts": "002916.SZ",
+            "name": "深南电路",
+            "ind": "元器件",
+            "score": 0.405,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 6,
+            "ts": "300308.SZ",
+            "name": "中际旭创",
+            "ind": "通信设备",
+            "score": 0.386,
+            "ret": null,
+            "in_portfolio": true
+          },
+          {
+            "rank": 7,
+            "ts": "603986.SH",
+            "name": "兆易创新",
+            "ind": "半导体",
+            "score": 0.358,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 8,
+            "ts": "002463.SZ",
+            "name": "沪电股份",
+            "ind": "元器件",
+            "score": 0.355,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 9,
+            "ts": "002938.SZ",
+            "name": "鹏鼎控股",
+            "ind": "元器件",
+            "score": 0.351,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 10,
+            "ts": "600176.SH",
+            "name": "中国巨石",
+            "ind": "玻璃",
+            "score": 0.351,
+            "ret": null,
+            "in_portfolio": true
+          },
+          {
+            "rank": 11,
+            "ts": "688256.SH",
+            "name": "寒武纪",
+            "ind": "半导体",
+            "score": 0.343,
+            "ret": null,
+            "in_portfolio": true
+          },
+          {
+            "rank": 12,
+            "ts": "688012.SH",
+            "name": "中微公司",
+            "ind": "半导体",
+            "score": 0.326,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 13,
+            "ts": "002475.SZ",
+            "name": "立讯精密",
+            "ind": "元器件",
+            "score": 0.322,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 14,
+            "ts": "603296.SH",
+            "name": "华勤技术",
+            "ind": "元器件",
+            "score": 0.308,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 15,
+            "ts": "688041.SH",
+            "name": "海光信息",
+            "ind": "半导体",
+            "score": 0.287,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 16,
+            "ts": "601138.SH",
+            "name": "工业富联",
+            "ind": "通信设备",
+            "score": 0.286,
+            "ret": null,
+            "in_portfolio": true
+          },
+          {
+            "rank": 17,
+            "ts": "300433.SZ",
+            "name": "蓝思科技",
+            "ind": "元器件",
+            "score": 0.28,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 18,
+            "ts": "600584.SH",
+            "name": "长电科技",
+            "ind": "半导体",
+            "score": 0.271,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 19,
+            "ts": "301269.SZ",
+            "name": "华大九天",
+            "ind": "半导体",
+            "score": 0.258,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 20,
+            "ts": "688082.SH",
+            "name": "盛美上海",
+            "ind": "半导体",
+            "score": 0.255,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 21,
+            "ts": "600522.SH",
+            "name": "中天科技",
+            "ind": "通信设备",
+            "score": 0.249,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 22,
+            "ts": "300476.SZ",
+            "name": "胜宏科技",
+            "ind": "元器件",
+            "score": 0.238,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 23,
+            "ts": "688981.SH",
+            "name": "中芯国际",
+            "ind": "半导体",
+            "score": 0.238,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 24,
+            "ts": "688126.SH",
+            "name": "沪硅产业",
+            "ind": "半导体",
+            "score": 0.231,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 25,
+            "ts": "300866.SZ",
+            "name": "安克创新",
+            "ind": "元器件",
+            "score": 0.215,
+            "ret": null,
+            "in_portfolio": true
+          },
+          {
+            "rank": 26,
+            "ts": "300782.SZ",
+            "name": "卓胜微",
+            "ind": "半导体",
+            "score": 0.186,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 27,
+            "ts": "002371.SZ",
+            "name": "北方华创",
+            "ind": "半导体",
+            "score": 0.186,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 28,
+            "ts": "688396.SH",
+            "name": "华润微",
+            "ind": "半导体",
+            "score": 0.177,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 29,
+            "ts": "688303.SH",
+            "name": "大全能源",
+            "ind": "电气设备",
+            "score": 0.163,
+            "ret": null,
+            "in_portfolio": true
+          },
+          {
+            "rank": 30,
+            "ts": "300661.SZ",
+            "name": "圣邦股份",
+            "ind": "半导体",
+            "score": 0.145,
             "ret": null,
             "in_portfolio": false
           }
@@ -84595,7 +84609,7 @@
             "ts": "601939.SH",
             "name": "建设银行",
             "ind": "银行",
-            "score": 0.082,
+            "score": 0.081,
             "ret": 1.99,
             "in_portfolio": false
           },
@@ -85728,82 +85742,82 @@
         "d": "2026-06-10",
         "buy_d": "2026-06-11",
         "sell_d": "2026-06-12",
-        "avg_ret": null,
-        "bench_ret": null,
-        "excess": null,
-        "hits": null,
-        "n": null,
-        "hit_rate": null,
+        "avg_ret": 3.32,
+        "bench_ret": 1.15,
+        "excess": 2.17,
+        "hits": 7,
+        "n": 10,
+        "hit_rate": 70.0,
         "picks": [
           {
             "ts": "300274.SZ",
             "name": "阳光电源",
             "ind": "电气设备",
             "score": 0.114,
-            "ret": null
+            "ret": 3.71
           },
           {
             "ts": "002384.SZ",
             "name": "东山精密",
             "ind": "元器件",
             "score": 0.426,
-            "ret": null
+            "ret": 2.56
           },
           {
             "ts": "300866.SZ",
             "name": "安克创新",
             "ind": "元器件",
             "score": 0.202,
-            "ret": null
+            "ret": 7.25
           },
           {
             "ts": "300124.SZ",
             "name": "汇川技术",
             "ind": "电器仪表",
             "score": 0.167,
-            "ret": null
+            "ret": -0.17
           },
           {
             "ts": "688256.SH",
             "name": "寒武纪",
             "ind": "半导体",
             "score": 0.383,
-            "ret": null
+            "ret": 2.95
           },
           {
             "ts": "300502.SZ",
             "name": "新易盛",
             "ind": "通信设备",
             "score": 0.324,
-            "ret": null
+            "ret": -2.17
           },
           {
             "ts": "688008.SH",
             "name": "澜起科技",
             "ind": "半导体",
             "score": 0.306,
-            "ret": null
+            "ret": 5.62
           },
           {
             "ts": "600176.SH",
             "name": "中国巨石",
             "ind": "玻璃",
             "score": 0.302,
-            "ret": null
+            "ret": 8.67
           },
           {
             "ts": "300308.SZ",
             "name": "中际旭创",
             "ind": "通信设备",
             "score": 0.268,
-            "ret": null
+            "ret": 4.05
           },
           {
             "ts": "300750.SZ",
             "name": "宁德时代",
             "ind": "电气设备",
             "score": 0.118,
-            "ret": null
+            "ret": 0.78
           }
         ],
         "top30": [
@@ -85813,7 +85827,7 @@
             "name": "东山精密",
             "ind": "元器件",
             "score": 0.426,
-            "ret": null,
+            "ret": 2.56,
             "in_portfolio": true
           },
           {
@@ -85822,7 +85836,7 @@
             "name": "寒武纪",
             "ind": "半导体",
             "score": 0.383,
-            "ret": null,
+            "ret": 2.95,
             "in_portfolio": true
           },
           {
@@ -85831,7 +85845,7 @@
             "name": "三环集团",
             "ind": "元器件",
             "score": 0.362,
-            "ret": null,
+            "ret": 2.89,
             "in_portfolio": false
           },
           {
@@ -85840,7 +85854,7 @@
             "name": "生益科技",
             "ind": "元器件",
             "score": 0.361,
-            "ret": null,
+            "ret": 6.14,
             "in_portfolio": false
           },
           {
@@ -85849,7 +85863,7 @@
             "name": "新易盛",
             "ind": "通信设备",
             "score": 0.324,
-            "ret": null,
+            "ret": -2.17,
             "in_portfolio": true
           },
           {
@@ -85858,7 +85872,7 @@
             "name": "立讯精密",
             "ind": "元器件",
             "score": 0.311,
-            "ret": null,
+            "ret": 1.78,
             "in_portfolio": false
           },
           {
@@ -85867,7 +85881,7 @@
             "name": "澜起科技",
             "ind": "半导体",
             "score": 0.306,
-            "ret": null,
+            "ret": 5.62,
             "in_portfolio": true
           },
           {
@@ -85876,7 +85890,7 @@
             "name": "中国巨石",
             "ind": "玻璃",
             "score": 0.302,
-            "ret": null,
+            "ret": 8.67,
             "in_portfolio": true
           },
           {
@@ -85885,7 +85899,7 @@
             "name": "沪电股份",
             "ind": "元器件",
             "score": 0.292,
-            "ret": null,
+            "ret": 2.01,
             "in_portfolio": false
           },
           {
@@ -85894,7 +85908,7 @@
             "name": "深南电路",
             "ind": "元器件",
             "score": 0.29,
-            "ret": null,
+            "ret": 2.07,
             "in_portfolio": false
           },
           {
@@ -85903,7 +85917,7 @@
             "name": "中际旭创",
             "ind": "通信设备",
             "score": 0.268,
-            "ret": null,
+            "ret": 4.05,
             "in_portfolio": true
           },
           {
@@ -85912,7 +85926,7 @@
             "name": "兆易创新",
             "ind": "半导体",
             "score": 0.266,
-            "ret": null,
+            "ret": 5.72,
             "in_portfolio": false
           },
           {
@@ -85921,7 +85935,7 @@
             "name": "鹏鼎控股",
             "ind": "元器件",
             "score": 0.26,
-            "ret": null,
+            "ret": -1.16,
             "in_portfolio": false
           },
           {
@@ -85930,7 +85944,7 @@
             "name": "长电科技",
             "ind": "半导体",
             "score": 0.258,
-            "ret": null,
+            "ret": 3.31,
             "in_portfolio": false
           },
           {
@@ -85939,7 +85953,7 @@
             "name": "工业富联",
             "ind": "通信设备",
             "score": 0.24,
-            "ret": null,
+            "ret": 3.04,
             "in_portfolio": false
           },
           {
@@ -85948,7 +85962,7 @@
             "name": "华大九天",
             "ind": "半导体",
             "score": 0.203,
-            "ret": null,
+            "ret": 3.86,
             "in_portfolio": false
           },
           {
@@ -85957,7 +85971,7 @@
             "name": "安克创新",
             "ind": "元器件",
             "score": 0.202,
-            "ret": null,
+            "ret": 7.25,
             "in_portfolio": true
           },
           {
@@ -85966,7 +85980,7 @@
             "name": "沪硅产业",
             "ind": "半导体",
             "score": 0.192,
-            "ret": null,
+            "ret": 6.97,
             "in_portfolio": false
           },
           {
@@ -85975,7 +85989,7 @@
             "name": "卓胜微",
             "ind": "半导体",
             "score": 0.184,
-            "ret": null,
+            "ret": 0.48,
             "in_portfolio": false
           },
           {
@@ -85984,7 +85998,7 @@
             "name": "圣邦股份",
             "ind": "半导体",
             "score": 0.181,
-            "ret": null,
+            "ret": 2.18,
             "in_portfolio": false
           },
           {
@@ -85993,7 +86007,7 @@
             "name": "盛美上海",
             "ind": "半导体",
             "score": 0.175,
-            "ret": null,
+            "ret": 14.92,
             "in_portfolio": false
           },
           {
@@ -86002,7 +86016,7 @@
             "name": "汇川技术",
             "ind": "电器仪表",
             "score": 0.167,
-            "ret": null,
+            "ret": -0.17,
             "in_portfolio": true
           },
           {
@@ -86011,7 +86025,7 @@
             "name": "天孚通信",
             "ind": "通信设备",
             "score": 0.163,
-            "ret": null,
+            "ret": -26.54,
             "in_portfolio": false
           },
           {
@@ -86020,7 +86034,7 @@
             "name": "北方华创",
             "ind": "半导体",
             "score": 0.146,
-            "ret": null,
+            "ret": 6.62,
             "in_portfolio": false
           },
           {
@@ -86029,7 +86043,7 @@
             "name": "中微公司",
             "ind": "半导体",
             "score": 0.14,
-            "ret": null,
+            "ret": 6.09,
             "in_portfolio": false
           },
           {
@@ -86038,7 +86052,7 @@
             "name": "海光信息",
             "ind": "半导体",
             "score": 0.138,
-            "ret": null,
+            "ret": 6.18,
             "in_portfolio": false
           },
           {
@@ -86047,7 +86061,7 @@
             "name": "龙芯中科",
             "ind": "半导体",
             "score": 0.137,
-            "ret": null,
+            "ret": 4.96,
             "in_portfolio": false
           },
           {
@@ -86056,7 +86070,7 @@
             "name": "胜宏科技",
             "ind": "元器件",
             "score": 0.134,
-            "ret": null,
+            "ret": 3.05,
             "in_portfolio": false
           },
           {
@@ -86065,7 +86079,7 @@
             "name": "华润微",
             "ind": "半导体",
             "score": 0.134,
-            "ret": null,
+            "ret": 2.89,
             "in_portfolio": false
           },
           {
@@ -86074,11 +86088,11 @@
             "name": "瑞芯微",
             "ind": "半导体",
             "score": 0.13,
-            "ret": null,
+            "ret": 0.73,
             "in_portfolio": false
           }
         ],
-        "pending": true
+        "pending": false
       },
       "2026-06-11": {
         "d": "2026-06-11",
@@ -86430,6 +86444,362 @@
             "name": "中信建投",
             "ind": "证券",
             "score": 0.09,
+            "ret": null,
+            "in_portfolio": false
+          }
+        ],
+        "pending": true
+      },
+      "2026-06-12": {
+        "d": "2026-06-12",
+        "buy_d": "2026-06-15",
+        "sell_d": "2026-06-16",
+        "avg_ret": null,
+        "bench_ret": null,
+        "excess": null,
+        "hits": null,
+        "n": null,
+        "hit_rate": null,
+        "picks": [
+          {
+            "ts": "002384.SZ",
+            "name": "东山精密",
+            "ind": "元器件",
+            "score": 0.521,
+            "ret": null
+          },
+          {
+            "ts": "300866.SZ",
+            "name": "安克创新",
+            "ind": "元器件",
+            "score": 0.215,
+            "ret": null
+          },
+          {
+            "ts": "688256.SH",
+            "name": "寒武纪",
+            "ind": "半导体",
+            "score": 0.343,
+            "ret": null
+          },
+          {
+            "ts": "688008.SH",
+            "name": "澜起科技",
+            "ind": "半导体",
+            "score": 0.456,
+            "ret": null
+          },
+          {
+            "ts": "300308.SZ",
+            "name": "中际旭创",
+            "ind": "通信设备",
+            "score": 0.386,
+            "ret": null
+          },
+          {
+            "ts": "605117.SH",
+            "name": "德业股份",
+            "ind": "电气设备",
+            "score": 0.127,
+            "ret": null
+          },
+          {
+            "ts": "300442.SZ",
+            "name": "润泽科技",
+            "ind": "软件服务",
+            "score": 0.055,
+            "ret": null
+          },
+          {
+            "ts": "600176.SH",
+            "name": "中国巨石",
+            "ind": "玻璃",
+            "score": 0.351,
+            "ret": null
+          },
+          {
+            "ts": "601138.SH",
+            "name": "工业富联",
+            "ind": "通信设备",
+            "score": 0.286,
+            "ret": null
+          },
+          {
+            "ts": "688303.SH",
+            "name": "大全能源",
+            "ind": "电气设备",
+            "score": 0.163,
+            "ret": null
+          }
+        ],
+        "top30": [
+          {
+            "rank": 1,
+            "ts": "002384.SZ",
+            "name": "东山精密",
+            "ind": "元器件",
+            "score": 0.521,
+            "ret": null,
+            "in_portfolio": true
+          },
+          {
+            "rank": 2,
+            "ts": "600183.SH",
+            "name": "生益科技",
+            "ind": "元器件",
+            "score": 0.494,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 3,
+            "ts": "688008.SH",
+            "name": "澜起科技",
+            "ind": "半导体",
+            "score": 0.456,
+            "ret": null,
+            "in_portfolio": true
+          },
+          {
+            "rank": 4,
+            "ts": "300408.SZ",
+            "name": "三环集团",
+            "ind": "元器件",
+            "score": 0.41,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 5,
+            "ts": "002916.SZ",
+            "name": "深南电路",
+            "ind": "元器件",
+            "score": 0.405,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 6,
+            "ts": "300308.SZ",
+            "name": "中际旭创",
+            "ind": "通信设备",
+            "score": 0.386,
+            "ret": null,
+            "in_portfolio": true
+          },
+          {
+            "rank": 7,
+            "ts": "603986.SH",
+            "name": "兆易创新",
+            "ind": "半导体",
+            "score": 0.358,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 8,
+            "ts": "002463.SZ",
+            "name": "沪电股份",
+            "ind": "元器件",
+            "score": 0.355,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 9,
+            "ts": "002938.SZ",
+            "name": "鹏鼎控股",
+            "ind": "元器件",
+            "score": 0.351,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 10,
+            "ts": "600176.SH",
+            "name": "中国巨石",
+            "ind": "玻璃",
+            "score": 0.351,
+            "ret": null,
+            "in_portfolio": true
+          },
+          {
+            "rank": 11,
+            "ts": "688256.SH",
+            "name": "寒武纪",
+            "ind": "半导体",
+            "score": 0.343,
+            "ret": null,
+            "in_portfolio": true
+          },
+          {
+            "rank": 12,
+            "ts": "688012.SH",
+            "name": "中微公司",
+            "ind": "半导体",
+            "score": 0.326,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 13,
+            "ts": "002475.SZ",
+            "name": "立讯精密",
+            "ind": "元器件",
+            "score": 0.322,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 14,
+            "ts": "603296.SH",
+            "name": "华勤技术",
+            "ind": "元器件",
+            "score": 0.308,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 15,
+            "ts": "688041.SH",
+            "name": "海光信息",
+            "ind": "半导体",
+            "score": 0.287,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 16,
+            "ts": "601138.SH",
+            "name": "工业富联",
+            "ind": "通信设备",
+            "score": 0.286,
+            "ret": null,
+            "in_portfolio": true
+          },
+          {
+            "rank": 17,
+            "ts": "300433.SZ",
+            "name": "蓝思科技",
+            "ind": "元器件",
+            "score": 0.28,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 18,
+            "ts": "600584.SH",
+            "name": "长电科技",
+            "ind": "半导体",
+            "score": 0.271,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 19,
+            "ts": "301269.SZ",
+            "name": "华大九天",
+            "ind": "半导体",
+            "score": 0.258,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 20,
+            "ts": "688082.SH",
+            "name": "盛美上海",
+            "ind": "半导体",
+            "score": 0.255,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 21,
+            "ts": "600522.SH",
+            "name": "中天科技",
+            "ind": "通信设备",
+            "score": 0.249,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 22,
+            "ts": "300476.SZ",
+            "name": "胜宏科技",
+            "ind": "元器件",
+            "score": 0.238,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 23,
+            "ts": "688981.SH",
+            "name": "中芯国际",
+            "ind": "半导体",
+            "score": 0.238,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 24,
+            "ts": "688126.SH",
+            "name": "沪硅产业",
+            "ind": "半导体",
+            "score": 0.231,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 25,
+            "ts": "300866.SZ",
+            "name": "安克创新",
+            "ind": "元器件",
+            "score": 0.215,
+            "ret": null,
+            "in_portfolio": true
+          },
+          {
+            "rank": 26,
+            "ts": "300782.SZ",
+            "name": "卓胜微",
+            "ind": "半导体",
+            "score": 0.186,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 27,
+            "ts": "002371.SZ",
+            "name": "北方华创",
+            "ind": "半导体",
+            "score": 0.186,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 28,
+            "ts": "688396.SH",
+            "name": "华润微",
+            "ind": "半导体",
+            "score": 0.177,
+            "ret": null,
+            "in_portfolio": false
+          },
+          {
+            "rank": 29,
+            "ts": "688303.SH",
+            "name": "大全能源",
+            "ind": "电气设备",
+            "score": 0.163,
+            "ret": null,
+            "in_portfolio": true
+          },
+          {
+            "rank": 30,
+            "ts": "300661.SZ",
+            "name": "圣邦股份",
+            "ind": "半导体",
+            "score": 0.145,
             "ret": null,
             "in_portfolio": false
           }
