@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use M2-Alpha in research or derivative work, please cite this repository."
+type: software
+title: "M2-Alpha: A Research-to-Reproduction A-Share Deep-Learning Alpha Repository"
+authors:
+  - name: "M2-Alpha contributors"
+version: "2026.07.07"
+date-released: "2026-07-07"
+repository-code: "https://github.com/Johnny-xuan/M2-Alpha"
+url: "https://johnny-xuan.github.io/M2-Alpha"
+license: "Apache-2.0"
+keywords:
+  - quantitative finance
+  - stock prediction
+  - deep learning
+  - transformer
+  - A-share market
+abstract: >
+  M2-Alpha is a research-to-reproduction repository for an A-share
+  deep-learning alpha model. It includes public model checkpoints,
+  benchmark strategy rules, historical backtest evidence, model
+  documentation, reproduction notes, and a technical report.

@@ -1,0 +1,17 @@
+name: Historical Backtest Note
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  note:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain repository backtest policy
+        run: |
+          echo "M2-Alpha no longer runs a scheduled market-data tracker in GitHub Actions."
+          echo "docs/data/data.json is generated from the local research-grade panel with the audited benchmark engine."
+          echo "Use build/update_backtest_site.py with a compatible panel to rebuild the historical backtest payload."

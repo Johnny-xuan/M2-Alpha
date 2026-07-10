@@ -1,0 +1,36 @@
+{
+  "base_source": "BaoStock",
+  "enrichment_sources": ["AKShare", "efinance"],
+  "warmup_start": "20250401",
+  "sources": {
+    "volume_ratio": {
+      "status": "derived",
+      "method": "vol / rolling_mean(previous_5_trading_days_vol), per stock",
+      "rows": 303967
+    },
+    "akshare_realtime": {
+      "status": "unavailable"
+    },
+    "efinance_realtime": {
+      "status": "unavailable"
+    },
+    "efinance_base_info": {
+      "status": "ok",
+      "rows": 293
+    },
+    "eastmoney_moneyflow_history": {
+      "status": "unavailable"
+    },
+    "efinance_history_bill": {
+      "status": "unavailable"
+    }
+  },
+  "applied": {
+    "target_rows": 300,
+    "matched_rows": 293,
+    "volume_ratio_rows": 303967,
+    "valuation_rows_filled": 293,
+    "industry_filled": 0,
+    "moneyflow_status": "unavailable"
+  }
+}

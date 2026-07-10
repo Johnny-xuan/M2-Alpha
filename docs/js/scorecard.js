@@ -5,6 +5,7 @@
      · date range picker + chips + recent days list
    ──────────────────────────────────────────────────────────── */
 import { $, $$, svg, fmtPct } from "./utils.js";
+import { t } from "./i18n.js?v=20260709-bilingual1";
 
 const PAGE_SIZE = 10;
 let _scState = null;     // { dates: [...], page: N }
@@ -14,8 +15,10 @@ export function renderScorecardSummary(data) {
   const sc = data.scorecard?.summary;
   if (!sc) return;
   $("#sc-days").textContent = sc.n_days_total;
-  $("#sc-best").textContent = fmtPct(sc.best_day.ret);
-  $("#sc-best-d").textContent = sc.best_day.d;
+  if (sc.best_day) {
+    $("#sc-best").textContent = fmtPct(sc.best_day.ret);
+    $("#sc-best-d").textContent = sc.best_day.d;
+  }
 }
 
 /* ─── 60-day excess bar chart ─── */
@@ -24,6 +27,7 @@ export function renderExcessChart(data) {
   if (!svgEl) return;
   const all = data.scorecard.all_dates;
   const series = all.slice(-60);
+  if (!series.length) return;
 
   const W = 1400, H = 280;
   const padL = 56, padR = 24, padT = 24, padB = 36;
@@ -71,11 +75,11 @@ export function renderExcessChart(data) {
     const ht = Math.abs(yScale(v) - yMid);
     const rect = svg("rect", {
       x, y, width: barW, height: Math.max(1, ht), rx: 1,
-      fill: v >= 0 ? "#c8f93d" : "#ff6b3c",
+      fill: v >= 0 ? "#ff6b3c" : "#c8f93d",
     });
     rect.style.opacity = "0";
     rect.style.animation = `fade-up 0.4s ${0.005 * i}s forwards cubic-bezier(0.22, 0.61, 0.36, 1)`;
-    if (v >= 0) rect.setAttribute("filter", "drop-shadow(0 0 3px rgba(200, 249, 61, 0.4))");
+    if (v >= 0) rect.setAttribute("filter", "drop-shadow(0 0 3px rgba(255, 107, 60, 0.36))");
     svgEl.appendChild(rect);
   });
 }
@@ -83,6 +87,7 @@ export function renderExcessChart(data) {
 /* ─── date range picker ─── */
 export function initDateRange(data) {
   const allDates = Object.keys(data.scorecard.by_date).sort();
+  if (!allDates.length) return;
   const minD = allDates[0];
   const maxD = allDates[allDates.length - 1];
 
@@ -94,27 +99,27 @@ export function initDateRange(data) {
   endEl.value = maxD;
 
   $$('.sc-chip-btn').forEach(btn => {
-    btn.addEventListener("click", () => {
+    btn.onclick = () => {
       $$('.sc-chip-btn').forEach(b => b.classList.remove("sc-chip-btn--active"));
       btn.classList.add("sc-chip-btn--active");
       applyPreset(data, btn.dataset.preset, allDates);
-    });
+    };
   });
 
-  $("#date-apply").addEventListener("click", () => {
+  $("#date-apply").onclick = () => {
     $$('.sc-chip-btn').forEach(b => b.classList.remove("sc-chip-btn--active"));
     applyRange(data, startEl.value, endEl.value, allDates);
-  });
+  };
   [startEl, endEl].forEach(el => {
-    el.addEventListener("change", () => {
+    el.onchange = () => {
       $$('.sc-chip-btn').forEach(b => b.classList.remove("sc-chip-btn--active"));
-    });
-    el.addEventListener("keydown", (e) => {
+    };
+    el.onkeydown = (e) => {
       if (e.key === "Enter") $("#date-apply").click();
-    });
+    };
   });
-  $("#sc-pager-prev").addEventListener("click", () => goPage(data, -1));
-  $("#sc-pager-next").addEventListener("click", () => goPage(data, +1));
+  $("#sc-pager-prev").onclick = () => goPage(data, -1);
+  $("#sc-pager-next").onclick = () => goPage(data, +1);
 
   applyPreset(data, "10", allDates);
 }
@@ -164,19 +169,16 @@ function renderDateRange(data, dates) {
   const titleEl = $("#sc-detail-title");
   const counterEl = $("#sc-counter");
   if (sorted.length === 0) {
-    titleEl.textContent = "无 数 据";
+    titleEl.textContent = t("score.noData");
     counterEl.innerHTML = "";
   } else if (sorted.length === 1) {
-    titleEl.textContent = `${sorted[0]} · 当 日 复 盘`;
+    titleEl.textContent = t("score.dailyReview", { date: sorted[0] });
     counterEl.innerHTML = "";
   } else {
     titleEl.textContent = `${sorted[sorted.length - 1]} → ${sorted[0]}`;
     const stats = aggregateRange(data, sorted);
-    counterEl.innerHTML = `
-      共 <em>${sorted.length}</em> 天 · 平 均 超 额
-      <em class="${stats.avg_excess >= 0 ? 'gain' : 'loss'}">${fmtPct(stats.avg_excess, 2)}</em>
-      · 跑 赢 <em>${stats.win_days}</em>/<em>${sorted.length}</em>
-    `;
+    const avgHtml = `<em class="${stats.avg_excess >= 0 ? 'gain' : 'loss'}">${fmtPct(stats.avg_excess, 2)}</em>`;
+    counterEl.innerHTML = t("score.counter", { days: sorted.length, avgHtml, winDays: stats.win_days });
   }
   renderSCDaysVisible(data);
 }
@@ -206,7 +208,7 @@ function renderSCDaysVisible(data) {
     if (!day) return "";
 
     const top30Btn = day.top30?.length
-      ? `<button class="sc-day__top30-btn" data-sc-top30="${d}" title="查看模型原始预测 Top 30">Top 30 ↗</button>`
+      ? `<button class="sc-day__top30-btn" data-sc-top30="${d}" title="${t("score.top30Title")}">Top 30 ↗</button>`
       : "";
 
     // —— Pending：未结算（picks 存在但实际涨幅未知）——
@@ -221,20 +223,20 @@ function renderSCDaysVisible(data) {
         <div class="sc-day sc-day--pending" style="animation: fade-up 0.4s ${0.03 * idx}s backwards cubic-bezier(0.22, 0.61, 0.36, 1)">
           <div class="sc-day__date">
             <div class="sc-day__d-main">${day.d}</div>
-            <div class="sc-day__d-sub">买 ${(day.buy_d || "—").slice(5)} → 卖 ${(day.sell_d || "—").slice(5)}</div>
+            <div class="sc-day__d-sub">${t("score.buySell", { buy: shortTradeDate(day.buy_d), sell: shortTradeDate(day.sell_d) })}</div>
             ${top30Btn}
           </div>
           <div class="sc-day__chips">${picksHtml}</div>
           <div class="sc-day__summary">
-            <div class="sc-day__sum-pending">待结算</div>
-            <div class="sc-day__sum-vs">等 ${(day.sell_d || "下一交易日").slice(5)} 开盘卖出</div>
+            <div class="sc-day__sum-pending">${t("score.pending")}</div>
+            <div class="sc-day__sum-vs">${t("score.waitOpenSell", { sell: shortTradeDate(day.sell_d, t("score.nextTradeDay")) })}</div>
           </div>
         </div>
       `;
     }
 
     // —— 已结算 ——
-    // 着色约定：单只股票实际涨幅 > 0 = 绿，< 0 = 红（看绝对涨跌，不跟 bench 比）
+    // 着色约定：单只股票实际涨幅 > 0 = 红，< 0 = 绿（A 股习惯）
     const picksHtml = day.picks.map(p => {
       if (p.ret == null) return "";
       const cls = p.ret >= 0 ? "gain" : "loss";
@@ -251,33 +253,29 @@ function renderSCDaysVisible(data) {
       <div class="sc-day" style="animation: fade-up 0.4s ${0.03 * idx}s backwards cubic-bezier(0.22, 0.61, 0.36, 1)">
         <div class="sc-day__date">
           <div class="sc-day__d-main">${day.d}</div>
-          <div class="sc-day__d-sub">买 ${day.buy_d.slice(5)} → 卖 ${day.sell_d.slice(5)}</div>
+          <div class="sc-day__d-sub">${t("score.buySell", { buy: day.buy_d.slice(5), sell: day.sell_d.slice(5) })}</div>
           ${top30Btn}
         </div>
         <div class="sc-day__chips">${picksHtml}</div>
         <div class="sc-day__summary">
           <div class="sc-day__sum-r ${cls}">${fmtPct(day.avg_ret, 2)}</div>
-          <div class="sc-day__sum-vs">vs 沪深300 <em class="${excessCls}">${fmtPct(day.excess || 0, 2)}</em></div>
-          <div class="sc-day__sum-vs">命中 <em>${day.hits}/${day.n}</em></div>
+          <div class="sc-day__sum-vs">${t("score.vsBenchmark")} <em class="${excessCls}">${fmtPct(day.excess || 0, 2)}</em></div>
+          <div class="sc-day__sum-vs">${t("score.hit")} <em>${day.hits}/${day.n}</em></div>
         </div>
       </div>
     `;
   }).join("");
 
-  // wire top30 buttons (delegated, idempotent)
-  if (!host.dataset.top30Wired) {
-    host.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-sc-top30]");
-      if (!btn) return;
-      openTop30Modal(data, btn.dataset.scTop30);
-    });
-    host.dataset.top30Wired = "1";
-  }
+  host.onclick = (e) => {
+    const btn = e.target.closest("[data-sc-top30]");
+    if (!btn) return;
+    openTop30Modal(data, btn.dataset.scTop30);
+  };
 
   // pager visibility + state
   if (totalPages > 1) {
     pager.hidden = false;
-    $("#sc-pager-info").innerHTML = `<em>${_scState.page + 1}</em> / ${totalPages} 页 · 共 ${_scState.dates.length} 天`;
+    $("#sc-pager-info").innerHTML = t("score.pager", { page: _scState.page + 1, totalPages, days: _scState.dates.length });
     $("#sc-pager-prev").disabled = _scState.page === 0;
     $("#sc-pager-next").disabled = _scState.page >= totalPages - 1;
   } else {
@@ -301,7 +299,7 @@ function ensureTop30Modal() {
           <div class="t30-title"></div>
           <div class="t30-sub"></div>
         </div>
-        <button class="t30-close" data-t30-close aria-label="关闭">×</button>
+        <button class="t30-close" data-t30-close aria-label="${t("score.close")}">×</button>
       </header>
       <div class="t30-body"></div>
     </div>
@@ -322,6 +320,10 @@ function closeTop30Modal() {
   document.body.style.overflow = "";
 }
 
+function shortTradeDate(dateIso, fallback = "—") {
+  return dateIso ? dateIso.slice(5) : fallback;
+}
+
 function openTop30Modal(data, dateIso) {
   const day = data.scorecard.by_date[dateIso];
   if (!day || !day.top30) return;
@@ -329,29 +331,29 @@ function openTop30Modal(data, dateIso) {
   const realized = !day.pending && day.top30.some(t => t.ret != null);
 
   modal.querySelector(".t30-title").innerHTML =
-    `${day.d} · 模型原始预测 <em>Top 30</em>`;
+    t("score.modalTitle", { date: day.d });
   modal.querySelector(".t30-sub").innerHTML = `
-    买 ${(day.buy_d || "—").slice(5)} → 卖 ${(day.sell_d || "—").slice(5)} ·
-    ${day.pending ? '<span class="t30-pending">待结算</span>' :
-      `策略命中 <em>${day.hits}/${day.n}</em> · 持仓平均 <em class="${day.avg_ret>=0?'gain':'loss'}">${fmtPct(day.avg_ret,2)}</em>`}
+    ${t("score.buySell", { buy: shortTradeDate(day.buy_d), sell: shortTradeDate(day.sell_d) })} ·
+    ${day.pending ? `<span class="t30-pending">${t("score.modalPending")}</span>` :
+      t("score.modalRealized", { hits: day.hits, n: day.n, avgHtml: `<em class="${day.avg_ret>=0?'gain':'loss'}">${fmtPct(day.avg_ret,2)}</em>` })}
   `;
 
   // build table
   let inSel = 0;
-  const rowsHtml = day.top30.map(t => {
-    if (t.in_portfolio) inSel++;
-    const retCls = t.ret == null ? "" : t.ret >= 0 ? "gain" : "loss";
-    const retTxt = t.ret == null ? '<span class="t30-pending">—</span>' : fmtPct(t.ret, 2);
-    const selBadge = t.in_portfolio
-      ? '<span class="t30-badge t30-badge--in" title="被策略选中">✓ 持仓</span>'
-      : '<span class="t30-badge t30-badge--out" title="未被策略选中">·</span>';
+  const rowsHtml = day.top30.map(item => {
+    if (item.in_portfolio) inSel++;
+    const retCls = item.ret == null ? "" : item.ret >= 0 ? "gain" : "loss";
+    const retTxt = item.ret == null ? '<span class="t30-pending">—</span>' : fmtPct(item.ret, 2);
+    const selBadge = item.in_portfolio
+      ? `<span class="t30-badge t30-badge--in" title="${t("score.selectedTitle")}">${t("score.selectedBadge")}</span>`
+      : `<span class="t30-badge t30-badge--out" title="${t("score.outTitle")}">${t("score.outBadge")}</span>`;
     return `
-      <tr class="${t.in_portfolio ? 't30-row--in' : ''}">
-        <td class="t30-rk">${t.rank}</td>
-        <td class="t30-ts mono">${t.ts}</td>
-        <td class="t30-name">${t.name}</td>
-        <td class="t30-ind">${t.ind}</td>
-        <td class="t30-score mono">+${t.score.toFixed(3)}</td>
+      <tr class="${item.in_portfolio ? 't30-row--in' : ''}">
+        <td class="t30-rk">${item.rank}</td>
+        <td class="t30-ts mono">${item.ts}</td>
+        <td class="t30-name">${item.name}</td>
+        <td class="t30-ind">${item.ind}</td>
+        <td class="t30-score mono">+${item.score.toFixed(3)}</td>
         <td class="t30-ret mono ${retCls}">${retTxt}</td>
         <td class="t30-sel">${selBadge}</td>
       </tr>
@@ -360,23 +362,23 @@ function openTop30Modal(data, dateIso) {
 
   modal.querySelector(".t30-body").innerHTML = `
     <div class="t30-stats">
-      <span>共 <em>30</em> 只 raw 预测</span>
+      <span>${t("score.rawCount")}</span>
       <span class="t30-sep">·</span>
-      <span>其中 <em class="gain">${inSel}</em> 只被策略选入持仓</span>
+      <span>${t("score.selectedCount", { count: inSel })}</span>
       <span class="t30-sep">·</span>
-      <span>${realized ? `已结算 (D+1→D+2 open-to-open)` : '待结算 (D+2 开盘价未知)'}</span>
+      <span>${realized ? t("score.realizedState") : t("score.pendingState")}</span>
     </div>
     <div class="t30-table-wrap">
       <table class="t30-table">
         <thead>
           <tr>
             <th class="t30-rk">#</th>
-            <th>代码</th>
-            <th>名称</th>
-            <th>行业</th>
-            <th>评分</th>
-            <th>实际涨幅</th>
-            <th class="t30-sel">策略</th>
+            <th>${t("score.thCode")}</th>
+            <th>${t("score.thName")}</th>
+            <th>${t("score.thIndustry")}</th>
+            <th>${t("score.thScore")}</th>
+            <th>${t("score.thReturn")}</th>
+            <th class="t30-sel">${t("score.thStrategy")}</th>
           </tr>
         </thead>
         <tbody>${rowsHtml}</tbody>

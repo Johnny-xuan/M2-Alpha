@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>M²-Alpha · A 股每日选股参考</title>
-<meta name="description" content="自研深度学习量化模型 · 沪深 300 截面 alpha 选股 · 每个交易日 20:00 自动更新 · OOS Sharpe 3.12" />
+<meta name="description" content="M2-Alpha 深度学习量化模型 · M-0-M 当前公开基线 · M-1-M / M-2-M 研究回测曲线" />
 
 <!-- Favicon -->
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -12,7 +12,7 @@
 <!-- Open Graph (微信/Facebook 等) -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="M²-Alpha · A 股每日选股参考">
-<meta property="og:description" content="自研深度学习量化模型 · 沪深 300 截面 alpha · OOS Sharpe 3.12 · 每日自动更新">
+<meta property="og:description" content="M2-Alpha 当前公开基线与研究回测曲线 · A 股截面 alpha">
 <meta property="og:image" content="https://johnny-xuan.github.io/M2-Alpha/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -22,14 +22,10 @@
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="M²-Alpha · A 股每日选股参考">
-<meta name="twitter:description" content="自研深度学习量化模型 · 沪深 300 截面 alpha · OOS Sharpe 3.12 · 每日自动更新">
+<meta name="twitter:description" content="M2-Alpha 当前公开基线与研究回测曲线 · A 股截面 alpha">
 <meta name="twitter:image" content="https://johnny-xuan.github.io/M2-Alpha/og-image.png">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..900,0..100,0..1&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:wght@100..800&display=swap" rel="stylesheet">
-
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=20260709-bilingual1">
 
 <!-- 默认亮色主题 + 防首屏闪烁 -->
 <script>
@@ -57,7 +53,6 @@
   <a class="brand" href="#picks" data-tab-link="picks">
     <span class="brand__mark">M<sup>2</sup></span>
     <span class="brand__name">α<em>lpha</em></span>
-    <span class="brand__ver">v0.1</span>
   </a>
 
   <ul class="nav-tabs">
@@ -68,6 +63,11 @@
   </ul>
 
   <div class="nav-cluster">
+    <div class="model-switcher" id="model-switcher" aria-label="模型版本"></div>
+    <div class="lang-switcher" aria-label="语言切换">
+      <a class="lang-switcher__link lang-switcher__link--active" href="./#picks" data-lang-target="index.html">中</a>
+      <a class="lang-switcher__link" href="en.html#picks" data-lang-target="en.html">EN</a>
+    </div>
     <button class="theme-toggle" id="theme-toggle" title="切换主题" aria-label="切换主题">
       <span class="theme-toggle__icon">☾</span>
     </button>
@@ -116,8 +116,8 @@
             建仓 · <em id="next-trading-day">—</em> · 开盘买入
           </h1>
           <p class="block-sub">
-            截面 Top 10 推荐 · 基于 <strong id="picks-asof">—</strong> 收盘数据 ·
-            次日 (建仓日) 09:30 集合竞价买入 · 第三日开盘卖出
+            <strong id="picks-model-title">M-0-M</strong> 截面 Top 5 推荐 · 基于 <strong id="picks-asof">—</strong> 收盘数据 ·
+            下一交易日 09:30 开盘调仓
           </p>
         </header>
 
@@ -140,17 +140,19 @@
         <div class="strategy-inline">
           <span class="strategy-inline__ico">📋</span>
           <div>
-            <strong>策略</strong>：等权 10% / 只 · 同行业 ≤ 2 只 · 次日开盘买、第三日开盘卖 · 持仓掉出 Top 50 才换
+            <strong>策略</strong>：当前公开基线 M-0-M；M-1-M / M-2-M 的历史能力曲线展示在回测业绩页
             <a href="#about-strategy" data-tab-link="about" class="inline-link">详细规则 →</a>
           </div>
         </div>
+
+        <div class="data-source-inline" id="data-source-inline" aria-live="polite"></div>
       </div>
 
       <!-- ─── 侧栏：近期表现 ─── -->
       <aside class="tab1-side">
 
         <div class="side-block">
-          <h3 class="side-block__h">最近 60 天 · 每日超额</h3>
+          <h3 class="side-block__h">最近 60 天 · 逐日超额</h3>
           <svg id="mini-excess-chart" class="mini-chart" viewBox="0 0 600 140" preserveAspectRatio="none" aria-label="超额走势"></svg>
           <div class="side-stats">
             <div class="side-stat">
@@ -174,14 +176,14 @@
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════
-       TAB 2 · 每日复盘
+       TAB 2 · 逐日复盘
        ═══════════════════════════════════════════════════════════ -->
   <section class="tab-panel" data-tab-panel="scorecard" hidden>
     <header class="block-head">
-      <h1 class="block-title">每日 OOS 实战记录 · 共 <span id="sc-days">—</span> 个样本</h1>
+      <h1 class="block-title">逐日回测记录 · 共 <span id="sc-days">—</span> 个样本</h1>
       <p class="block-sub">
-        每日 Top 10 推荐按"次日开盘买、第三日开盘卖"执行，复盘实际收益 vs 沪深 300 同期。
-        <strong>每过一个交易日，新增一行 OOS 样本</strong>，自动 commit 进 git history。
+        Top 5 组合按研究 benchmark 的信号滞后、开盘成交、卖出带和手续费口径执行，
+        逐日复盘组合收益 vs 沪深 300 同期表现。
       </p>
     </header>
 
@@ -190,17 +192,17 @@
       <div class="sc-stat">
         <div class="sc-stat__k">日均超额</div>
         <div class="sc-stat__v" data-sc-stat="excess_avg" data-suffix="%">+0.00%</div>
-        <div class="sc-stat__d">Top 10 平均收益 − 同期沪深 300</div>
+        <div class="sc-stat__d">Top 5 平均收益 − 同期沪深 300</div>
       </div>
       <div class="sc-stat">
         <div class="sc-stat__k">日级胜率</div>
         <div class="sc-stat__v" data-sc-stat="win_rate_vs_bench_daily" data-suffix="%">0.00%</div>
-        <div class="sc-stat__d"><span data-sc-text="win_days">—</span> / <span data-sc-text="n_days_total">—</span> 天 Top 10 跑赢基准</div>
+        <div class="sc-stat__d"><span data-sc-text="win_days">—</span> / <span data-sc-text="n_days_total">—</span> 天 Top 5 跑赢基准</div>
       </div>
       <div class="sc-stat">
         <div class="sc-stat__k">个股命中</div>
         <div class="sc-stat__v" data-sc-stat="avg_hit_rate" data-suffix="%">0.00%</div>
-        <div class="sc-stat__d">每只推荐跑赢基准的比例</div>
+        <div class="sc-stat__d">每只持仓跑赢基准的比例</div>
       </div>
       <div class="sc-stat">
         <div class="sc-stat__k">最佳一天</div>
@@ -212,19 +214,19 @@
     <!-- 60 天超额 chart -->
     <div class="sc-chart-host">
       <h3 class="sub-h">
-        <span>最近 60 天 · 每日 Top 10 vs 沪深 300</span>
+        <span>最近 60 天 · Top 5 组合 vs 沪深 300</span>
         <span class="sub-h__legend">
           <span class="lg lg--gain"><i></i>跑赢</span>
           <span class="lg lg--loss"><i></i>跑输</span>
         </span>
       </h3>
-      <svg id="excess-chart" class="excess-chart" viewBox="0 0 1400 280" preserveAspectRatio="none" aria-label="每日超额"></svg>
+      <svg id="excess-chart" class="excess-chart" viewBox="0 0 1400 280" preserveAspectRatio="none" aria-label="逐日超额"></svg>
     </div>
 
     <!-- 单日复盘 + 翻页 -->
     <div class="sc-detail">
       <div class="sub-h sub-h--ctrl">
-        <span id="sc-detail-title">最近 10 天 · 每日推荐与实际表现</span>
+        <span id="sc-detail-title">最近 10 天 · 组合持仓与实际表现</span>
         <div class="sc-counter" id="sc-counter"></div>
       </div>
 
@@ -254,16 +256,24 @@
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════
-       TAB 3 · 回测业绩 (master range + sub-tabs)
+       TAB 3 · 回测业绩 (range selector + sub-tabs)
        ═══════════════════════════════════════════════════════════ -->
   <section class="tab-panel" data-tab-panel="backtest" hidden>
     <header class="block-head">
-      <h1 class="block-title">OOS 回测 · 100 万起步 · 滚动累积</h1>
+      <h1 class="block-title">OOS 回测 · 100 万起步 · 净值曲线</h1>
       <p class="block-sub">
-        按交易策略严格执行（开盘买卖 / 等权 Top 10 / 行业 ≤ 2 / 滞后带换仓），
-        在沪深 300 真实历史数据上的滚动 OOS 回测结果。下方所有内容均按选定时间范围动态计算。
-        <span class="dim">回测净值未扣交易摩擦（手续费 / 滑点 / 印花税），实际跟单收益会低于此处展示。</span>
+        M-0-M 是当前公开页面的稳定基线；M-1-M 与 M-2-M 是本地研究 panel 上的虚拟历史回测线，
+        只用于展示模型在统一研究口径下的历史能力。
+        <span class="dim">M-1-M / M-2-M 截止到 2026-06-10；它们不是新的每日建仓推荐。</span>
       </p>
+      <div class="latest-callout">
+        <span class="latest-callout__tag">LATEST</span>
+        <div>
+          <strong>M-2-M 最新能力线</strong>
+          <span>完整因子面板上的冻结回测累计 <em class="gain" data-tpl="research_cum_text">—</em>，Sharpe <em data-tpl="research_sharpe_text">—</em>，MaxDD <em class="loss" data-tpl="research_mdd_text">—</em>。</span>
+          <span class="latest-callout__meta" data-tpl="capability_basis_text">—</span>
+        </div>
+      </div>
     </header>
 
     <div class="section-controls">
@@ -292,14 +302,14 @@
     </div>
 
     <nav class="section-tabs" role="tablist">
-      <button class="section-tab section-tab--active" data-stab="overview">概览</button>
-      <button class="section-tab" data-stab="equity">净值曲线</button>
+      <button class="section-tab section-tab--active" data-stab="equity">净值曲线</button>
       <button class="section-tab" data-stab="monthly">月度收益</button>
       <button class="section-tab" data-stab="holdings">模型偏好</button>
+      <button class="section-tab" data-stab="overview">概览</button>
     </nav>
 
     <!-- 概览 -->
-    <div class="section-panel" data-stab-panel="overview">
+    <div class="section-panel" data-stab-panel="overview" hidden>
       <div class="perf-stats">
         <div class="perf-stat">
           <div class="perf-stat__k">期末净值</div>
@@ -314,7 +324,7 @@
         <div class="perf-stat">
           <div class="perf-stat__k">超越基准</div>
           <div class="perf-stat__v gain" id="s3-excess">+0.00pp</div>
-          <div class="perf-stat__d">已扣除双边手续费</div>
+          <div class="perf-stat__d">已扣手续费口径</div>
         </div>
         <div class="perf-stat">
           <div class="perf-stat__k">月度胜率</div>
@@ -335,12 +345,14 @@
     </div>
 
     <!-- 净值曲线 -->
-    <div class="section-panel" data-stab-panel="equity" hidden>
+    <div class="section-panel" data-stab-panel="equity">
       <div class="chart-host">
         <h3 class="sub-h">
-          <span>净值曲线 · 模型组合 vs 沪深 300</span>
+          <span>净值曲线 · M-0-M / M-1-M / M-2-M vs 沪深 300</span>
           <span class="sub-h__legend">
-            <span class="lg lg--model"><i></i>M²-Alpha 组合</span>
+            <span class="lg lg--m0"><i></i>M-0-M</span>
+            <span class="lg lg--m1"><i></i>M-1-M</span>
+            <span class="lg lg--m2"><i></i>M-2-M</span>
             <span class="lg lg--bench"><i></i>沪深 300</span>
             <span class="lg lg--dd"><i></i>回撤区</span>
           </span>
@@ -364,10 +376,10 @@
     <!-- 模型偏好 -->
     <div class="section-panel" data-stab-panel="holdings" hidden>
       <div class="holdings-host">
-        <h3 class="sub-h">模型偏好 · 基于区间内全部 Top 10 推荐</h3>
+        <h3 class="sub-h">模型偏好 · 基于区间内全部 Top 5 持仓</h3>
         <div class="holdings">
           <div class="holdings__left">
-            <h4 class="sub-sub">Top 10 行业分布</h4>
+            <h4 class="sub-sub">Top 5 行业分布</h4>
             <div class="industry-bars" id="industry-bars"></div>
           </div>
           <div class="holdings__right">
@@ -383,20 +395,21 @@
        TAB 4 · 关于
        ═══════════════════════════════════════════════════════════ -->
   <section class="tab-panel" data-tab-panel="about" hidden>
-    <div class="about-layout">
+    <div class="about-layout about-layout--docs">
 
       <!-- 左侧 sticky 目录 -->
       <aside class="about-sidebar" id="about-sidebar">
         <div class="about-sidebar__inner">
-          <div class="about-sidebar__title">CONTENTS</div>
+          <div class="about-sidebar__title">M2-ALPHA DOCS</div>
           <nav class="about-toc">
-            <a href="#about-overview" class="about-toc__a" data-tab-link="about" data-toc="overview">是什么</a>
-            <a href="#about-model"    class="about-toc__a" data-tab-link="about" data-toc="model">模型 <span class="about-toc__chip">v0.1</span></a>
-            <a href="#about-features" class="about-toc__a" data-tab-link="about" data-toc="features">35 个输入因子</a>
-            <a href="#about-strategy" class="about-toc__a" data-tab-link="about" data-toc="strategy">交易策略</a>
-            <a href="#about-usage"    class="about-toc__a" data-tab-link="about" data-toc="usage">如何参考使用</a>
-            <a href="#about-pipeline" class="about-toc__a" data-tab-link="about" data-toc="pipeline">数据更新机制</a>
-            <a href="#about-risk"     class="about-toc__a about-toc__a--warn" data-tab-link="about" data-toc="risk">风险提示</a>
+            <a href="#about-overview" class="about-toc__a" data-tab-link="about" data-toc="overview">项目概览</a>
+            <a href="#about-architecture" class="about-toc__a" data-tab-link="about" data-toc="architecture">模型架构 <span class="about-toc__chip">diagram</span></a>
+            <a href="#about-model" class="about-toc__a" data-tab-link="about" data-toc="model">三款权重 <span class="about-toc__chip">3 weights</span></a>
+            <a href="#about-features" class="about-toc__a" data-tab-link="about" data-toc="features">数据与因子</a>
+            <a href="#about-strategy" class="about-toc__a" data-tab-link="about" data-toc="strategy">回测策略</a>
+            <a href="#about-usage" class="about-toc__a" data-tab-link="about" data-toc="usage">使用教程</a>
+            <a href="#about-license" class="about-toc__a" data-tab-link="about" data-toc="license">开源许可</a>
+            <a href="#about-risk" class="about-toc__a about-toc__a--warn" data-tab-link="about" data-toc="risk">风险提示</a>
           </nav>
           <div class="about-sidebar__foot">
             <a href="https://github.com/Johnny-xuan/M2-Alpha" target="_blank" rel="noopener" class="inline-link">GitHub →</a>
@@ -404,135 +417,333 @@
         </div>
       </aside>
 
-      <!-- 右侧内容流 -->
+      <!-- 右侧文档页 -->
       <div class="about-content">
 
-      <section class="about-sec" id="about-overview">
-        <h2 class="about-h">M²·Alpha 是什么</h2>
-        <p>
-          <strong>M²-Alpha (Micro-Macro Alpha Engine)</strong> 是一个自研的深度学习 A 股
-          截面 alpha 选股模型，配套一套完全公开的执行策略，并通过 GitHub Actions 每日
-          自动更新数据。权重、策略规则、回测代码、数据 pipeline 全部开源在
-          <a href="https://github.com/Johnny-xuan/M2-Alpha" target="_blank" rel="noopener" class="inline-link">GitHub</a>。
-        </p>
-        <p class="dim">
-          区别于一次性回测展示，本项目的实证记录通过 daily live tracking 持续累积 ——
-          每过一个交易日，OOS 记录在 git history 中新增一条，删不掉、改不了，谁都能审计。
-        </p>
+      <section class="about-page about-page--active" id="about-overview" data-about-page="overview">
+        <p class="doc-kicker">RESEARCH-TO-REPRODUCTION REPOSITORY</p>
+        <h2 class="about-h about-h--page">M²-Alpha 是什么</h2>
+        <div class="doc-hero-grid">
+          <div>
+            <p>
+              <strong>M²-Alpha (Micro-Macro Alpha Engine)</strong> 是一个面向 A 股截面选股的深度学习 alpha 模型仓库。
+              它不是作业报告的原样搬运，而是把模型结构、训练方法、权重、benchmark 口径和页面展示整理成一套可阅读、可复现、可继续研究的开源项目。
+            </p>
+            <p>
+              M-0-M、M-1-M 和 M-2-M 分别对应紧凑发布基线、3-block 主线模型和 5-block 深层迭代模型。
+              更完整的技术细节、训练入口、因子口径和回测脚本放在 GitHub 仓库与技术报告里维护。
+            </p>
+            <div class="doc-actions">
+              <a href="https://github.com/Johnny-xuan/M2-Alpha" target="_blank" rel="noopener" class="doc-action doc-action--primary">Open GitHub</a>
+              <a href="#about-architecture" data-tab-link="about" class="doc-action">看模型架构</a>
+              <a href="report/M2Alpha_Technical_Report.pdf" target="_blank" rel="noopener" class="doc-action">下载技术报告 PDF</a>
+            </div>
+          </div>
+          <div class="doc-stat-panel" aria-label="project facts">
+            <div><span>公开权重</span><strong>3</strong></div>
+            <div><span>输入因子</span><strong>35</strong></div>
+            <div><span>基准策略</span><strong>Top 5</strong></div>
+            <div><span>许可</span><strong>Apache 2.0</strong></div>
+          </div>
+        </div>
+        <div class="doc-route-grid">
+          <article>
+            <span>01</span>
+            <strong>读设计</strong>
+            <p>架构图和 M² Block 说明展示模型如何同时读取单股时间轨迹和同日截面关系。</p>
+          </article>
+          <article>
+            <span>02</span>
+            <strong>看权重</strong>
+            <p>再看 M-0-M、M-1-M、M-2-M 的设计定位，区分紧凑版本和深层迭代版本。</p>
+          </article>
+          <article>
+            <span>03</span>
+            <strong>查因子</strong>
+            <p>因子页列出 35 个输入、预期作用和计算方式，也标出公开展示口径缺少或近似的字段。</p>
+          </article>
+          <article>
+            <span>04</span>
+            <strong>跑复现</strong>
+            <p>有兼容完整 panel 时跑 benchmark；只有公开免费数据时，把结果理解为 open-data 展示。</p>
+          </article>
+        </div>
       </section>
 
-      <section class="about-sec" id="about-model">
-        <header class="about-h2">
-          <h2 class="about-h">模型</h2>
-          <span class="ver-chip">v0.1</span>
-        </header>
+      <section class="about-page" id="about-architecture" data-about-page="architecture" hidden>
+        <p class="doc-kicker">ARCHITECTURE</p>
+        <h2 class="about-h about-h--page">Micro-Macro Alpha 架构</h2>
         <p>
-          当前线上是 <strong>M²-Alpha v0.1</strong>：自研深度学习模型 ·
-          35 个 basic 因子做沪深 300 截面排名 · CPU 推理（~600K 参数 / 2.4 MB ckpt）。
-          架构细节不公开，权重 / 因子 / 策略 / 数据 pipeline 全部开源，更高版本敬请期待。
+          M²-Alpha 把每天的股票池组织成 <strong>股票 S × 时间 T × 因子 F</strong> 的三维网格。
+          它不先把每只股票压成一个末端向量，而是在整个窗口里保留 <strong>S × T × D</strong> 表征，
+          让时间轴的 Micro 注意力和截面轴的 Macro 注意力在可堆叠的 M² Block 里反复重读。
         </p>
-      </section>
-
-      <section class="about-sec" id="about-features">
-        <h2 class="about-h">35 个输入因子</h2>
-        <p class="dim" style="margin-top:0;margin-bottom:14px">
-          每个因子按个股时序计算，再做截面 robust z-score 后喂模型。
-          带 <span class="feat-warn">⚠</span> 的因子目前用 BaoStock 数据无法填实数（恒为 0，等价于中性信号），后续数据源升级后可补齐。
+        <div class="doc-grid doc-grid--three">
+          <article class="doc-mini"><strong>交易员双视角</strong><span>一个有经验的交易员不会只看某一只股票的走势，也不会只看某一天的截面排名；他会一边读单股轨迹，一边把它放回全市场比较。</span></article>
+          <article class="doc-mini"><strong>解耦 Micro / Macro</strong><span>Micro 负责沿时间轴理解个股自身形态，Macro 负责沿截面轴判断同日相对位置。两件事分开建模，模型才知道自己在读哪一种信号。</span></article>
+          <article class="doc-mini"><strong>迭代重读</strong><span>时序判断依赖市场语境，截面判断也依赖个股轨迹。因此 M² Block 被设计成可堆叠单元，让两个视角多轮互相修正。</span></article>
+        </div>
+        <figure class="arch-report-figure" aria-label="Trader-inspired dual-view design intuition from the technical report">
+          <img src="report/figures/fig_trader.png" alt="Trader-inspired dual-view process: read one stock over time, compare across stocks, and iteratively refine ranking" class="arch-report-img" loading="lazy" decoding="async">
+          <figcaption>技术报告中的交易员启发图：先沿时间轴读单股走势，再沿截面轴横向比较全市场，并在两个视角之间反复切换，最终落到排序。</figcaption>
+        </figure>
+        <figure class="arch-report-figure" aria-label="M2-Alpha architecture diagram from the technical report">
+          <img src="report/figures/fig_method.png" alt="M2-Alpha architecture: stock-time grid input, repeated M squared block, prediction training and inference" class="arch-report-img" loading="lazy" decoding="async">
+          <figcaption>技术报告中的 M²-Alpha 方法图：左侧是 stock-time grid，中间是可重复堆叠的 M² Block，右侧展示 dense supervision 训练和 final-step ranking 推理。</figcaption>
+        </figure>
+        <div class="doc-grid doc-grid--two">
+          <article class="doc-mini"><strong>1. Stock-Time Grid</strong><span>输入是每个交易日的候选股票面板，形状为 <code>S × T × F</code>。这里 <code>S</code> 是股票数，<code>T=8</code> 是回看窗口，<code>F=35</code> 是每日因子。</span></article>
+          <article class="doc-mini"><strong>2. Feature Projection</strong><span>35 个因子先投影到隐藏维 <code>D=128</code>，叠加位置编码和层归一化，得到 <code>H0 ∈ R^(S×T×D)</code>。</span></article>
+          <article class="doc-mini"><strong>3. M² Block</strong><span>每层依次执行 Micro temporal attention、Macro cross-sectional attention 和 FFN。Micro 读单股轨迹；Macro 在同一天横向比较全部股票。</span></article>
+          <article class="doc-mini"><strong>4. Dense Supervision</strong><span>训练时对整个 <code>S × T</code> 预测网格监督，推理时只取最后时间步 <code>Y[:,T]</code> 做当日截面排名。</span></article>
+        </div>
+        <p class="doc-note">
+          这个设计让“时间上的走势解读”和“截面里的相对强弱”互相修正。更深的模型不是简单加参数，而是让 Micro 和 Macro 多轮交换上下文。
         </p>
-        <div class="feat-grid">
-          <div class="feat-group">
-            <h4 class="feat-h">动量 <span class="feat-cnt">8</span></h4>
-            <code class="feat-list">f_ret_1 · f_ret_2 · f_ret_3 · f_ret_5 · f_ret_10 · f_ret_20 · f_ret_30 · f_ret_60</code>
+        <div class="report-panel">
+          <div>
+            <p class="doc-kicker">TECHNICAL REPORT</p>
+            <strong>完整 PDF 技术报告</strong>
+            <span>报告保留了方法图、实验设置、消融分析和复现边界。完整论证以 PDF 和仓库文档为准。</span>
           </div>
-          <div class="feat-group">
-            <h4 class="feat-h">均线偏离 <span class="feat-cnt">5</span></h4>
-            <code class="feat-list">f_close_ma_5 · f_close_ma_10 · f_close_ma_20 · f_close_ma_30 · f_close_ma_60</code>
-          </div>
-          <div class="feat-group">
-            <h4 class="feat-h">波动率 <span class="feat-cnt">5</span></h4>
-            <code class="feat-list">f_vol_5 · f_vol_10 · f_vol_20 · f_vol_30 · f_vol_60</code>
-          </div>
-          <div class="feat-group">
-            <h4 class="feat-h">K 线形态 <span class="feat-cnt">4</span></h4>
-            <code class="feat-list">f_kmid · f_klen · f_kup · f_klow</code>
-          </div>
-          <div class="feat-group">
-            <h4 class="feat-h">成交量 <span class="feat-cnt">5</span></h4>
-            <code class="feat-list">f_vol_ratio_5 · f_vol_ratio_10 · f_vol_ratio_20 · f_vol_chg_1 · f_amount_chg_1</code>
-          </div>
-          <div class="feat-group">
-            <h4 class="feat-h">换手 <span class="feat-cnt">2</span></h4>
-            <code class="feat-list">f_turnover_rate · f_turnover_rate_f</code>
-          </div>
-          <div class="feat-group">
-            <h4 class="feat-h">估值 <span class="feat-cnt">3</span></h4>
-            <code class="feat-list">f_pe_ttm · f_pb · f_ps_ttm</code>
-          </div>
-          <div class="feat-group feat-group--warn">
-            <h4 class="feat-h">数据源限制 <span class="feat-cnt feat-cnt--warn">3 <span class="feat-warn">⚠</span></span></h4>
-            <code class="feat-list">
-              f_volume_ratio <span class="dim">(量比)</span> ·
-              f_mf_net_ratio <span class="dim">(资金净流入率)</span> ·
-              f_mf_big_small_diff <span class="dim">(大单-小单差)</span>
-            </code>
-            <p class="feat-note">BaoStock 不暴露这 3 个字段，当前用 0 占位 → 模型实际只有 32 个有效信号。</p>
+          <div class="report-panel__actions">
+            <a href="report/M2Alpha_Technical_Report.pdf" target="_blank" rel="noopener" class="doc-action doc-action--primary">中文 PDF</a>
+            <a href="report/M2Alpha_Technical_Report_EN.pdf" target="_blank" rel="noopener" class="doc-action">English PDF</a>
           </div>
         </div>
       </section>
 
-      <section class="about-sec" id="about-strategy">
-        <h2 class="about-h">交易策略 · 6 条规则</h2>
-        <ol class="rules-compact">
-          <li><span class="rk">候选池</span>仅在沪深 300 成分股内选股</li>
-          <li><span class="rk">推荐数</span>每日 Top 10：按评分降序遍历全部 300 只，受行业上限约束直到凑满</li>
-          <li><span class="rk">权重</span>等权 10% / 只，不按评分加权</li>
-          <li><span class="rk">行业上限</span>同一申万行业 ≤ 2 只（凑不齐时顺着 rank 继续往下挑）</li>
-          <li><span class="rk">卖出规则</span>掉出当日评分 Top 50 才卖（滞后带，降低换手）</li>
-          <li><span class="rk">成交</span>09:30 集合竞价 · 回测按 open-to-open 计 PnL，未扣手续费/滑点</li>
-        </ol>
-      </section>
-
-      <section class="about-sec" id="about-usage">
-        <h2 class="about-h">如何参考使用 · 3 步</h2>
-        <ol class="steps-compact">
-          <li>
-            <strong>每个交易日 20:00 后</strong>来本站查看「<u>下一交易日</u>」的建仓推荐
-            <span class="dim">（数据自动更新；下一交易日可能是明天、也可能是周一或假期后的第一天）</span>
-          </li>
-          <li>
-            <strong>下一交易日 09:25</strong> 在券商软件按 10 只清单录入"市价委托"，
-            09:30 集合竞价撮合。每只配净值 10%
-          </li>
-          <li>
-            <strong>再下一个交易日 09:30</strong> 开盘卖出，回笼资金。再回本站看新清单
-          </li>
-        </ol>
-      </section>
-
-      <section class="about-sec" id="about-pipeline">
-        <h2 class="about-h">数据更新机制</h2>
-        <p>每个交易日北京时间 20:00，GitHub Actions cron 自动执行：</p>
-        <ol class="pipeline-compact">
-          <li>BaoStock 增量拉取沪深 300 当日量价 + 基本面，append 到 <code>build/cache/panel.parquet</code></li>
-          <li>加载 <code>ml/m2alpha.pt</code> 在全期 panel 上重跑推理，覆盖 <code>preds.parquet</code></li>
-          <li>用 strategy.py（行业分散 + 滞后带）从 preds 完全重建 <code>docs/data/data.json</code></li>
-          <li>commit 4 个 cache 文件 + data.json → GitHub Pages 自动重新部署</li>
-        </ol>
-        <p class="dim">
-          20:00 是为了等 BaoStock 当日数据全部就绪（17:30 后陆续刷出，留 2.5 小时缓冲）。
-          周末/节假日 panel 无新增就跳过 commit。跑挂大概率是 BaoStock 字段微调，到 GitHub Actions 看 log。
+      <section class="about-page" id="about-model" data-about-page="model" hidden>
+        <header class="about-h2">
+          <div>
+            <p class="doc-kicker">MODEL ZOO</p>
+            <h2 class="about-h about-h--page">三款模型设计</h2>
+          </div>
+          <span class="ver-chip" id="about-model-chip">3 weights</span>
+        </header>
+        <p>
+          三款权重共享上面这套 <strong>stock-time grid → M² Block → dense prediction grid</strong> 路线。
+          输入窗口、隐藏维、Micro/Macro 注意力头数和高斯近邻先验保持一致，主要差异在
+          <strong>发布定位、3-block 主线 checkpoint、以及 5-block 深层迭代</strong>。
+        </p>
+        <div class="design-strip">
+          <span><strong>共同底座</strong> T=8 · F=35 · D=128</span>
+          <span>Micro heads 4</span>
+          <span>Macro heads 2</span>
+          <span>Gaussian σ=4</span>
+          <span>Dense supervision</span>
+        </div>
+        <div class="model-grid model-grid--docs">
+          <article class="model-card model-card--m0">
+            <div class="model-card__head">
+              <h3>M-0-M</h3>
+              <span>compact release anchor · 3 blocks</span>
+            </div>
+            <p>
+              紧凑发布基线。它是最小可读、可跑、可维护的 M² 堆栈：3 层 M² Block，时间轴先读个股轨迹，
+              截面轴再重排同日股票关系，不引入额外复杂 gating。它给整个仓库提供一个稳定的实现锚点。
+            </p>
+            <ul class="model-points">
+              <li>设计取舍是稳定和透明，适合作为 release/reference line。</li>
+              <li>和 M-1-M 同属 3-block family，不应被理解成另一套架构。</li>
+            </ul>
+            <div class="model-specs">
+              <span>3 blocks</span><span>release anchor</span><span>no extra gating</span>
+            </div>
+          </article>
+          <article class="model-card model-card--m1">
+            <div class="model-card__head">
+              <h3>M-1-M</h3>
+              <span>canonical 3-block line</span>
+            </div>
+            <p>
+              第一代主线模型。它保持 3-block 深度，把注意力放在“基础 M² Block 本身是否足够强”这个问题上：
+              dense supervision 训练整个预测网格，推理时只取最后时间步排名。它是 M²-Alpha 的标准紧凑形态。
+            </p>
+            <ul class="model-points">
+              <li>设计重点是验证 Micro/Macro 解耦加迭代的一阶能力。</li>
+              <li>和 M-0-M 的结构差异小，区别主要是主线 checkpoint 和研究口径。</li>
+            </ul>
+            <div class="model-specs">
+              <span>3 blocks</span><span>canonical M²</span><span>dense grid</span>
+            </div>
+          </article>
+          <article class="model-card model-card--m2">
+            <div class="model-card__head">
+              <h3>M-2-M</h3>
+              <span>deep iterative line · 5 blocks</span>
+            </div>
+            <p>
+              第二代加深模型。它把 M² Block 堆叠到 5 层，让 Micro 对时间轨迹的重读和 Macro 对截面位置的修正发生更多轮。
+              更深的地方不只是参数更多，而是 Macro 注入的截面上下文会回流到下一轮 Micro，再被下一轮 Macro 重新校正。
+            </p>
+            <ul class="model-points">
+              <li>设计重点是提高跨股票共动、行业拥挤和相对强弱关系的表达能力。</li>
+              <li>它是三款中真正改变 block 深度和迭代轮数的版本。</li>
+            </ul>
+            <div class="model-specs">
+              <span>5 blocks</span><span>more refinement</span><span>capacity line</span>
+            </div>
+          </article>
+        </div>
+        <p class="doc-note">
+          设计轴上，M-0-M 与 M-1-M 是同深度紧凑线，M-2-M 是更深的迭代线。
+          输入因子完整度和公开展示限制在“数据与因子”和“使用教程”中单独说明。
         </p>
       </section>
 
-      <section class="about-sec about-sec--warn" id="about-risk">
-        <h2 class="about-h">风险提示 · 务必阅读</h2>
+      <section class="about-page" id="about-features" data-about-page="features" hidden>
+        <p class="doc-kicker">DATA AND FACTORS</p>
+        <h2 class="about-h about-h--page">35 个输入因子</h2>
+        <p>
+          M²-Alpha 使用 35 个输入因子，覆盖动量、均线偏离、波动率、K 线形态、成交活跃度、换手、估值和资金流结构。
+          每个因子先沿个股历史时序生成，再在同一交易日做横截面 robust z-score 标准化，最后输入 M² Block。
+          完整因子越齐，模型越接近研究训练与强回测中的预测能力。
+        </p>
+        <div class="factor-ledger">
+          <article class="factor-card">
+            <header><h4>动量收益</h4><span>8 factors</span></header>
+            <dl><div><dt>是什么</dt><dd>过去不同窗口的累计收益。</dd></div><div><dt>作用</dt><dd>让模型判断短期延续、反转和中期趋势强弱。</dd></div><div><dt>计算</dt><dd><code>close / close.shift(k) - 1</code>，窗口 <code>k=1,2,3,5,10,20,30,60</code>。</dd></div></dl>
+            <code class="feat-list">f_ret_1 · f_ret_2 · f_ret_3 · f_ret_5 · f_ret_10 · f_ret_20 · f_ret_30 · f_ret_60</code>
+          </article>
+          <article class="factor-card">
+            <header><h4>均线偏离</h4><span>5 factors</span></header>
+            <dl><div><dt>是什么</dt><dd>收盘价相对不同周期均价的位置。</dd></div><div><dt>作用</dt><dd>给模型一个价格是否过热、偏弱或正在脱离均衡的参照。</dd></div><div><dt>计算</dt><dd><code>close / rolling_mean(close,k) - 1</code>，窗口 <code>k=5,10,20,30,60</code>。</dd></div></dl>
+            <code class="feat-list">f_close_ma_5 · f_close_ma_10 · f_close_ma_20 · f_close_ma_30 · f_close_ma_60</code>
+          </article>
+          <article class="factor-card">
+            <header><h4>收益波动率</h4><span>5 factors</span></header>
+            <dl><div><dt>是什么</dt><dd>近期日收益的滚动标准差。</dd></div><div><dt>作用</dt><dd>刻画风险、分歧和不稳定状态，帮助模型区分强势上涨和高噪声波动。</dd></div><div><dt>计算</dt><dd>先算 1 日收益，再取 <code>rolling_std(ret_1,k)</code>，窗口 <code>k=5,10,20,30,60</code>。</dd></div></dl>
+            <code class="feat-list">f_vol_5 · f_vol_10 · f_vol_20 · f_vol_30 · f_vol_60</code>
+          </article>
+          <article class="factor-card">
+            <header><h4>K 线形态</h4><span>4 factors</span></header>
+            <dl><div><dt>是什么</dt><dd>当天实体、全长、上影线和下影线的归一化形态。</dd></div><div><dt>作用</dt><dd>捕捉日内买卖力量、冲高回落、探底回升和振幅结构。</dd></div><div><dt>计算</dt><dd>以 <code>open</code> 归一化：<code>(close-open)/open</code>、<code>(high-low)/open</code>、上下影线比例。</dd></div></dl>
+            <code class="feat-list">f_kmid · f_klen · f_kup · f_klow</code>
+          </article>
+          <article class="factor-card">
+            <header><h4>成交活跃度</h4><span>5 factors</span></header>
+            <dl><div><dt>是什么</dt><dd>成交量相对自身均值的位置，以及量额的一日变化。</dd></div><div><dt>作用</dt><dd>识别突然放量、缩量、交易热度变化和价格走势背后的参与强度。</dd></div><div><dt>计算</dt><dd><code>vol / rolling_mean(vol,k)</code>，窗口 <code>k=5,10,20</code>；另含 <code>pct_change(vol,1)</code> 与 <code>pct_change(amount,1)</code>。</dd></div></dl>
+            <code class="feat-list">f_vol_ratio_5 · f_vol_ratio_10 · f_vol_ratio_20 · f_vol_chg_1 · f_amount_chg_1</code>
+          </article>
+          <article class="factor-card">
+            <header><h4>换手与量比</h4><span>3 factors</span></header>
+            <dl><div><dt>是什么</dt><dd>股票筹码交换速度、自由流通换手，以及当日量比。</dd></div><div><dt>作用</dt><dd>衡量拥挤度、短线资金关注度和交易活跃是否异常。</dd></div><div><dt>计算</dt><dd><code>turnover_rate</code>、<code>turnover_rate_f</code> 和 vendor-style <code>volume_ratio</code> 字段，再做截面标准化。</dd></div></dl>
+            <code class="feat-list">f_turnover_rate · f_turnover_rate_f · f_volume_ratio</code>
+          </article>
+          <article class="factor-card">
+            <header><h4>估值位置</h4><span>3 factors</span></header>
+            <dl><div><dt>是什么</dt><dd>TTM 市盈率、市净率和 TTM 市销率。</dd></div><div><dt>作用</dt><dd>给纯量价信号加入估值参照，帮助模型分辨趋势、拥挤和基本面定价位置。</dd></div><div><dt>计算</dt><dd>读取 <code>pe_ttm</code>、<code>pb</code>、<code>ps_ttm</code>，对异常值做处理后进入同日截面 robust z-score。</dd></div></dl>
+            <code class="feat-list">f_pe_ttm · f_pb · f_ps_ttm</code>
+          </article>
+          <article class="factor-card factor-card--warn">
+            <header><h4>资金流结构</h4><span>2 factors</span></header>
+            <dl><div><dt>是什么</dt><dd>主力资金净流入强度，以及大单相对小单的方向差。</dd></div><div><dt>作用</dt><dd>补充盘口资金行为，帮助模型识别价格变化背后是主动买入、主动卖出还是散乱成交。</dd></div><div><dt>计算</dt><dd><code>net_mf_amount / amount</code>；以及 <code>(buy_lg + buy_elg - buy_sm) / (buy_lg + buy_elg + buy_sm + 1)</code>。</dd></div></dl>
+            <code class="feat-list">f_mf_net_ratio · f_mf_big_small_diff</code>
+          </article>
+        </div>
+        <div class="factor-status-grid">
+          <article class="factor-status">
+            <strong>完整研究因子合同</strong>
+            <span>35 个输入因子全部可构造，包括量价、换手、估值、量比和资金流结构。M-1-M / M-2-M 的强回测曲线应在这种口径下理解。</span>
+          </article>
+          <article class="factor-status factor-status--warn">
+            <strong>当前公开展示口径</strong>
+            <span><code>f_volume_ratio</code>、<code>f_mf_net_ratio</code>、<code>f_mf_big_small_diff</code> 无法稳定拿到完整历史真值；<code>f_turnover_rate_f</code> 可能只能近似。只有完整量化因子齐备时，模型预测能力才更接近研究结果。</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="about-page" id="about-strategy" data-about-page="strategy" hidden>
+        <p class="doc-kicker">BENCHMARK STRATEGY</p>
+        <h2 class="about-h about-h--page">统一回测策略</h2>
+        <p>
+          回测页不展示随意调参后的最好看曲线，而是使用固定规则来比较模型排序能力。这样读者能清楚看到：
+          收益来自模型分数、数据口径和持仓规则，而不是事后挑参数。
+        </p>
+        <ol class="rules-compact rules-compact--docs">
+          <li><span class="rk">候选池</span>动态 top1000 股票池，按月末流通市值选样</li>
+          <li><span class="rk">选股范围</span>每个回测日先取预测分前 100 名，再从中构造 Top 5 组合</li>
+          <li><span class="rk">权重</span>等权 20% / 只，不按评分加权</li>
+          <li><span class="rk">行业上限</span>行业 cap20；若无法凑满组合，按研究 benchmark fallback 继续补齐</li>
+          <li><span class="rk">卖出规则</span>掉出当日评分 Top 200 才卖，降低过度换手</li>
+          <li><span class="rk">成交</span>按 open 成交与 open NAV 计价，fee_rate=0.0013，未额外建模滑点</li>
+        </ol>
+        <p class="doc-note">
+          这套策略用于公开 benchmark 与研究曲线说明；真实交易需要重新评估流动性、滑点、成交约束和合规要求。
+        </p>
+      </section>
+
+      <section class="about-page" id="about-usage" data-about-page="usage" hidden>
+        <p class="doc-kicker">AGENT QUICK START</p>
+        <h2 class="about-h about-h--page">给 Coding Agent 的使用提示词</h2>
+        <p>
+          下面的提示词可直接交给本地 coding agent，用于配置环境、检查数据、启动展示页或运行 benchmark。
+          提示词显式区分公开展示数据与完整研究因子，避免把 open-data 结果和 full-factor research 结果混在一起。
+        </p>
+        <div class="guide-grid">
+          <article class="guide-card"><span>01</span><strong>公开体验</strong><p>启动 <code>docs/</code> 静态页面，确认 M-0-M/M-1-M/M-2-M 曲线和模型说明能正常打开。</p></article>
+          <article class="guide-card"><span>02</span><strong>读架构</strong><p>查看 <code>docs/METHOD.md</code>、<code>m2alpha/</code> 和 <code>model_registry.yml</code>，解释 M² Block 和三款权重。</p></article>
+          <article class="guide-card"><span>03</span><strong>检查数据</strong><p>如果只有公开数据，就只做公开基线；如果有完整 35 因子 top1000 panel，再跑研究 benchmark。</p></article>
+          <article class="guide-card"><span>04</span><strong>复现结果</strong><p>要求 agent 记录命令、数据路径、策略参数和输出文件，避免把公开数据基线与完整研究面板混在一起。</p></article>
+        </div>
+        <div class="code-panel code-panel--prompt" aria-label="agent quick start prompt">
+          <div class="code-panel__bar">
+            <div class="code-panel__dots" aria-hidden="true"><span></span><span></span><span></span></div>
+            <button type="button" class="code-copy" data-copy-target="agent-prompt-code" aria-label="复制 Agent 使用提示词">复制</button>
+          </div>
+          <pre><code id="agent-prompt-code">你是我的 coding agent。请帮我配置并使用 M2-Alpha 仓库：
+
+1. 克隆并进入仓库：github.com/Johnny-xuan/M2-Alpha。
+2. 先阅读 README.md、docs/METHOD.md、docs/DATA_SOURCES.md、docs/REPRODUCTION.md、model_registry.yml。
+3. 创建 Python 环境并安装 requirements.txt；不要改动模型权重。
+4. 启动本地网页：python -m http.server 8765 --directory docs，并检查回测页和关于页能正常打开。
+5. 解释三款模型：
+   - M-0-M：紧凑发布基线，3-block M² stack，适合检查仓库实现和公开展示。
+   - M-1-M：第一代主线模型，同样是 3-block，用于理解基础 M² Block 的标准形态。
+   - M-2-M：第二代深层模型，5-block，用于理解更深 Micro/Macro 迭代带来的表达能力。
+6. 重要数据边界：
+   公开数据路线没有完整研究数据。训练和强 benchmark 使用过更完整的研究面板，
+   包括完整 35 因子、动态 top1000 股票池、量比、自由流通换手、估值和资金流等字段。
+   如果我只提供 BaoStock/AKShare/efinance 免费数据，请明确说明它不能完全复现 M-1-M/M-2-M 的研究能力。
+7. 如果我要复现 benchmark，请先让我提供兼容 panel 路径；然后使用统一策略：
+   n_hold=5, pool_rank=100, sell_rank=200, industry cap20, open execution/open NAV, fee_rate=0.0013。
+8. 最后给我一份简短报告：执行了哪些代码、使用的数据在哪里、输出结果和哪些因素仍不可复现。</code></pre>
+        </div>
+        <p class="doc-note">
+          公开仓库可以完整开源代码、权重和流程，但不能直接打包训练所用的完整研究数据。想复现强研究曲线，需要自己准备兼容的完整因子面板；只有公开免费数据时，结果更适合作为 open-data baseline。
+        </p>
+      </section>
+
+      <section class="about-page" id="about-license" data-about-page="license" hidden>
+        <p class="doc-kicker">OPEN LICENSE</p>
+        <h2 class="about-h about-h--page">开源许可与商业使用</h2>
+        <div class="license-panel">
+          <p>
+            M2-Alpha 仓库按 <strong>Apache License 2.0</strong> 发布。代码、模型权重、训练脚本、回测代码和网页展示可以用于学术研究、
+            二次开发和商业项目，前提是保留许可证与必要的版权声明。
+          </p>
+          <p>
+            需要分开理解的是数据：BaoStock、AKShare、efinance 以及你自行接入的数据源有各自的使用条款和上游限制。
+            仓库会提供构建与适配逻辑，但不会替你保证外部数据的授权范围。
+          </p>
+        </div>
+        <div class="doc-grid doc-grid--two">
+          <article class="doc-mini"><strong>可以做</strong><span>阅读源码、下载权重、复现 benchmark、改造模型、集成到商业系统。</span></article>
+          <article class="doc-mini"><strong>需要自查</strong><span>外部行情数据的抓取频率、缓存、再分发和商业授权边界。</span></article>
+        </div>
+      </section>
+
+      <section class="about-page about-page--warn" id="about-risk" data-about-page="risk" hidden>
+        <p class="doc-kicker">RISK NOTICE</p>
+        <h2 class="about-h about-h--page">风险提示</h2>
         <ul>
-          <li><strong>不构成任何形式的投资建议</strong> — 本站为模型预测的公开展示</li>
-          <li><strong>过去的回测不代表未来</strong> — 模型有效性可能随市场结构衰减</li>
-          <li>历史回测中曾出现单日 <span class="loss" data-tpl="worst_day_ret">—</span> 的最差日（<span data-tpl="worst_day_d">—</span>），跟单需有承受短期回撤的心理准备</li>
-          <li>严格按规则执行 — 只买几只 / 不按权重 / 隔几天才换 — 实际效果会与回测<strong>显著不同</strong></li>
-          <li>建议至少配置 <strong>10 万以上</strong>本金参与，否则手续费占比过高吞噬收益</li>
-          <li>据此操作的任何决策，<strong>由使用者自行承担风险</strong></li>
+          <li><strong>不构成任何形式的投资建议</strong>，本站为模型预测和历史回测展示。</li>
+          <li><strong>过去的回测不代表未来</strong>，模型有效性可能随市场结构变化而衰减。</li>
+          <li>历史回测中曾出现单日 <span class="loss" data-tpl="worst_day_ret">—</span> 的最差日（<span data-tpl="worst_day_d">—</span>），真实交易需要能承受短期回撤。</li>
+          <li>不按规则执行，例如只买几只、不等权、延迟换仓，实际结果会与回测显著不同。</li>
+          <li>真实交易需自行评估手续费、滑点、资金规模、风险承受能力与合规约束。</li>
+          <li>据此操作的任何决策，由使用者自行承担风险。</li>
         </ul>
       </section>
 
@@ -552,6 +763,19 @@
 
 </main>
 
-<script type="module" src="js/main.js"></script>
+<script>
+  (function(){
+    function syncLangLinks(){
+      var hash = window.location.hash || "#picks";
+      document.querySelectorAll("[data-lang-target]").forEach(function(link){
+        var target = link.getAttribute("data-lang-target");
+        link.setAttribute("href", target === "index.html" ? "./" + hash : target + hash);
+      });
+    }
+    syncLangLinks();
+    window.addEventListener("hashchange", syncLangLinks);
+  })();
+</script>
+<script type="module" src="js/main.js?v=20260709-bilingual1"></script>
 </body>
 </html>

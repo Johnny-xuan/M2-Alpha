@@ -2,6 +2,7 @@
    theme.js — dark / light toggle, persisted in localStorage
    ──────────────────────────────────────────────────────────── */
 import { $ } from "./utils.js";
+import { t } from "./i18n.js?v=20260709-bilingual1";
 
 const KEY = "m2alpha-theme";
 
@@ -11,7 +12,7 @@ function apply(theme) {
   const btn = $("#theme-toggle");
   if (btn) {
     btn.querySelector(".theme-toggle__icon").textContent = theme === "light" ? "☀" : "☾";
-    btn.title = theme === "light" ? "切换到暗色" : "切换到亮色";
+    btn.title = theme === "light" ? t("theme.dark") : t("theme.light");
   }
 }
 

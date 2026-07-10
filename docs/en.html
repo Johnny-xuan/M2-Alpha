@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M²-Alpha · Daily A-Share Alpha Picks</title>
+<meta name="description" content="M2-Alpha deep-learning quant model · M-0-M public baseline · M-1-M / M-2-M research backtest curves" />
+
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="M²-Alpha · Daily A-Share Alpha Picks">
+<meta property="og:description" content="M2-Alpha public baseline and research backtest curves · A-share cross-sectional alpha">
+<meta property="og:image" content="https://johnny-xuan.github.io/M2-Alpha/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://johnny-xuan.github.io/M2-Alpha/en.html">
+<meta property="og:locale" content="en_US">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="M²-Alpha · Daily A-Share Alpha Picks">
+<meta name="twitter:description" content="M2-Alpha public baseline and research backtest curves · A-share cross-sectional alpha">
+<meta name="twitter:image" content="https://johnny-xuan.github.io/M2-Alpha/og-image.png">
+
+<link rel="stylesheet" href="styles.css?v=20260709-bilingual1">
+
+<!-- Default light theme and first-paint guard -->
+<script>
+  (function(){
+    try {
+      var t = localStorage.getItem("m2alpha-theme") || "light";   // ← default light
+      if (t === "light") document.documentElement.classList.add("preload-light");
+    } catch(e){
+      document.documentElement.classList.add("preload-light");
+    }
+  })();
+</script>
+<style>html.preload-light body { background: #faf6ee; }</style>
+</head>
+<body>
+
+<!-- ambient -->
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-vignette" aria-hidden="true"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     STICKY NAVBAR — 4 tabs (click-to-switch)
+     ═══════════════════════════════════════════════════════════════ -->
+<nav class="navbar">
+  <a class="brand" href="#picks" data-tab-link="picks">
+    <span class="brand__mark">M<sup>2</sup></span>
+    <span class="brand__name">α<em>lpha</em></span>
+  </a>
+
+  <ul class="nav-tabs">
+    <li><a href="#picks"     class="nav-tab" data-tab-link="picks">Today Picks</a></li>
+    <li><a href="#scorecard" class="nav-tab" data-tab-link="scorecard">Daily Review</a></li>
+    <li><a href="#backtest"  class="nav-tab" data-tab-link="backtest">Backtest</a></li>
+    <li><a href="#about"     class="nav-tab" data-tab-link="about">About</a></li>
+  </ul>
+
+  <div class="nav-cluster">
+    <div class="model-switcher" id="model-switcher" aria-label="Model version"></div>
+    <div class="lang-switcher" aria-label="Language">
+      <a class="lang-switcher__link" href="./#picks" data-lang-target="index.html">中</a>
+      <a class="lang-switcher__link lang-switcher__link--active" href="en.html#picks" data-lang-target="en.html">EN</a>
+    </div>
+    <button class="theme-toggle" id="theme-toggle" title="Toggle theme" aria-label="Toggle theme">
+      <span class="theme-toggle__icon">☾</span>
+    </button>
+    <div class="nav-pill nav-pill--clock" title="Current time">
+      <span class="nav-pill__k" id="nav-today">— —</span>
+      <span class="nav-pill__t" id="nav-clock">— : — : —</span>
+    </div>
+    <div class="nav-pill nav-pill--signal" title="Next trading day based on the latest close">
+      <span class="nav-pill__dot"></span>
+      <span class="nav-pill__k">Entry</span>
+      <span class="nav-pill__v" id="nav-next-day">—</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     TAB AREA — 4 mutually-exclusive panels
+     ═══════════════════════════════════════════════════════════════ -->
+<main class="tab-area">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TAB 1 · Today Picks (default)
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="tab-panel" data-tab-panel="picks">
+
+    <!-- Overview banner -->
+    <div class="brief-banner">
+      <span class="brief-banner__l">M²·Alpha</span>
+      <span class="brief-banner__sep">·</span>
+      <span class="brief-banner__txt">Since <em data-tpl="start_date">—</em></span>
+      <span class="brief-banner__sep">·</span>
+      <span class="brief-banner__txt"><em data-tpl="trading_days">—</em> trading days covered</span>
+      <span class="brief-banner__grow"></span>
+      <span class="brief-banner__num"><span>Cumulative</span><em data-tpl="cum_return_text">+0%</em></span>
+      <span class="brief-banner__num"><span>Sharpe</span><em data-tpl="sharpe_text">0.00</em></span>
+      <span class="brief-banner__num"><span>Monthly win</span><em data-tpl="monthly_win_text_short">0%</em></span>
+      <span class="brief-banner__num"><span>MaxDD</span><em class="loss" data-tpl="mdd_text">0%</em></span>
+    </div>
+
+    <div class="tab1-grid">
+
+      <!-- Main: next trading-day picks -->
+      <div class="tab1-main">
+        <header class="block-head">
+          <h1 class="block-title">
+            Entry · <em id="next-trading-day">—</em> · Buy at Open
+          </h1>
+          <p class="block-sub">
+            <strong id="picks-model-title">M-0-M</strong> cross-sectional Top 5 picks · Based on the <strong id="picks-asof">—</strong> close ·
+            Rebalance at 09:30 on the next trading day
+          </p>
+        </header>
+
+        <table class="picks" id="picks-table">
+          <thead>
+            <tr>
+              <th class="c-rk">#</th>
+              <th class="c-code">Code</th>
+              <th class="c-name">Name</th>
+              <th class="c-ind">Industry</th>
+              <th class="c-score">Score</th>
+              <th class="c-bar">Signal</th>
+              <th class="c-px">Ref Price</th>
+              <th class="c-w">Weight</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <div class="strategy-inline">
+          <span class="strategy-inline__ico">📋</span>
+          <div>
+            <strong>Strategy</strong>: the public baseline is M-0-M; M-1-M / M-2-M historical capability curves are shown on the Backtest page.
+            <a href="#about-strategy" data-tab-link="about" class="inline-link">Rules →</a>
+          </div>
+        </div>
+
+        <div class="data-source-inline" id="data-source-inline" aria-live="polite"></div>
+      </div>
+
+      <!-- Side: recent performance -->
+      <aside class="tab1-side">
+
+        <div class="side-block">
+          <h3 class="side-block__h">Last 60 days · Daily excess</h3>
+          <svg id="mini-excess-chart" class="mini-chart" viewBox="0 0 600 140" preserveAspectRatio="none" aria-label="Daily excess trend"></svg>
+          <div class="side-stats">
+            <div class="side-stat">
+              <span class="side-stat__k">Avg excess</span>
+              <span class="side-stat__v" data-sc-stat="excess_avg" data-suffix="%">+0.00%</span>
+            </div>
+            <div class="side-stat">
+              <span class="side-stat__k">Daily win rate</span>
+              <span class="side-stat__v" data-sc-stat="win_rate_vs_bench_daily" data-suffix="%">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="side-block">
+          <h3 class="side-block__h">Last 7 days hits <a href="#scorecard" data-tab-link="scorecard" class="inline-link">View all →</a></h3>
+          <div class="recent-hits" id="recent-hits"></div>
+        </div>
+
+      </aside>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TAB 2 · Daily Review
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="tab-panel" data-tab-panel="scorecard" hidden>
+    <header class="block-head">
+      <h1 class="block-title">Daily Review · <span id="sc-days">—</span> samples</h1>
+      <p class="block-sub">
+        The Top 5 portfolio follows the research benchmark: delayed signal, open execution,
+        sell-band discipline, and fee accounting. This page reviews daily portfolio return vs CSI 300.
+      </p>
+    </header>
+
+    <!-- Key numbers -->
+    <div class="sc-stats">
+      <div class="sc-stat">
+        <div class="sc-stat__k">Avg Daily Excess</div>
+        <div class="sc-stat__v" data-sc-stat="excess_avg" data-suffix="%">+0.00%</div>
+        <div class="sc-stat__d">Top 5 average return minus CSI 300</div>
+      </div>
+      <div class="sc-stat">
+        <div class="sc-stat__k">Daily Win Rate</div>
+        <div class="sc-stat__v" data-sc-stat="win_rate_vs_bench_daily" data-suffix="%">0.00%</div>
+        <div class="sc-stat__d"><span data-sc-text="win_days">—</span> / <span data-sc-text="n_days_total">—</span> days Top 5 beat the benchmark</div>
+      </div>
+      <div class="sc-stat">
+        <div class="sc-stat__k">Stock Hit Rate</div>
+        <div class="sc-stat__v" data-sc-stat="avg_hit_rate" data-suffix="%">0.00%</div>
+        <div class="sc-stat__d">Share of holdings beating the benchmark</div>
+      </div>
+      <div class="sc-stat">
+        <div class="sc-stat__k">Best Day</div>
+        <div class="sc-stat__v gain" id="sc-best">+0.00%</div>
+        <div class="sc-stat__d" id="sc-best-d">—</div>
+      </div>
+    </div>
+
+    <!-- 60-day excess chart -->
+    <div class="sc-chart-host">
+      <h3 class="sub-h">
+        <span>Last 60 days · Top 5 portfolio vs CSI 300</span>
+        <span class="sub-h__legend">
+          <span class="lg lg--gain"><i></i>Beat</span>
+          <span class="lg lg--loss"><i></i>Trail</span>
+        </span>
+      </h3>
+      <svg id="excess-chart" class="excess-chart" viewBox="0 0 1400 280" preserveAspectRatio="none" aria-label="Daily excess"></svg>
+    </div>
+
+    <!-- Daily detail and pagination -->
+    <div class="sc-detail">
+      <div class="sub-h sub-h--ctrl">
+        <span id="sc-detail-title">Last 10 days · Holdings and realized performance</span>
+        <div class="sc-counter" id="sc-counter"></div>
+      </div>
+
+      <div class="sc-rangebar">
+        <div class="sc-chips" role="tablist">
+          <button class="sc-chip-btn sc-chip-btn--active" data-preset="10">Last 10 days</button>
+          <button class="sc-chip-btn" data-preset="30">Last 30 days</button>
+          <button class="sc-chip-btn" data-preset="60">Last 60 days</button>
+          <button class="sc-chip-btn" data-preset="all">All</button>
+        </div>
+        <div class="sc-range">
+          <label class="sc-range__l"><span>From</span><input type="date" id="date-start" class="sc-range__inp"></label>
+          <span class="sc-range__arrow">→</span>
+          <label class="sc-range__l"><span>To</span><input type="date" id="date-end" class="sc-range__inp"></label>
+          <button class="sc-range__btn" id="date-apply">Apply →</button>
+        </div>
+      </div>
+
+      <div class="sc-days" id="sc-days-list"></div>
+
+      <div class="sc-pager" id="sc-pager" hidden>
+        <button class="sc-pager__btn" id="sc-pager-prev" aria-label="Previous page">←</button>
+        <span class="sc-pager__info" id="sc-pager-info">— / —</span>
+        <button class="sc-pager__btn" id="sc-pager-next" aria-label="Next page">→</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TAB 3 · Backtest (range selector + sub-tabs)
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="tab-panel" data-tab-panel="backtest" hidden>
+    <header class="block-head">
+      <h1 class="block-title">OOS Backtest · 1M Initial Capital · NAV Curve</h1>
+      <p class="block-sub">
+        M-0-M is the stable public baseline for this page. M-1-M and M-2-M are virtual
+        historical research lines built on a local full-factor panel, shown only to compare
+        model capability under one benchmark protocol.
+        <span class="dim">M-1-M / M-2-M stop on 2026-06-10; they are not new daily picks.</span>
+      </p>
+      <div class="latest-callout">
+        <span class="latest-callout__tag">LATEST</span>
+        <div>
+          <strong>M-2-M latest capability line</strong>
+          <span>Frozen backtest on the full-factor panel: cumulative <em class="gain" data-tpl="research_cum_text">—</em>, Sharpe <em data-tpl="research_sharpe_text">—</em>, MaxDD <em class="loss" data-tpl="research_mdd_text">—</em>.</span>
+          <span class="latest-callout__meta" data-tpl="capability_basis_text">—</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="section-controls">
+      <div class="sc-chips" role="tablist">
+        <button class="sc-chip-btn" data-s3-preset="1m">1M</button>
+        <button class="sc-chip-btn" data-s3-preset="3m">3M</button>
+        <button class="sc-chip-btn" data-s3-preset="6m">6M</button>
+        <button class="sc-chip-btn" data-s3-preset="1y">1Y</button>
+        <button class="sc-chip-btn sc-chip-btn--active" data-s3-preset="all">All</button>
+      </div>
+      <div class="sc-range">
+        <label class="sc-range__l"><span>From</span><input type="date" id="s3-start" class="sc-range__inp"></label>
+        <span class="sc-range__arrow">→</span>
+        <label class="sc-range__l"><span>To</span><input type="date" id="s3-end" class="sc-range__inp"></label>
+        <button class="sc-range__btn" id="s3-apply">Apply →</button>
+      </div>
+    </div>
+
+    <div class="section-meta">
+      <span class="section-meta__k">Range</span>
+      <span class="section-meta__v" id="s3-range-text">— → —</span>
+      <span class="section-meta__sep">·</span>
+      <span class="section-meta__v"><em id="s3-meta-days">—</em> trading days</span>
+      <span class="section-meta__sep">·</span>
+      <span class="section-meta__v"><em id="s3-meta-months">—</em> months</span>
+    </div>
+
+    <nav class="section-tabs" role="tablist">
+      <button class="section-tab section-tab--active" data-stab="equity">NAV Curve</button>
+      <button class="section-tab" data-stab="monthly">Monthly Returns</button>
+      <button class="section-tab" data-stab="holdings">Model Preference</button>
+      <button class="section-tab" data-stab="overview">Overview</button>
+    </nav>
+
+    <!-- Overview -->
+    <div class="section-panel" data-stab-panel="overview" hidden>
+      <div class="perf-stats">
+        <div class="perf-stat">
+          <div class="perf-stat__k">Final NAV</div>
+          <div class="perf-stat__v" id="s3-final-nav-mult">0.00x</div>
+          <div class="perf-stat__d">1M initial capital → period end</div>
+        </div>
+        <div class="perf-stat">
+          <div class="perf-stat__k">Cumulative</div>
+          <div class="perf-stat__v gain" id="s3-cum-return">+0.00%</div>
+          <div class="perf-stat__d">CSI 300 over the same period <span id="s3-bench-cum">—</span></div>
+        </div>
+        <div class="perf-stat">
+          <div class="perf-stat__k">Excess Return</div>
+          <div class="perf-stat__v gain" id="s3-excess">+0.00pp</div>
+          <div class="perf-stat__d">After fees</div>
+        </div>
+        <div class="perf-stat">
+          <div class="perf-stat__k">Monthly Win Rate</div>
+          <div class="perf-stat__v gain" id="s3-monthly-win-rate">0%</div>
+          <div class="perf-stat__d" id="s3-monthly-win-text">—</div>
+        </div>
+        <div class="perf-stat">
+          <div class="perf-stat__k">Max Drawdown</div>
+          <div class="perf-stat__v loss" id="s3-mdd">0.00%</div>
+          <div class="perf-stat__d">Maximum drawdown in range</div>
+        </div>
+        <div class="perf-stat">
+          <div class="perf-stat__k">Sharpe Annualized</div>
+          <div class="perf-stat__v gain" id="s3-sharpe">0.00</div>
+          <div class="perf-stat__d">Return / volatility · annualized</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NAV curve -->
+    <div class="section-panel" data-stab-panel="equity">
+      <div class="chart-host">
+        <h3 class="sub-h">
+          <span>NAV Curve · M-0-M / M-1-M / M-2-M vs CSI 300</span>
+          <span class="sub-h__legend">
+            <span class="lg lg--m0"><i></i>M-0-M</span>
+            <span class="lg lg--m1"><i></i>M-1-M</span>
+            <span class="lg lg--m2"><i></i>M-2-M</span>
+            <span class="lg lg--bench"><i></i>CSI 300</span>
+            <span class="lg lg--dd"><i></i>Drawdown</span>
+          </span>
+        </h3>
+        <svg id="equity-chart" class="chart" viewBox="0 0 1400 420" preserveAspectRatio="none" aria-label="NAV curve"></svg>
+        <div id="equity-tooltip" class="tooltip" hidden></div>
+      </div>
+    </div>
+
+    <!-- Monthly returns -->
+    <div class="section-panel" data-stab-panel="monthly" hidden>
+      <div class="monthly-host">
+        <h3 class="sub-h">
+          <span>Monthly Returns · Model vs CSI 300</span>
+          <span class="ctrl">Monthly excess win rate <em class="gain" id="s3-monthly-win-frac">— / —</em></span>
+        </h3>
+        <div id="monthly-bars" class="monthly"></div>
+      </div>
+    </div>
+
+    <!-- Model preference -->
+    <div class="section-panel" data-stab-panel="holdings" hidden>
+      <div class="holdings-host">
+        <h3 class="sub-h">Model Preference · Based on all Top 5 holdings in range</h3>
+        <div class="holdings">
+          <div class="holdings__left">
+            <h4 class="sub-sub">Top 5 Industry Distribution</h4>
+            <div class="industry-bars" id="industry-bars"></div>
+          </div>
+          <div class="holdings__right">
+            <h4 class="sub-sub">12 Most Frequent Holdings</h4>
+            <ol class="top-held" id="top-held"></ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TAB 4 · About
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="tab-panel" data-tab-panel="about" hidden>
+    <div class="about-layout about-layout--docs">
+
+      <!-- Left sticky table of contents -->
+      <aside class="about-sidebar" id="about-sidebar">
+        <div class="about-sidebar__inner">
+          <div class="about-sidebar__title">M2-ALPHA DOCS</div>
+          <nav class="about-toc">
+            <a href="#about-overview" class="about-toc__a" data-tab-link="about" data-toc="overview">Overview</a>
+            <a href="#about-architecture" class="about-toc__a" data-tab-link="about" data-toc="architecture">Architecture <span class="about-toc__chip">diagram</span></a>
+            <a href="#about-model" class="about-toc__a" data-tab-link="about" data-toc="model">Three Weights <span class="about-toc__chip">3 weights</span></a>
+            <a href="#about-features" class="about-toc__a" data-tab-link="about" data-toc="features">Data & Factors</a>
+            <a href="#about-strategy" class="about-toc__a" data-tab-link="about" data-toc="strategy">Strategy</a>
+            <a href="#about-usage" class="about-toc__a" data-tab-link="about" data-toc="usage">Quick Start</a>
+            <a href="#about-license" class="about-toc__a" data-tab-link="about" data-toc="license">License</a>
+            <a href="#about-risk" class="about-toc__a about-toc__a--warn" data-tab-link="about" data-toc="risk">Risk Notice</a>
+          </nav>
+          <div class="about-sidebar__foot">
+            <a href="https://github.com/Johnny-xuan/M2-Alpha" target="_blank" rel="noopener" class="inline-link">GitHub →</a>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right-side docs page -->
+      <div class="about-content">
+
+      <section class="about-page about-page--active" id="about-overview" data-about-page="overview">
+        <p class="doc-kicker">RESEARCH-TO-REPRODUCTION REPOSITORY</p>
+        <h2 class="about-h about-h--page">What M²-Alpha Is</h2>
+        <div class="doc-hero-grid">
+          <div>
+            <p>
+              <strong>M²-Alpha (Micro-Macro Alpha Engine)</strong> is a deep-learning alpha repository
+              for A-share cross-sectional stock selection. It packages model design, training logic,
+              released weights, benchmark rules, and this public dashboard into one readable,
+              reproducible, research-friendly project.
+            </p>
+            <p>
+              M-0-M, M-1-M, and M-2-M correspond to the compact release baseline, the canonical
+              3-block line, and the deeper 5-block iterative line. Full method details, training
+              entry points, factor contracts, and backtest scripts are maintained in the GitHub
+              repository and the technical report.
+            </p>
+            <div class="doc-actions">
+              <a href="https://github.com/Johnny-xuan/M2-Alpha" target="_blank" rel="noopener" class="doc-action doc-action--primary">Open GitHub</a>
+              <a href="#about-architecture" data-tab-link="about" class="doc-action">View Architecture</a>
+              <a href="report/M2Alpha_Technical_Report_EN.pdf" target="_blank" rel="noopener" class="doc-action">Download Technical Report</a>
+            </div>
+          </div>
+          <div class="doc-stat-panel" aria-label="project facts">
+            <div><span>Released weights</span><strong>3</strong></div>
+            <div><span>Input factors</span><strong>35</strong></div>
+            <div><span>Benchmark strategy</span><strong>Top 5</strong></div>
+            <div><span>License</span><strong>Apache 2.0</strong></div>
+          </div>
+        </div>
+        <div class="doc-route-grid">
+          <article>
+            <span>01</span>
+            <strong>Read the design</strong>
+            <p>The architecture diagrams and M² Block notes show how the model reads single-stock time paths and same-day cross-sectional relations together.</p>
+          </article>
+          <article>
+            <span>02</span>
+            <strong>Compare weights</strong>
+            <p>Use the model zoo to separate the compact 3-block family from the deeper iterative 5-block line.</p>
+          </article>
+          <article>
+            <span>03</span>
+            <strong>Check factors</strong>
+            <p>The factor page lists all 35 inputs, their intended role, and which fields are missing or approximated in public/open-data sources.</p>
+          </article>
+          <article>
+            <span>04</span>
+            <strong>Run reproduction</strong>
+            <p>Run the benchmark with a compatible full panel; with only free public data, treat the output as an open-data baseline.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="about-page" id="about-architecture" data-about-page="architecture" hidden>
+        <p class="doc-kicker">ARCHITECTURE</p>
+        <h2 class="about-h about-h--page">Micro-Macro Alpha Architecture</h2>
+        <p>
+          M²-Alpha represents each trading-day universe as a three-dimensional
+          <strong>stocks S × time T × factors F</strong> grid. Instead of collapsing every stock into
+          one terminal vector too early, it preserves an <strong>S × T × D</strong> representation
+          across the whole window, so temporal Micro attention and cross-sectional Macro attention
+          can repeatedly reread the panel inside stackable M² Blocks.
+        </p>
+        <div class="doc-grid doc-grid--three">
+          <article class="doc-mini"><strong>Trader dual view</strong><span>A strong trader does not only inspect one stock over time or one daily ranking in isolation; they read the path and then place it back into the market cross-section.</span></article>
+          <article class="doc-mini"><strong>Decoupled Micro / Macro</strong><span>Micro models each stock along time. Macro models relative position across stocks on the same day. Keeping them separate makes the signal source explicit.</span></article>
+          <article class="doc-mini"><strong>Iterative rereading</strong><span>Temporal judgment depends on market context, and cross-sectional judgment depends on each stock path. M² Blocks let the two views refine each other over multiple rounds.</span></article>
+        </div>
+        <figure class="arch-report-figure" aria-label="Trader-inspired dual-view design intuition from the technical report">
+          <img src="report/figures/fig_trader.png" alt="Trader-inspired dual-view process: read one stock over time, compare across stocks, and iteratively refine ranking" class="arch-report-img" loading="lazy" decoding="async">
+          <figcaption>Trader-inspired diagram from the technical report: read one stock along time, compare across the market, then iterate between the two views before ranking.</figcaption>
+        </figure>
+        <figure class="arch-report-figure" aria-label="M2-Alpha architecture diagram from the technical report">
+          <img src="report/figures/fig_method.png" alt="M2-Alpha architecture: stock-time grid input, repeated M squared block, prediction training and inference" class="arch-report-img" loading="lazy" decoding="async">
+          <figcaption>M²-Alpha method diagram from the technical report: stock-time grid on the left, repeated M² Blocks in the middle, dense-supervision training and final-step ranking on the right.</figcaption>
+        </figure>
+        <div class="doc-grid doc-grid--two">
+          <article class="doc-mini"><strong>1. Stock-Time Grid</strong><span>The input is a candidate-stock panel shaped as <code>S × T × F</code>, where <code>S</code> is stock count, <code>T=8</code> is lookback length, and <code>F=35</code> is the daily factor set.</span></article>
+          <article class="doc-mini"><strong>2. Feature Projection</strong><span>The 35 factors are projected to <code>D=128</code>, combined with positional encoding and normalization, producing <code>H0 ∈ R^(S×T×D)</code>.</span></article>
+          <article class="doc-mini"><strong>3. M² Block</strong><span>Each layer runs Micro temporal attention, Macro cross-sectional attention, and an FFN. Micro reads stock paths; Macro compares all stocks on the same day.</span></article>
+          <article class="doc-mini"><strong>4. Dense Supervision</strong><span>Training supervises the full <code>S × T</code> prediction grid; inference uses only the final time step <code>Y[:,T]</code> for daily cross-sectional ranking.</span></article>
+        </div>
+        <p class="doc-note">
+          This design lets path interpretation and relative-strength comparison correct each other.
+          A deeper model is not just more parameters; it allows Micro and Macro to exchange context over more refinement rounds.
+        </p>
+        <div class="report-panel">
+          <div>
+            <p class="doc-kicker">TECHNICAL REPORT</p>
+            <strong>Full PDF technical report</strong>
+            <span>The report contains method diagrams, experiment settings, ablations, and reproduction boundaries. The PDF and repository docs are the source of truth.</span>
+          </div>
+          <div class="report-panel__actions">
+            <a href="report/M2Alpha_Technical_Report.pdf" target="_blank" rel="noopener" class="doc-action doc-action--primary">Chinese PDF</a>
+            <a href="report/M2Alpha_Technical_Report_EN.pdf" target="_blank" rel="noopener" class="doc-action">English PDF</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="about-page" id="about-model" data-about-page="model" hidden>
+        <header class="about-h2">
+          <div>
+            <p class="doc-kicker">MODEL ZOO</p>
+            <h2 class="about-h about-h--page">Three Model Designs</h2>
+          </div>
+          <span class="ver-chip" id="about-model-chip">3 weights</span>
+        </header>
+        <p>
+          The three released weights share the same
+          <strong>stock-time grid → M² Block → dense prediction grid</strong> route.
+          Lookback length, hidden width, Micro/Macro attention heads, and the Gaussian neighbor prior
+          stay aligned. The main differences are release positioning, the canonical 3-block checkpoint,
+          and the deeper 5-block iterative variant.
+        </p>
+        <div class="design-strip">
+          <span><strong>Shared base</strong> T=8 · F=35 · D=128</span>
+          <span>Micro heads 4</span>
+          <span>Macro heads 2</span>
+          <span>Gaussian σ=4</span>
+          <span>Dense supervision</span>
+        </div>
+        <div class="model-grid model-grid--docs">
+          <article class="model-card model-card--m0">
+            <div class="model-card__head">
+              <h3>M-0-M</h3>
+              <span>compact release anchor · 3 blocks</span>
+            </div>
+            <p>
+              Compact release baseline. It is the smallest readable, runnable, maintainable M² stack:
+              three M² Blocks, Micro reading each stock path first, Macro then reordering same-day
+              stock relationships, with no extra gating complexity. It anchors the repository with a stable implementation.
+            </p>
+            <ul class="model-points">
+              <li>Prioritizes stability and transparency as a release/reference line.</li>
+              <li>Belongs to the same 3-block family as M-1-M, not a separate architecture.</li>
+            </ul>
+            <div class="model-specs">
+              <span>3 blocks</span><span>release anchor</span><span>no extra gating</span>
+            </div>
+          </article>
+          <article class="model-card model-card--m1">
+            <div class="model-card__head">
+              <h3>M-1-M</h3>
+              <span>canonical 3-block line</span>
+            </div>
+            <p>
+              First-generation canonical line. It keeps 3-block depth and asks whether the base M² Block
+              is already strong enough: dense supervision trains the whole prediction grid, while inference
+              ranks only the final time step. This is the standard compact M²-Alpha form.
+            </p>
+            <ul class="model-points">
+              <li>Tests the first-order value of decoupled Micro/Macro modeling plus iteration.</li>
+              <li>Structurally close to M-0-M; the distinction is mainly checkpoint lineage and research protocol.</li>
+            </ul>
+            <div class="model-specs">
+              <span>3 blocks</span><span>canonical M²</span><span>dense grid</span>
+            </div>
+          </article>
+          <article class="model-card model-card--m2">
+            <div class="model-card__head">
+              <h3>M-2-M</h3>
+              <span>deep iterative line · 5 blocks</span>
+            </div>
+            <p>
+              Second-generation deeper line. It stacks M² Blocks to five layers, giving Micro more chances
+              to reread time paths and Macro more rounds to correct relative positions. Depth here means
+              cross-sectional context injected by Macro flows back into the next Micro pass, then gets recalibrated again.
+            </p>
+            <ul class="model-points">
+              <li>Targets stronger representation of co-movement, industry crowding, and relative strength.</li>
+              <li>The only version that materially changes block depth and iteration count.</li>
+            </ul>
+            <div class="model-specs">
+              <span>5 blocks</span><span>more refinement</span><span>capacity line</span>
+            </div>
+          </article>
+        </div>
+        <p class="doc-note">
+          Along the design axis, M-0-M and M-1-M are compact same-depth lines, while M-2-M is the deeper iterative line.
+          Factor completeness and public-data limits are documented separately in Data & Factors and Quick Start.
+        </p>
+      </section>
+
+      <section class="about-page" id="about-features" data-about-page="features" hidden>
+        <p class="doc-kicker">DATA AND FACTORS</p>
+        <h2 class="about-h about-h--page">35 Input Factors</h2>
+        <p>
+          M²-Alpha uses 35 input factors covering momentum, moving-average deviation, volatility,
+          candlestick shape, trading activity, turnover, valuation, and money-flow structure.
+          Each factor is first constructed along each stock history, then robust z-scored cross-sectionally
+          on the same trading day before entering the M² Blocks. The closer the factor panel is to the full contract,
+          the closer the model gets to its research-training and strong-backtest capability.
+        </p>
+        <div class="factor-ledger">
+          <article class="factor-card">
+            <header><h4>Momentum Returns</h4><span>8 factors</span></header>
+            <dl><div><dt>What</dt><dd>Cumulative returns over multiple past windows.</dd></div><div><dt>Role</dt><dd>Helps the model identify short-term continuation, reversal, and medium-term trend strength.</dd></div><div><dt>Formula</dt><dd><code>close / close.shift(k) - 1</code>, with <code>k=1,2,3,5,10,20,30,60</code>.</dd></div></dl>
+            <code class="feat-list">f_ret_1 · f_ret_2 · f_ret_3 · f_ret_5 · f_ret_10 · f_ret_20 · f_ret_30 · f_ret_60</code>
+          </article>
+          <article class="factor-card">
+            <header><h4>Moving-Average Deviation</h4><span>5 factors</span></header>
+            <dl><div><dt>What</dt><dd>Close price relative to moving averages at different horizons.</dd></div><div><dt>Role</dt><dd>Provides a reference for overheated, weak, or equilibrium-breaking price behavior.</dd></div><div><dt>Formula</dt><dd><code>close / rolling_mean(close,k) - 1</code>, with <code>k=5,10,20,30,60</code>.</dd></div></dl>
+            <code class="feat-list">f_close_ma_5 · f_close_ma_10 · f_close_ma_20 · f_close_ma_30 · f_close_ma_60</code>
+          </article>
+          <article class="factor-card">
+            <header><h4>Return Volatility</h4><span>5 factors</span></header>
+            <dl><div><dt>What</dt><dd>Rolling standard deviation of recent daily returns.</dd></div><div><dt>Role</dt><dd>Captures risk, disagreement, and instability, helping separate strong trends from noisy swings.</dd></div><div><dt>Formula</dt><dd>Compute 1-day return first, then <code>rolling_std(ret_1,k)</code> with <code>k=5,10,20,30,60</code>.</dd></div></dl>
+            <code class="feat-list">f_vol_5 · f_vol_10 · f_vol_20 · f_vol_30 · f_vol_60</code>
+          </article>
+          <article class="factor-card">
+            <header><h4>Candlestick Shape</h4><span>4 factors</span></header>
+            <dl><div><dt>What</dt><dd>Normalized body, full range, upper shadow, and lower shadow for the day.</dd></div><div><dt>Role</dt><dd>Captures intraday buying/selling pressure, failed breakouts, rebounds, and range structure.</dd></div><div><dt>Formula</dt><dd>Normalize by <code>open</code>: <code>(close-open)/open</code>, <code>(high-low)/open</code>, and shadow ratios.</dd></div></dl>
+            <code class="feat-list">f_kmid · f_klen · f_kup · f_klow</code>
+          </article>
+          <article class="factor-card">
+            <header><h4>Trading Activity</h4><span>5 factors</span></header>
+            <dl><div><dt>What</dt><dd>Volume relative to its own rolling mean, plus one-day changes in volume and amount.</dd></div><div><dt>Role</dt><dd>Detects volume expansion/contraction, shifts in trading heat, and participation behind price moves.</dd></div><div><dt>Formula</dt><dd><code>vol / rolling_mean(vol,k)</code> with <code>k=5,10,20</code>; also <code>pct_change(vol,1)</code> and <code>pct_change(amount,1)</code>.</dd></div></dl>
+            <code class="feat-list">f_vol_ratio_5 · f_vol_ratio_10 · f_vol_ratio_20 · f_vol_chg_1 · f_amount_chg_1</code>
+          </article>
+          <article class="factor-card">
+            <header><h4>Turnover & Volume Ratio</h4><span>3 factors</span></header>
+            <dl><div><dt>What</dt><dd>Share turnover speed, free-float turnover, and the vendor-style volume ratio.</dd></div><div><dt>Role</dt><dd>Measures crowding, short-term attention, and abnormal trading activity.</dd></div><div><dt>Formula</dt><dd>Use <code>turnover_rate</code>, <code>turnover_rate_f</code>, and vendor-style <code>volume_ratio</code>, then cross-sectionally standardize.</dd></div></dl>
+            <code class="feat-list">f_turnover_rate · f_turnover_rate_f · f_volume_ratio</code>
+          </article>
+          <article class="factor-card">
+            <header><h4>Valuation Position</h4><span>3 factors</span></header>
+            <dl><div><dt>What</dt><dd>TTM P/E, P/B, and TTM P/S.</dd></div><div><dt>Role</dt><dd>Adds valuation context to price-volume signals, helping distinguish trend, crowding, and fundamental pricing position.</dd></div><div><dt>Formula</dt><dd>Read <code>pe_ttm</code>, <code>pb</code>, and <code>ps_ttm</code>, handle outliers, then apply same-day robust z-score.</dd></div></dl>
+            <code class="feat-list">f_pe_ttm · f_pb · f_ps_ttm</code>
+          </article>
+          <article class="factor-card factor-card--warn">
+            <header><h4>Money-Flow Structure</h4><span>2 factors</span></header>
+            <dl><div><dt>What</dt><dd>Main-fund net inflow intensity and the directional gap between large and small orders.</dd></div><div><dt>Role</dt><dd>Adds order-flow behavior, helping tell whether price movement is driven by active buying, active selling, or scattered trades.</dd></div><div><dt>Formula</dt><dd><code>net_mf_amount / amount</code>; and <code>(buy_lg + buy_elg - buy_sm) / (buy_lg + buy_elg + buy_sm + 1)</code>.</dd></div></dl>
+            <code class="feat-list">f_mf_net_ratio · f_mf_big_small_diff</code>
+          </article>
+        </div>
+        <div class="factor-status-grid">
+          <article class="factor-status">
+            <strong>Full research factor contract</strong>
+            <span>All 35 inputs are constructible, including price-volume, turnover, valuation, volume ratio, and money-flow fields. M-1-M / M-2-M strong backtest curves should be read under this protocol.</span>
+          </article>
+          <article class="factor-status factor-status--warn">
+            <strong>Current public display protocol</strong>
+            <span><code>f_volume_ratio</code>, <code>f_mf_net_ratio</code>, and <code>f_mf_big_small_diff</code> cannot be obtained as stable full-history truth fields; <code>f_turnover_rate_f</code> may only be approximated. The model is closest to research capability when the full factor panel is available.</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="about-page" id="about-strategy" data-about-page="strategy" hidden>
+        <p class="doc-kicker">BENCHMARK STRATEGY</p>
+        <h2 class="about-h about-h--page">Unified Backtest Strategy</h2>
+        <p>
+          The backtest page does not show the prettiest curve after arbitrary tuning. It uses fixed
+          rules to compare model ranking ability, making it clear that performance comes from model
+          scores, data protocol, and portfolio rules rather than parameter picking after the fact.
+        </p>
+        <ol class="rules-compact rules-compact--docs">
+          <li><span class="rk">Universe</span>Dynamic top1000 stock pool sampled by month-end float market cap</li>
+          <li><span class="rk">Selection</span>Take the top 100 predicted names each backtest day, then build a Top 5 portfolio</li>
+          <li><span class="rk">Weights</span>Equal weight, 20% per holding; no score-weighting</li>
+          <li><span class="rk">Industry cap</span>Industry cap20; if the portfolio cannot be filled, continue with the research benchmark fallback</li>
+          <li><span class="rk">Sell rule</span>Sell only after a name falls out of daily Top 200, reducing excessive turnover</li>
+          <li><span class="rk">Execution</span>Open execution and open NAV accounting, fee_rate=0.0013, with no additional slippage model</li>
+        </ol>
+        <p class="doc-note">
+          This strategy is for the public benchmark and research-curve explanation. Real trading requires
+          fresh assessment of liquidity, slippage, execution constraints, and compliance requirements.
+        </p>
+      </section>
+
+      <section class="about-page" id="about-usage" data-about-page="usage" hidden>
+        <p class="doc-kicker">AGENT QUICK START</p>
+        <h2 class="about-h about-h--page">Prompt for a coding agent</h2>
+        <p>
+          The prompt below can be handed directly to a coding agent to set up
+          the local environment, inspect data, launch the dashboard, or run a benchmark. It explicitly
+          separates public display data from the full research factor panel to avoid mixing open-data
+          output with full-factor research results.
+        </p>
+        <div class="guide-grid">
+          <article class="guide-card"><span>01</span><strong>Public demo</strong><p>Launch the static <code>docs/</code> page and verify that M-0-M/M-1-M/M-2-M curves and model docs open correctly.</p></article>
+          <article class="guide-card"><span>02</span><strong>Read architecture</strong><p>Inspect <code>docs/METHOD.md</code>, <code>m2alpha/</code>, and <code>model_registry.yml</code>, then explain the M² Block and three released weights.</p></article>
+          <article class="guide-card"><span>03</span><strong>Check data</strong><p>If only public data is available, run only the public baseline. If a full 35-factor top1000 panel exists, run the research benchmark.</p></article>
+          <article class="guide-card"><span>04</span><strong>Reproduce results</strong><p>Ask the agent to record commands, data paths, strategy parameters, and output files so open-data baseline results are not mixed with full-data research results.</p></article>
+        </div>
+        <div class="code-panel code-panel--prompt" aria-label="agent quick start prompt">
+          <div class="code-panel__bar">
+            <div class="code-panel__dots" aria-hidden="true"><span></span><span></span><span></span></div>
+            <button type="button" class="code-copy" data-copy-target="agent-prompt-code" aria-label="Copy agent quick start prompt">Copy</button>
+          </div>
+          <pre><code id="agent-prompt-code">You are my coding agent. Help me configure and use the M2-Alpha repository:
+
+1. Clone and enter the repository: github.com/Johnny-xuan/M2-Alpha.
+2. First read README.md, docs/METHOD.md, docs/DATA_SOURCES.md, docs/REPRODUCTION.md, and model_registry.yml.
+3. Create a Python environment and install requirements.txt; do not modify model weights.
+4. Launch the local site: python -m http.server 8765 --directory docs, then verify that the Backtest and About pages open correctly.
+5. Explain the three model lines:
+   - M-0-M: compact release baseline, 3-block M² stack, suitable for checking the implementation and public display.
+   - M-1-M: first-generation canonical line, also 3-block, useful for understanding the standard base M² Block form.
+   - M-2-M: second-generation deeper line, 5-block, useful for understanding the extra representation capacity from deeper Micro/Macro iteration.
+6. Important data boundary:
+   The public/open-data path does not include the full research data. Training and strong benchmark results used a richer research panel,
+   including the full 35 factors, dynamic top1000 stock universe, volume ratio, free-float turnover, valuation, and money-flow fields.
+   If I only provide free BaoStock/AKShare/efinance data, clearly state that it cannot fully reproduce the M-1-M/M-2-M research capability.
+7. If I want to reproduce the benchmark, first ask me for a compatible panel path; then use the unified strategy:
+   n_hold=5, pool_rank=100, sell_rank=200, industry cap20, open execution/open NAV, fee_rate=0.0013.
+8. Finish with a short report: what code was run, where the data came from, what outputs were produced, and which factors remain unreproducible.</code></pre>
+        </div>
+        <p class="doc-note">
+          The public repository can open-source code, weights, and workflow, but it cannot bundle the full
+          research data used for training. To reproduce the strong research curves, prepare a compatible
+          full factor panel; with only free public data, treat results as an open-data baseline.
+        </p>
+      </section>
+
+      <section class="about-page" id="about-license" data-about-page="license" hidden>
+        <p class="doc-kicker">OPEN LICENSE</p>
+        <h2 class="about-h about-h--page">Open License and Commercial Use</h2>
+        <div class="license-panel">
+          <p>
+            The M2-Alpha repository is released under the <strong>Apache License 2.0</strong>.
+            Code, model weights, training scripts, backtest code, and the web dashboard may be used
+            for academic research, derivative development, and commercial projects, provided that the
+            license and required copyright notices are preserved.
+          </p>
+          <p>
+            Data should be considered separately: BaoStock, AKShare, efinance, and any data source you
+            connect yourself have their own terms and upstream restrictions. The repository provides
+            construction and adapter logic, but it does not guarantee the authorization scope of external data.
+          </p>
+        </div>
+        <div class="doc-grid doc-grid--two">
+          <article class="doc-mini"><strong>Allowed</strong><span>Read source code, download weights, reproduce benchmarks, modify models, and integrate into commercial systems.</span></article>
+          <article class="doc-mini"><strong>Check yourself</strong><span>Review crawl frequency, caching, redistribution, and commercial authorization boundaries for external market data.</span></article>
+        </div>
+      </section>
+
+      <section class="about-page about-page--warn" id="about-risk" data-about-page="risk" hidden>
+        <p class="doc-kicker">RISK NOTICE</p>
+        <h2 class="about-h about-h--page">Risk Notice</h2>
+        <ul>
+          <li><strong>This is not investment advice in any form.</strong> The site displays model predictions and historical backtests.</li>
+          <li><strong>Past backtests do not imply future performance.</strong> Model effectiveness may decay as market structure changes.</li>
+          <li>The historical backtest includes a worst single day of <span class="loss" data-tpl="worst_day_ret">—</span> on <span data-tpl="worst_day_d">—</span>; real trading must tolerate short-term drawdowns.</li>
+          <li>Executing differently from the rules, such as buying only a few names, using unequal weights, or delaying rebalance, can materially change realized results.</li>
+          <li>Real trading requires independent assessment of fees, slippage, capital size, risk tolerance, and compliance constraints.</li>
+          <li>Any decision made based on this site is the user's own responsibility.</li>
+        </ul>
+      </section>
+
+      </div>
+    </div>
+
+    <footer class="footer footer--about">
+      <span class="footer__mark">M²·Alpha</span>
+      <span class="footer__sep">·</span>
+      <a href="https://github.com/Johnny-xuan/M2-Alpha" target="_blank" rel="noopener" class="footer__link">GitHub</a>
+      <span class="footer__sep">·</span>
+      <span>© 2026</span>
+      <span class="footer__sep">·</span>
+      <span>Apache License 2.0</span>
+    </footer>
+  </section>
+
+</main>
+
+<script>
+  (function(){
+    function syncLangLinks(){
+      var hash = window.location.hash || "#picks";
+      document.querySelectorAll("[data-lang-target]").forEach(function(link){
+        var target = link.getAttribute("data-lang-target");
+        link.setAttribute("href", target === "index.html" ? "./" + hash : target + hash);
+      });
+    }
+    syncLangLinks();
+    window.addEventListener("hashchange", syncLangLinks);
+  })();
+</script>
+<script type="module" src="js/main.js?v=20260709-bilingual1"></script>
+</body>
+</html>

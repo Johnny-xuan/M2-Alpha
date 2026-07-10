@@ -1,0 +1,103 @@
+version: 3
+generated_from: "public release model-lineage audit"
+last_inventory_date: "2026-07-09"
+
+public_site_policy:
+  public_lines:
+    - M-0-M
+    - M-1-M
+    - M-2-M
+  rule: "M-0-M is the current stable public baseline; M-1-M and M-2-M are historical research curves, not daily recommendation models."
+  not_public_main_line:
+    - "The 4-block depth ablation remains report evidence, not a public model line."
+
+storage_policy:
+  committed_release_assets:
+    - "ml/m2alpha.pt"
+    - "ml/m2alpha-m1m.pt"
+    - "ml/m2alpha-m2m.pt"
+  excluded_from_repository:
+    - "internal experiment checkpoint pools"
+    - "raw epoch grids and .last.pt resume states"
+    - "seed packs outside the selected release evidence"
+    - "local inventory files"
+  caveat:
+    - "Public-facing method names use M-0-M/M-1-M/M-2-M only."
+
+shared_architecture:
+  architecture: m2_alpha
+  tau: 8
+  feature_count: 35
+  d_model: 128
+  n_heads_intra: 4
+  n_heads_inter: 2
+  dropout: 0.1
+  use_gating: false
+  gaussian_sigma: 4.0
+
+public_lines:
+  - id: m0m
+    public_name: M-0-M
+    role: stable_public_baseline
+    website_surface: "today picks, daily review, and baseline curve"
+    checkpoint_policy: "Inherited from the current public GitHub Pages baseline."
+    source_identity:
+      public_asset: "ml/m2alpha.pt"
+      sha256_16: "7476d38487157fb"
+    design:
+      n_layers: 3
+      note: "Compact public baseline, used as the stable site anchor."
+    caveat: "Baseline page evidence should not be compared directly with full-factor research curves without naming the data and strategy basis."
+
+  - id: m1m
+    public_name: M-1-M
+    role: historical_full_factor_3_block_curve
+    website_surface: "backtest curve only"
+    checkpoint:
+      public_asset: "ml/m2alpha-m1m.pt"
+      seed: 42
+      checkpoint_epoch: 13
+      sha256_16: "b2d12a39b2600369"
+    design:
+      n_layers: 3
+      note: "Canonical compact M² line."
+    benchmark_highlight:
+      metric_basis: "compatible_full_factor_top1000_hold5_cap20_open_fee"
+      cum_pct: 239.12
+      sharpe: 3.40
+      max_dd_pct: -15.43
+      realized_window: "2025-07-10 to 2026-05-21"
+    caveat: "Historical research curve; not a daily updated portfolio recommendation."
+
+  - id: m2m
+    public_name: M-2-M
+    role: historical_full_factor_5_block_research_highlight
+    website_surface: "backtest curve and latest capability callout"
+    checkpoint:
+      public_asset: "ml/m2alpha-m2m.pt"
+      seed: 2024
+      checkpoint_epoch: 20
+      sha256_16: "1588b22a7dbde0fd"
+    design:
+      n_layers: 5
+      note: "Deeper iterative Micro/Macro line."
+    benchmark_highlight:
+      metric_basis: "compatible_full_factor_top1000_hold5_cap20_open_fee"
+      cum_pct: 354.34
+      sharpe: 3.99
+      max_dd_pct: -17.68
+      realized_window: "2025-07-10 to 2026-05-21"
+    caveat: "Main research highlight; not a daily updated portfolio recommendation."
+
+lineage_evidence:
+  depth_4_ablation:
+    public_main_line: false
+    seed: 42
+    checkpoint_epoch: 17
+    sha256_16: "9dcd3d9a23467146"
+    n_layers: 4
+    benchmark_reference:
+      cum_pct: 147.38
+      sharpe: 1.93
+      max_dd_pct: -30.14
+    reason_not_public_main_line: "Latest release decision keeps the 4-block depth ablation as report evidence rather than a public model line."

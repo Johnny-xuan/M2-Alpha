@@ -2,6 +2,7 @@
    tab-picks.js — Tab 1 sidebar: mini excess chart + recent hits chips
    ──────────────────────────────────────────────────────────── */
 import { $, svg, fmtPct } from "./utils.js";
+import { t } from "./i18n.js?v=20260709-bilingual1";
 
 /* mini 60-day excess sparkline */
 export function renderMiniExcess(data) {
@@ -38,7 +39,7 @@ export function renderMiniExcess(data) {
     const ht = Math.abs(yScale(v) - yMid);
     svgEl.appendChild(svg("rect", {
       x, y, width: barW, height: Math.max(1, ht), rx: 1,
-      fill: v >= 0 ? "#c8f93d" : "#ff6b3c",
+      fill: v >= 0 ? "#ff6b3c" : "#c8f93d",
     }));
   });
 }
@@ -51,11 +52,11 @@ export function renderRecentHits(data) {
     .filter(d => !d.pending && d.avg_ret != null)
     .slice(-7).reverse();
   if (!recent.length) {
-    host.innerHTML = '<div class="dim" style="font-size:12px">暂无已结算数据</div>';
+    host.innerHTML = `<div class="dim" style="font-size:12px">${t("recent.noSettled")}</div>`;
     return;
   }
   host.innerHTML = recent.map(day => {
-    // 着色按"当日 Top10 平均收益的绝对正负"，不按 vs bench
+    // 着色按"当日 Top5 平均收益的绝对正负"，不按 vs bench
     const cls = (day.avg_ret || 0) >= 0 ? "gain" : "loss";
     return `
       <div class="rh-row ${cls}">

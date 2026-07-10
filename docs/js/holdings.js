@@ -2,6 +2,7 @@
    holdings.js — industry distribution + most-held tickers
    ──────────────────────────────────────────────────────────── */
 import { $ } from "./utils.js";
+import { t } from "./i18n.js?v=20260709-bilingual1";
 
 export function renderHoldingsPanel(data) {
   const ind = data.industry_avg.slice(0, 10);
@@ -26,7 +27,7 @@ export function renderHoldingsPanel(data) {
         <div class="th-row__n">${h.name}</div>
         <div class="th-row__c">${h.ts} <em>· ${h.industry}</em></div>
       </div>
-      <div class="th-row__pct">${h.pct}%<span class="pct-sub">·${h.days}天</span></div>
+      <div class="th-row__pct">${h.pct}%<span class="pct-sub">${t("holdings.days", { days: h.days })}</span></div>
     </li>
   `).join("");
 }

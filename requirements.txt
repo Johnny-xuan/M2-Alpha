@@ -1,13 +1,16 @@
-# M²-Alpha 每日数据更新依赖（GitHub Actions runner 使用）
+# M²-Alpha public release runtime dependencies
 
-# 数据 / 计算
+# Data / computation
 pandas>=2.0
 numpy>=1.24
 pyarrow>=14.0
+requests>=2.31
 
-# A 股数据源（无 token，免费，无频次限制）
+# A-share public data sources, no token required
 baostock>=0.9
+akshare>=1.18
+efinance>=0.5.8
 
-# 深度学习推理（CPU only — runner 没 GPU）
+# Deep-learning inference, CPU wheel by default
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch>=2.0,<3.0

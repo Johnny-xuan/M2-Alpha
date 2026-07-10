@@ -1,9 +1,8 @@
 /* ────────────────────────────────────────────────────────────
-   navbar.js — live clock, today date, scroll-spy for tabs
+   navbar.js — clock, today date, scroll-spy for tabs
    ──────────────────────────────────────────────────────────── */
 import { $, $$ } from "./utils.js";
-
-const WEEKDAYS_ZH = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+import { t } from "./i18n.js?v=20260709-bilingual1";
 
 export function startNavClock() {
   const dEl = $("#nav-today");
@@ -14,7 +13,7 @@ export function startNavClock() {
     const y = now.getFullYear();
     const m = String(now.getMonth() + 1).padStart(2, "0");
     const d = String(now.getDate()).padStart(2, "0");
-    const wd = WEEKDAYS_ZH[now.getDay()];
+    const wd = t(`weekday.${now.getDay()}`);
     const hh = String(now.getHours()).padStart(2, "0");
     const mm = String(now.getMinutes()).padStart(2, "0");
     const ss = String(now.getSeconds()).padStart(2, "0");

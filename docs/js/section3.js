@@ -1,13 +1,14 @@
 /* ────────────────────────────────────────────────────────────
    section3.js — Section 03 controller
-     · master time-range selector (chips + date inputs)
+     · time-range selector (chips + date inputs)
      · sub-tabs (overview / equity / monthly / holdings)
      · re-computes all 4 panels' data from the selected range
    ──────────────────────────────────────────────────────────── */
 import { $, $$, fmtPct } from "./utils.js";
-import { drawEquityChart } from "./equity-chart.js";
-import { renderMonthlyBars } from "./monthly.js";
-import { renderHoldingsPanel } from "./holdings.js";
+import { t } from "./i18n.js?v=20260709-bilingual1";
+import { drawEquityChart } from "./equity-chart.js?v=20260709-bilingual1";
+import { renderMonthlyBars } from "./monthly.js?v=20260709-bilingual1";
+import { renderHoldingsPanel } from "./holdings.js?v=20260709-bilingual1";
 
 const STARTING_NAV = 1_000_000;
 
@@ -18,8 +19,9 @@ export function initSection3(data) {
   _data = data;
   if (!data.equity_curve?.length) return;
 
-  const minD = data.equity_curve[0].d;
-  const maxD = data.equity_curve[data.equity_curve.length - 1].d;
+  const ranges = allEquityRanges(data);
+  const minD = ranges.minD;
+  const maxD = ranges.maxD;
   _range = { start: minD, end: maxD };
 
   const startEl = $("#s3-start"), endEl = $("#s3-end");
@@ -29,26 +31,26 @@ export function initSection3(data) {
 
   // preset chips
   $$('[data-s3-preset]').forEach(btn => {
-    btn.addEventListener("click", () => {
+    btn.onclick = () => {
       $$('[data-s3-preset]').forEach(b => b.classList.remove("sc-chip-btn--active"));
       btn.classList.add("sc-chip-btn--active");
       applyPreset(btn.dataset.s3Preset);
-    });
+    };
   });
-  $("#s3-apply").addEventListener("click", () => {
+  $("#s3-apply").onclick = () => {
     $$('[data-s3-preset]').forEach(b => b.classList.remove("sc-chip-btn--active"));
     applyRange(startEl.value, endEl.value);
-  });
+  };
   [startEl, endEl].forEach(el => {
-    el.addEventListener("change", () => {
+    el.onchange = () => {
       $$('[data-s3-preset]').forEach(b => b.classList.remove("sc-chip-btn--active"));
-    });
-    el.addEventListener("keydown", e => { if (e.key === "Enter") $("#s3-apply").click(); });
+    };
+    el.onkeydown = e => { if (e.key === "Enter") $("#s3-apply").click(); };
   });
 
   // sub-tabs
   $$('.section-tab').forEach(btn => {
-    btn.addEventListener("click", () => switchTab(btn.dataset.stab));
+    btn.onclick = () => switchTab(btn.dataset.stab);
   });
 
   // initial render
@@ -62,7 +64,7 @@ function switchTab(name) {
   });
   // re-render the now-visible panel (charts need to size correctly after un-hiding)
   if (name === "equity") {
-    drawEquityChart(filterEquity());
+    renderEquityChart();
   } else if (name === "monthly") {
     renderMonthlyBars({ monthly_returns: filterMonthly() });
     const monthlySlice = filterMonthly();
@@ -84,10 +86,10 @@ export function refreshSection3() {
 }
 
 function applyPreset(preset) {
-  const all = _data.equity_curve;
-  const lastDate = all[all.length - 1].d;
+  const ranges = allEquityRanges(_data);
+  const lastDate = ranges.maxD;
   if (preset === "all") {
-    _range = { start: all[0].d, end: lastDate };
+    _range = { start: ranges.minD, end: lastDate };
   } else {
     const m = { "1m": 1, "3m": 3, "6m": 6, "1y": 12 }[preset];
     const d = new Date(lastDate); d.setMonth(d.getMonth() - m);
@@ -106,6 +108,50 @@ function applyRange(startD, endD) {
 
 function filterEquity() {
   return _data.equity_curve.filter(d => d.d >= _range.start && d.d <= _range.end);
+}
+
+function allEquityRanges(data) {
+  const dates = [];
+  for (const row of data.equity_curve || []) dates.push(row.d);
+  for (const curve of data.backtest_curves || []) {
+    for (const row of curve.equity_curve || []) dates.push(row.d);
+  }
+  dates.sort();
+  return {
+    minD: dates[0] || data.equity_curve?.[0]?.d,
+    maxD: dates[dates.length - 1] || data.equity_curve?.at(-1)?.d,
+  };
+}
+
+function filterCurveRows(rows) {
+  return (rows || []).filter(d => d.d >= _range.start && d.d <= _range.end);
+}
+
+function buildEquityChartInput() {
+  const curves = [
+    {
+      key: "m0m",
+      label: _data.model?.label || _data.summary?.model_label || "M-0-M",
+      title: _data.model?.title || "M-0-M",
+      kind: "public_baseline",
+      series: filterCurveRows(_data.equity_curve),
+    },
+  ];
+  for (const curve of _data.backtest_curves || []) {
+    curves.push({
+      key: curve.key,
+      label: curve.label,
+      title: curve.title,
+      kind: curve.kind,
+      series: filterCurveRows(curve.equity_curve),
+    });
+  }
+  return { curves };
+}
+
+function renderEquityChart() {
+  drawEquityChart(buildEquityChartInput());
+  requestAnimationFrame(() => drawEquityChart(buildEquityChartInput()));
 }
 
 function filterMonthly() {
@@ -171,7 +217,7 @@ function rerenderAll() {
 
   // Equity chart (only render if its panel is visible OR pre-compute and store)
   const eqActive = !$('[data-stab-panel="equity"]').hidden;
-  if (eqActive) drawEquityChart(eqSlice);
+  if (eqActive) renderEquityChart();
 
   // Monthly bars (only if visible)
   const mActive = !$('[data-stab-panel="monthly"]').hidden;
@@ -203,7 +249,7 @@ function renderOverview(eqSlice, monthlySlice) {
   setNum("#s3-sharpe", o.sharpe.toFixed(2), o.sharpe >= 1 ? "gain" : "");
 
   $("#s3-bench-cum").textContent = (o.benchPct >= 0 ? "+" : "") + o.benchPct.toFixed(2) + "%";
-  $("#s3-monthly-win-text").textContent = `${monthlySlice.length} 个月中 ${monthsWon} 个月跑赢`;
+  $("#s3-monthly-win-text").textContent = t("section.monthlyWin", { months: monthlySlice.length, won: monthsWon });
 }
 
 function setNum(sel, txt, cls) {

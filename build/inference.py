@@ -1,7 +1,8 @@
-"""inference.py — 加载 m2alpha.pt 在最新 panel 上跑推理 → 输出每日 Top 10。
+"""inference.py — run M2-Alpha model inference on the latest panel.
 
 输入: build/cache/panel.parquet (来自 fetch_data.py)
-输出: build/cache/preds.parquet  字段: trade_date, ts_code, pred
+输出: build/cache/preds_m1m.parquet / build/cache/preds_m2m.parquet
+字段: trade_date, ts_code, pred
 
 策略：
   - 对每一日 D，构造 X ∈ (S, τ=8, F=35)，X[t] = features at D-τ+1+t
@@ -23,17 +24,20 @@ from alpha_model import (
     feature_columns,
     cross_sectional_robust_zscore,
 )
+from model_versions import (
+    DEFAULT_MODEL_LABEL,
+    MODEL_VERSIONS,
+    get_model_version,
+    model_keys,
+)
 
 CACHE = HERE / "cache"
-ML = HERE.parent / "ml"
-CKPT = ML / "m2alpha.pt"
 
 
-def run_inference(panel: pd.DataFrame, ckpt_path: Path, tau: int = 8,
-                  device: str = "cpu") -> pd.DataFrame:
-    """对 panel 跑模型 → 返回长表 (trade_date, ts_code, pred)。"""
+def prepare_inference_data(panel: pd.DataFrame, tau: int = 8) -> dict:
+    """Prepare shared panel tensors for all public M2-Alpha checkpoints."""
     # 1. 特征工程
-    print(f"  feature engineering ...")
+    print("  feature engineering ...")
     panel = make_features(panel)
     fc = feature_columns(panel)
     print(f"    {len(fc)} features: {fc[:3]}...{fc[-3:]}")
@@ -51,12 +55,6 @@ def run_inference(panel: pd.DataFrame, ckpt_path: Path, tau: int = 8,
     all_codes = sorted(panel["ts_code"].unique())
     print(f"    universe: {len(all_codes)} stocks × {len(all_dates)} days")
 
-    # 4. 加载模型
-    print(f"  loading model: {ckpt_path}")
-    model = load_alpha_model(str(ckpt_path), device=device)
-
-    # 5. 对每一日（从第 tau 天起）跑推理
-    print("  running inference ...")
     # 关键：每天只把"当天实际有 panel 数据"的股票喂给模型；零填充行不进 batch。
     # 否则带 inter-stock attention 的模型会被 padding 污染（peer-set 变了 → 所有 pred 跟着变），
     # 导致历史回测不稳定（每次 fetch 拉到的 universe 大小不同就会改一遍）。
@@ -72,6 +70,27 @@ def run_inference(panel: pd.DataFrame, ckpt_path: Path, tau: int = 8,
             index=all_codes, columns=all_dates).fillna(0.0).values
     X_full = np.stack([pivoted[c] for c in fc], axis=-1)             # (S, T, F)
 
+    return {
+        "tau": tau,
+        "all_dates": all_dates,
+        "all_codes": all_codes,
+        "has_data": has_data,
+        "X_full": X_full,
+    }
+
+
+def predict_prepared(prepared: dict, ckpt_path: Path, device: str = "cpu") -> pd.DataFrame:
+    """Run one checkpoint on prepared panel tensors."""
+    tau = prepared["tau"]
+    all_dates = prepared["all_dates"]
+    all_codes = prepared["all_codes"]
+    has_data = prepared["has_data"]
+    X_full = prepared["X_full"]
+
+    print(f"  loading model: {ckpt_path}")
+    model = load_alpha_model(str(ckpt_path), device=device)
+
+    print("  running inference ...")
     results = []
     with torch.no_grad():
         for t in range(tau - 1, len(all_dates)):
@@ -95,11 +114,24 @@ def run_inference(panel: pd.DataFrame, ckpt_path: Path, tau: int = 8,
     return df
 
 
+def run_inference(panel: pd.DataFrame, ckpt_path: Path, tau: int = 8,
+                  device: str = "cpu") -> pd.DataFrame:
+    """对 panel 跑一个 checkpoint → 返回长表 (trade_date, ts_code, pred)。"""
+    prepared = prepare_inference_data(panel, tau=tau)
+    return predict_prepared(prepared, ckpt_path, device=device)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--panel", default=str(CACHE / "panel.parquet"))
-    parser.add_argument("--ckpt", default=str(CKPT))
-    parser.add_argument("--out", default=str(CACHE / "preds.parquet"))
+    parser.add_argument(
+        "--model",
+        default="all",
+        choices=["all", *model_keys()],
+        help="public research model version to run; default runs M-1-M and M-2-M",
+    )
+    parser.add_argument("--ckpt", default=None, help="custom checkpoint path for one-off inference")
+    parser.add_argument("--out", default=None, help="custom output path for one-off inference")
     parser.add_argument("--tau", type=int, default=8)
     parser.add_argument("--device", default="cpu")
     args = parser.parse_args()
@@ -109,16 +141,32 @@ def main():
     print(f"  panel rows: {len(panel)}")
     print(f"  trade_date range: {panel.trade_date.min()} → {panel.trade_date.max()}")
 
-    preds = run_inference(panel, Path(args.ckpt), tau=args.tau, device=args.device)
-    preds.to_parquet(args.out, index=False)
-    print(f"[OK] saved → {args.out}  ({len(preds):,} rows)")
+    if args.ckpt:
+        if args.model != "all":
+            raise SystemExit("--ckpt is a custom one-off path; omit --model or leave it as all")
+        out = Path(args.out or CACHE / f"preds_{DEFAULT_MODEL_LABEL.replace('.', '_')}_custom.parquet")
+        preds = run_inference(panel, Path(args.ckpt), tau=args.tau, device=args.device)
+        preds.to_parquet(out, index=False)
+        print(f"[OK] saved → {out}  ({len(preds):,} rows)")
+        return
 
-    # show today's top 10
-    last_date = preds["trade_date"].max()
-    top10 = preds[preds.trade_date == last_date].nlargest(10, "pred")
-    print(f"\n[今日 Top 10 · {last_date}]")
-    for r in top10.itertuples():
-        print(f"  {r.ts_code}  pred={r.pred:+.3f}")
+    versions = MODEL_VERSIONS if args.model == "all" else (get_model_version(args.model),)
+    if args.out and len(versions) > 1:
+        raise SystemExit("--out can only be used with a single --model")
+
+    prepared = prepare_inference_data(panel, tau=args.tau)
+    for version in versions:
+        out = Path(args.out) if args.out else version.preds_path
+        print(f"\n[inference] {version.label} ({version.lineage})")
+        preds = predict_prepared(prepared, version.checkpoint, device=args.device)
+        preds.to_parquet(out, index=False)
+        print(f"[OK] saved → {out}  ({len(preds):,} rows)")
+
+        last_date = preds["trade_date"].max()
+        top5 = preds[preds.trade_date == last_date].nlargest(5, "pred")
+        print(f"\n[Top 5 · {version.label} · {last_date}]")
+        for r in top5.itertuples():
+            print(f"  {r.ts_code}  pred={r.pred:+.3f}")
 
 
 if __name__ == "__main__":

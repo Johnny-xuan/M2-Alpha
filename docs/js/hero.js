@@ -3,6 +3,8 @@
    ──────────────────────────────────────────────────────────── */
 import { $, $$ } from "./utils.js";
 
+let _countUpFrame = null;
+
 export function renderFeatured(data) {
   const top3 = data.current_holdings.slice(0, 3);
   $("#featured-cards").innerHTML = top3.map((p, idx) => `
@@ -19,6 +21,7 @@ export function renderFeatured(data) {
 
 /** animate every element with data-count-to from 0 to target */
 export function startCountUps() {
+  if (_countUpFrame) cancelAnimationFrame(_countUpFrame);
   const els = $$('[data-count-to]');
   const dur = 1400;
   const start = performance.now();
@@ -37,7 +40,8 @@ export function startCountUps() {
       else if (to > 0 && (suffix === "%" || suffix === "pp")) prefix = "+";
       el.textContent = prefix + v.toFixed(decimals) + suffix;
     });
-    if (k < 1) requestAnimationFrame(tick);
+    if (k < 1) _countUpFrame = requestAnimationFrame(tick);
+    else _countUpFrame = null;
   }
-  requestAnimationFrame(tick);
+  _countUpFrame = requestAnimationFrame(tick);
 }

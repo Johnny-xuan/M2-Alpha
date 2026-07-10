@@ -1,0 +1,31 @@
+{
+  "panel": "build/cache/panel.parquet",
+  "output": "outputs/checkpoints/m2alpha_baseline.pt",
+  "tau": 8,
+  "label_price": "open",
+  "model": {
+    "d_model": 128,
+    "n_heads_intra": 4,
+    "n_heads_inter": 2,
+    "n_layers": 3,
+    "dropout": 0.1,
+    "gaussian_sigma": 4.0
+  },
+  "training": {
+    "epochs": 40,
+    "smoke_epochs": 1,
+    "patience": 10,
+    "lr": 0.00001,
+    "weight_decay": 0.0001,
+    "seed": 42,
+    "device": "auto",
+    "min_stocks_per_day": 30,
+    "smoke_train_days": 8,
+    "smoke_valid_days": 2
+  },
+  "split": {
+    "train": ["20170101", "20231231"],
+    "valid": ["20240101", "20250630"],
+    "test": ["20250701", "20260525"]
+  }
+}

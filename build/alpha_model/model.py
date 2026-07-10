@@ -133,7 +133,7 @@ class AlphaModel(nn.Module):
 # ─────────────────────────────────────────────────────────────────────
 
 def load_alpha_model(ckpt_path: str, device: str = "cpu") -> AlphaModel:
-    """从 m2alpha.pt 加载模型 + 元数据。
+    """从 M2-Alpha checkpoint 加载模型 + 元数据。
 
     Checkpoint 结构（训练时保存）:
         {

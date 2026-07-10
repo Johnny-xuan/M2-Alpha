@@ -34,16 +34,33 @@ env/
 build/raw/
 docs/data/*.csv
 
-# build/cache/ 大部分忽略，只保留 incremental 模式作为状态的 4 个生产数据文件
+# build/cache/ 大部分忽略，只保留 incremental 模式作为状态的生产数据文件
 build/cache/*
 !build/cache/panel.parquet
-!build/cache/preds.parquet
+!build/cache/preds_m1m.parquet
+!build/cache/preds_m2m.parquet
 !build/cache/csi300.parquet
 !build/cache/basic.csv
+!build/cache/source_enrichment.json
 
 # Logs
 *.log
 logs/
+
+# LaTeX build byproducts
+*.aux
+*.out
+*.toc
+*.synctex.gz
+
+# Local research/training outputs
+outputs/
+
+# Local closeout workflow state
+.TreeWork/
+
+# Local model-weight inventory scans
+.model_inventory/
 
 # Test screenshots
 screenshots/
