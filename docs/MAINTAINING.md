@@ -4,11 +4,23 @@ This guide is for maintainers of the M2-Alpha repository. It covers operational 
 
 ## Public Site Data
 
-The repository no longer ships a scheduled tracking workflow. The public site is maintained as:
+The repository ships one scheduled public-data workflow, limited to the M-0-M baseline:
 
-- `M-0-M`: stable public baseline payload in `docs/data/data.json`;
+- `M-0-M`: trading-day refreshed public baseline payload in `docs/data/data.json`;
 - `M-1-M`: frozen full-factor 3-block historical research curve;
 - `M-2-M`: frozen full-factor 5-block historical research curve.
+
+`.github/workflows/m0-baseline-update.yml` runs after close in two weekday
+windows. It queries the BaoStock A-share calendar before fetching data, exits
+successfully on weekends and China-market holidays, and refuses to publish if
+the panel does not end on the validated session. It updates only
+`preds_m0m.parquet` and the M-0-M payload fields; it never rewrites frozen
+research curves.
+
+M-0-M is evaluated by `m2alpha.benchmark.run_research_backtest`, not a separate
+website simulator. It uses its selected Top-7, sell-rank 35, maximum-three-per-industry
+strategy on the BaoStock CSI300 panel. Signal lag, share/cash accounting,
+next-open execution, open NAV, and fees remain aligned with the research engine.
 
 The manual rebuild entrypoint is:
 
@@ -26,16 +38,21 @@ python build/update_backtest_site.py \
   --benchmark-index /path/to/csi300.parquet \
   --industry-file /path/to/basic.csv \
   --model all \
-  --start 20250710 \
-  --n-hold 5 \
-  --pool-rank 100 \
-  --sell-rank 200 \
-  --max-industry-frac 0.2 \
+  --start 20250701 \
+  --strategy-mode selected \
+  --historical-predict \
   --exec-price open \
+  --nav-price open \
   --fee-rate 0.0013
 ```
 
-Review `docs/data/data.json` after generation. The file should remain schema version 3, preserve `M-0-M` as the baseline model, and include only `M-1-M` and `M-2-M` under `backtest_curves`.
+`--strategy-mode selected` reads checkpoint-specific rules from
+`build/model_versions.py`. Use `--strategy-mode fixed` plus the CLI portfolio
+arguments for an architecture-only same-strategy comparison. Rebuild strategy
+selection evidence with `scripts/sweep_strategy.py`; never tune against a
+changing prediction cache.
+
+Review `docs/data/data.json` after generation. The file should remain schema version 3, preserve `M-0-M` as the baseline model, and order `M-0-M`, `M-1-M`, and `M-2-M` under `backtest_curves`.
 
 ## Data Source Boundaries
 
@@ -69,7 +86,7 @@ The public website has three named lines:
 
 | Public line | Repository role |
 |---|---|
-| M-0-M | Stable public baseline inherited from the current public page. |
+| M-0-M | Trading-day refreshed public baseline, generated only after a validated A-share session. |
 | M-1-M | Frozen 3-block full-factor research curve, backed by `ml/m2alpha-m1m.pt`. |
 | M-2-M | Frozen 5-block full-factor research curve, backed by `ml/m2alpha-m2m.pt`. |
 

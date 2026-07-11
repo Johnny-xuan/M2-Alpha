@@ -94,8 +94,8 @@ research top1000 panel for the two public research curves:
 
 | Public line | Checkpoint | Realized NAV dates | Cumulative return | Sharpe | Max drawdown |
 |---|---|---|---:|---:|---:|
-| M-1-M | seed42 ep13, 3-block | 2025-07-10 to 2026-05-21 | +239.12% | 3.40 | -15.43% |
-| M-2-M | seed2024 ep20, 5-block | 2025-07-10 to 2026-05-21 | +354.34% | 3.99 | -17.68% |
+| M-1-M | seed42 ep13, 3-block | 2025-07-10 to 2026-06-10 | +242.07% | 3.24 | -15.43% |
+| M-2-M | seed2024 ep20, 5-block | 2025-07-10 to 2026-06-10 | +383.31% | 3.11 | -31.10% |
 
 The 4-block depth ablation was also checked under the same runner and produced
 +147.38%, Sharpe 1.93, max drawdown -30.14%. It is not a public main line.
@@ -104,3 +104,8 @@ The M-2-M run was repeated after the deterministic trade-order fix; the summary,
 NAV, and trades files matched byte-for-byte across repeated processes. Its
 alignment summary reported first prediction date `20250710`, first trade date
 `20250711`, and `signal_lag_checked=true`.
+
+These are fixed-protocol integrity references. The public M-2-M capability
+curve uses its separately documented Top5/sell50/max-three-per-industry
+strategy and reaches +443.01%; strategy selection does not alter the alignment
+audit above.

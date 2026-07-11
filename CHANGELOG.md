@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-07-11 - M-0-M Trading-Day Refresh
+
+- Restored only the M-0-M public baseline update loop on the audited
+  `run_research_backtest` engine. A same-pipeline sweep selected Top 7, sell
+  rank 35, and at most three names per industry for the public checkpoint.
+- Added a BaoStock-backed session guard and a double post-close GitHub Actions
+  schedule. Weekends, China-market holidays, calendar failures, and stale panel
+  dates do not publish a new baseline payload.
+- Added `preds_m0m.parquet`, the M-0-M payload merger, and an offline Golden
+  Week guard test. M-1-M and M-2-M remain frozen research curves.
+- Added resumable fixed-prediction strategy sweeps and registered model-specific
+  portfolio rules. On the full-factor panel through 2026-06-12, M-1-M remains
+  Top5/sell200/max-one-per-industry at +242.07%, while M-2-M selects
+  Top5/sell50/max-three-per-industry at +443.01%, Sharpe 3.99, MaxDD -13.86%.
+
 ## 2026-07-09 - Public Research Release Candidate
 
 This release candidate turns M2-Alpha into an open research repository with a
@@ -50,7 +65,8 @@ entrypoints, and a technical report.
 
 - Removed the old single-model prediction cache `build/cache/preds.parquet`.
 - Removed the obsolete public-cache simulator and old daily wrapper entrypoint.
-- Removed the scheduled daily update workflow from the release surface.
+- Removed the old multi-model daily tracker; it is superseded by the
+  M-0-M-only trading-day refresh workflow above.
 - Excluded raw checkpoint pools, seed grids, resume states, ablation weights,
   local inventories, and private data paths.
 

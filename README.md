@@ -29,9 +29,9 @@ The design takes after how a trader works a name — and a trader does not read 
 
 Stack several of these blocks and the two views refine each other in depth (the public **M-1-M** uses 3, **M-2-M** uses 5). Training uses dense supervision over the whole stock-time grid; at inference the last time step is read off as a ranking score. The input is a `stocks × lookback × factors` tensor with lookback `T = 8` and `F = 35` daily factors.
 
-On the public research benchmark — a full-factor dynamic top-1000 A-share panel, open-execution, fees included, 2025-07 → 2026-05 — the deepest released line **M-2-M (5 blocks)** reaches **+354% cumulative return, Sharpe ≈ 4**, and the compact **M-1-M (3 blocks)** reaches **+239%, Sharpe 3.4**. Basis and caveats are documented in [docs/RESULTS.md](docs/RESULTS.md).
+On the public selected-strategy research display — a full-factor dynamic top-1000 A-share panel, open execution, fees included, 2025-07 → 2026-06 — the deepest released line **M-2-M (5 blocks)** reaches **+443.01% cumulative return, Sharpe 3.99**, and the compact **M-1-M (3 blocks)** reaches **+242.07%, Sharpe 3.24**. The model-specific strategy sweep, fixed-protocol reference, and post-hoc selection caveat are documented in [docs/RESULTS.md](docs/RESULTS.md).
 
-Nothing in this repository is investment advice, and the public site is not a trading service.
+Nothing in this repository is investment advice, and the public site is not a trading service. `M-0-M` is nevertheless refreshed after each validated A-share trading session by GitHub Actions; weekends, China-market holidays, unavailable calendars, and stale market data do not create a new public update.
 
 ## Architecture
 
@@ -74,7 +74,7 @@ The public site and the checkpoints share one naming scheme:
 
 | Name | What it is | Checkpoint |
 |---|---|---|
-| **M-0-M** | Stable public-baseline page line. Smooth inspectable line on the live site, not the strongest research curve. | `ml/m2alpha.pt` |
+| **M-0-M** | Trading-day refreshed CSI300 baseline using the audited research engine and its selected Top-7/sell-35/industry-max-3 strategy. | `ml/m2alpha.pt` |
 | **M-1-M** | Frozen 3-block research curve (compact Micro/Macro main line). | `ml/m2alpha-m1m.pt` |
 | **M-2-M** | Frozen 5-block research curve (deeper line, main research highlight). | `ml/m2alpha-m2m.pt` |
 
@@ -103,22 +103,48 @@ python scripts/benchmark_research.py \
   --panel /path/to/panel_top1000.parquet \
   --industry-file /path/to/basic.csv \
   --model all \
-  --start 20250710 --end 20260521 \
+  --start 20250701 --end 20260612 \
   --n-hold 5 --pool-rank 100 --sell-rank 200 \
   --max-industry-frac 0.2 --exec-price open --fee-rate 0.0013
 ```
 
-The benchmark uses one fixed strategy so model rankings are comparable on the same basis:
+The command above is the fixed-protocol comparison used for the published
+M-1-M/M-2-M research table. Strategy parameters are nevertheless part of a
+released model configuration: each checkpoint is swept independently, while
+the engine, signal lag, execution, NAV accounting, and fees stay fixed.
 
 | Rule | Value |
 |---|---|
 | Universe | dynamic top-1000, sampled by free-float market cap when available |
-| Selection | top `pool_rank=100` scores |
+| Ranking | full tradable list; `pool_rank=100` is retained as a historical recorded parameter |
 | Holdings | `n_hold=5`, equal weight |
 | Industry cap | 20% |
 | Sell rule | drop out below `sell_rank=200` |
 | Execution | open price / open NAV |
 | Fee | `fee_rate=0.0013` |
+
+The public capability curves use checkpoint-specific portfolio parameters:
+
+| Model | Selected portfolio rule | Result window |
+|---|---|---|
+| M-0-M | Top 7, sell rank 35, at most 3 names per industry | public CSI300 baseline through 2026-07-10 |
+| M-1-M | Top 5, sell rank 200, at most 1 name per industry | full-factor top1000 through 2026-06-10 |
+| M-2-M | Top 5, sell rank 50, at most 3 names per industry | full-factor top1000 through 2026-06-10 |
+
+Generate benchmark predictions once, then reproduce a model-level strategy
+sweep without changing the checkpoint or prediction cache:
+
+```bash
+python scripts/sweep_strategy.py \
+  --panel /path/to/panel_top1000.parquet \
+  --predictions outputs/benchmark/predictions_m2m.parquet \
+  --industry-file /path/to/basic.csv \
+  --model-label M-2-M \
+  --out outputs/benchmark/strategy_sweep_m2m.json
+```
+
+This is historical, post-hoc strategy selection, not untouched OOS evidence.
+The full grid and risk metrics are in [docs/RESULTS.md](docs/RESULTS.md).
 
 Preview the site locally:
 
@@ -129,6 +155,23 @@ python3 -m http.server 8765 --directory docs
 ```
 
 The committed public cache (`build/cache/`) is enough to inspect the site and run smoke tests. It is **not** enough to reproduce the multi-year research training run — full reproduction needs a compatible historical A-share factor panel matching [docs/DATA_SCHEMA.md](docs/DATA_SCHEMA.md). Tiered reproduction instructions are in [docs/REPRODUCTION.md](docs/REPRODUCTION.md).
+
+### M-0-M trading-day update
+
+The scheduled workflow runs two post-close Beijing-time windows on weekdays. It checks the BaoStock A-share trading calendar first, then refuses to publish unless the fetched panel ends on that validated session. M-0-M uses `run_research_backtest` with its selected Top 7, sell rank 35, and maximum three names per industry; signal lag, open execution/open NAV, share/cash accounting, and `fee_rate=0.0013` remain aligned with the research benchmark engine. Weekends and China-market holidays are successful no-ops rather than fabricated daily updates.
+
+```bash
+python build/trading_calendar.py --date 2025-10-01
+python build/m0_inference.py
+python build/update_m0_baseline.py --expected-trade-date 20260710 --next-trading-day 20260713
+```
+
+Maintainers can exercise the full GitHub Actions path without publishing a
+commit by dispatching a dry run for a known trading session:
+
+```bash
+gh workflow run m0-baseline-update.yml -f dry_run=true -f session_date=2026-07-10
+```
 
 ### Reproduce with a coding agent
 
@@ -146,7 +189,7 @@ You are my coding agent. Set up and exercise the M2-Alpha repository (github.com
 4. Serve the site and confirm the backtest + about pages load:
    python3 -m http.server 8765 --directory docs
 5. Three public lines — keep them distinct:
-   - M-0-M: stable public-baseline page line.
+   - M-0-M: trading-day refreshed public-baseline page line.
    - M-1-M: 3-block research curve (ml/m2alpha-m1m.pt).
    - M-2-M: 5-block research curve (ml/m2alpha-m2m.pt).
 6. Data boundary (important): the committed cache in build/cache/ only supports
@@ -155,10 +198,16 @@ You are my coding agent. Set up and exercise the M2-Alpha repository (github.com
    free-float turnover, valuation, money-flow). BaoStock + AKShare + efinance
    alone CANNOT reproduce M-1-M/M-2-M. If I did not hand you such a panel, run
    only the open-data baseline path and say so explicitly.
-7. If I provide a compatible panel, run the benchmark on the unified strategy
-   and report the numbers:
+7. If I provide a compatible panel, first reproduce the fixed-protocol
+   comparison and report the numbers:
    n_hold=5, pool_rank=100, sell_rank=200, max_industry_frac=0.2,
    exec-price=open, fee_rate=0.0013. Entry point: scripts/benchmark_research.py.
+   Treat portfolio parameters as model-level hyperparameters: compare
+   checkpoint-specific strategy sweeps separately, and never change the engine,
+   signal lag, execution, NAV accounting, or fees between candidates.
+   The selected public curves use M-1-M Top5/sell200/max-1-industry and
+   M-2-M Top5/sell50/max-3-industry. Use scripts/sweep_strategy.py to verify
+   those choices on fixed benchmark prediction caches.
 8. Report back: commands run, data paths used, outputs, and exactly which parts
    are not reproducible from public data alone.
 ```

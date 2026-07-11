@@ -1,0 +1,143 @@
+name: M-0-M Trading-Day Update
+
+on:
+  schedule:
+    # 20:20 and 20:50 Beijing time (UTC 12:20 / 12:50), Monday through Friday.
+    # The BaoStock session guard below makes China-market holidays successful no-ops.
+    - cron: "20 12 * * 1-5"
+    - cron: "50 12 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run the full validated update path without committing results"
+        required: false
+        default: false
+        type: boolean
+      session_date:
+        description: "Optional YYYY-MM-DD session date for a dry-run validation only"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: m0-baseline-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Align with current main before generating data
+        run: git pull --rebase origin main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - id: session
+        name: Check the A-share trading calendar
+        env:
+          SESSION_DATE: ${{ inputs.session_date }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          args=(--github-output "$GITHUB_OUTPUT")
+          if [ -n "$SESSION_DATE" ]; then
+            if [ "$DRY_RUN" != "true" ]; then
+              echo "session_date is reserved for non-publishing dry runs."
+              exit 1
+            fi
+            args+=(--date "$SESSION_DATE")
+          fi
+          python build/trading_calendar.py "${args[@]}"
+
+      - name: Skip when the A-share market is closed
+        if: steps.session.outputs.is_trading_day != 'true'
+        run: |
+          echo "${{ steps.session.outputs.trade_date }} is not an A-share trading day. No update is published."
+
+      - id: fetch
+        name: Fetch the M-0-M CSI300 baseline data
+        if: steps.session.outputs.is_trading_day == 'true'
+        env:
+          BAOSTOCK_SOCKET_TIMEOUT: "30"
+        run: |
+          before=$(python - <<'PY'
+          import pandas as pd
+          print(str(pd.read_parquet("build/cache/panel.parquet", columns=["trade_date"])["trade_date"].max()))
+          PY
+          )
+          python build/fetch_data.py --incremental --universe csi300 --end "${{ steps.session.outputs.trade_date }}"
+          actual=$(python - <<'PY'
+          import pandas as pd
+          print(str(pd.read_parquet("build/cache/panel.parquet", columns=["trade_date"])["trade_date"].max()))
+          PY
+          )
+          echo "panel_max=$actual" >> "$GITHUB_OUTPUT"
+          if [ "$actual" = "${{ steps.session.outputs.trade_date }}" ]; then
+            echo "panel_before=$before" >> "$GITHUB_OUTPUT"
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "BaoStock has not supplied the validated session yet (panel=$actual). No baseline is published."
+          fi
+
+      - name: Refresh the M-0-M prediction cache and website baseline
+        if: steps.fetch.outputs.ready == 'true'
+        run: |
+          python build/m0_inference.py
+          python build/update_m0_baseline.py \
+            --expected-trade-date "${{ steps.session.outputs.trade_date }}" \
+            --next-trading-day "${{ steps.session.outputs.next_trading_day }}"
+
+      - name: Validate the refreshed public payload
+        if: steps.fetch.outputs.ready == 'true'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(Path("docs/data/data.json").read_text(encoding="utf-8"))
+          assert data["schema_version"] == 3
+          assert data["model"]["label"] == "M-0-M"
+          assert data["summary"]["asof"].replace("-", "") == "${{ steps.session.outputs.trade_date }}"
+          assert [curve["label"] for curve in data["backtest_curves"][:3]] == ["M-0-M", "M-1-M", "M-2-M"]
+          print("M-0-M payload contract passed")
+          PY
+
+      - name: Show dry-run result without committing
+        if: steps.fetch.outputs.ready == 'true' && inputs.dry_run == true
+        run: git diff -- build/cache docs/data/data.json
+
+      - name: Commit validated trading-day update
+        if: steps.fetch.outputs.ready == 'true' && inputs.dry_run != true
+        env:
+          GH_USER: ${{ github.actor }}
+        run: |
+          git config user.name "M²-Alpha Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add build/cache/panel.parquet build/cache/csi300.parquet \
+                  build/cache/preds_m0m.parquet \
+                  docs/data/data.json
+          if git diff --cached --quiet; then
+            echo "Validated session produced no publishable baseline change."
+            exit 0
+          fi
+          git commit -m "data: refresh M-0-M baseline ${{ steps.session.outputs.trade_date }}"
+          git push origin main

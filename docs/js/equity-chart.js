@@ -2,7 +2,7 @@
    equity-chart.js — pure NAV chart renderer (range comes from outside)
    ──────────────────────────────────────────────────────────── */
 import { $, svg, fmtPct } from "./utils.js";
-import { t } from "./i18n.js?v=20260709-bilingual1";
+import { t } from "./i18n.js?v=20260711-strategy-v2";
 
 /** Draw equity chart for a given slice, or a multi-curve payload. */
 export function drawEquityChart(input) {

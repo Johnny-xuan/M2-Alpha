@@ -288,7 +288,7 @@ def run_research_backtest(
     prev_pred: dict[str, float] | None = None
     for date in trade_days:
         day_panel = panel_by_day[date]
-        tradable = {ts: _is_tradable(row) for ts, row in day_panel.iterrows()}
+        tradable = build_tradability_map(day_panel)
 
         if prev_pred is not None:
             target = strategy.decide(date, dict(holdings), prev_pred, tradable)
@@ -477,6 +477,11 @@ def _is_tradable(row: pd.Series) -> bool:
     ts = row.name if isinstance(row.name, str) else ""
     limit = 19.95 if (ts.startswith("300") or ts.startswith("688")) else 9.95
     return abs(float(pct)) < limit
+
+
+def build_tradability_map(day_panel: pd.DataFrame) -> dict[str, bool]:
+    """Return the benchmark tradability mask for one indexed trading-day panel."""
+    return {str(ts): _is_tradable(row) for ts, row in day_panel.iterrows()}
 
 
 def _execute_target_weights(

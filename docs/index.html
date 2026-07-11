@@ -25,7 +25,7 @@
 <meta name="twitter:description" content="M2-Alpha 当前公开基线与研究回测曲线 · A 股截面 alpha">
 <meta name="twitter:image" content="https://johnny-xuan.github.io/M2-Alpha/og-image.png">
 
-<link rel="stylesheet" href="styles.css?v=20260709-bilingual1">
+<link rel="stylesheet" href="styles.css?v=20260711-strategy-v2">
 
 <!-- 默认亮色主题 + 防首屏闪烁 -->
 <script>
@@ -116,7 +116,7 @@
             建仓 · <em id="next-trading-day">—</em> · 开盘买入
           </h1>
           <p class="block-sub">
-            <strong id="picks-model-title">M-0-M</strong> 截面 Top 5 推荐 · 基于 <strong id="picks-asof">—</strong> 收盘数据 ·
+            <strong id="picks-model-title">M-0-M</strong> 截面 Top 7 推荐 · 基于 <strong id="picks-asof">—</strong> 收盘数据 ·
             下一交易日 09:30 开盘调仓
           </p>
         </header>
@@ -182,8 +182,8 @@
     <header class="block-head">
       <h1 class="block-title">逐日回测记录 · 共 <span id="sc-days">—</span> 个样本</h1>
       <p class="block-sub">
-        Top 5 组合按研究 benchmark 的信号滞后、开盘成交、卖出带和手续费口径执行，
-        逐日复盘组合收益 vs 沪深 300 同期表现。
+        M-0-M 公开基线使用统一 benchmark 引擎与专属的 Top 7、sell rank 35、每行业最多三只策略，
+        保持相同的信号滞后、开盘成交、open NAV 与手续费口径，逐日复盘组合收益 vs 沪深 300。
       </p>
     </header>
 
@@ -192,12 +192,12 @@
       <div class="sc-stat">
         <div class="sc-stat__k">日均超额</div>
         <div class="sc-stat__v" data-sc-stat="excess_avg" data-suffix="%">+0.00%</div>
-        <div class="sc-stat__d">Top 5 平均收益 − 同期沪深 300</div>
+        <div class="sc-stat__d">Top 7 平均收益 − 同期沪深 300</div>
       </div>
       <div class="sc-stat">
         <div class="sc-stat__k">日级胜率</div>
         <div class="sc-stat__v" data-sc-stat="win_rate_vs_bench_daily" data-suffix="%">0.00%</div>
-        <div class="sc-stat__d"><span data-sc-text="win_days">—</span> / <span data-sc-text="n_days_total">—</span> 天 Top 5 跑赢基准</div>
+        <div class="sc-stat__d"><span data-sc-text="win_days">—</span> / <span data-sc-text="n_days_total">—</span> 天 Top 7 跑赢基准</div>
       </div>
       <div class="sc-stat">
         <div class="sc-stat__k">个股命中</div>
@@ -214,7 +214,7 @@
     <!-- 60 天超额 chart -->
     <div class="sc-chart-host">
       <h3 class="sub-h">
-        <span>最近 60 天 · Top 5 组合 vs 沪深 300</span>
+        <span>最近 60 天 · Top 7 组合 vs 沪深 300</span>
         <span class="sub-h__legend">
           <span class="lg lg--gain"><i></i>跑赢</span>
           <span class="lg lg--loss"><i></i>跑输</span>
@@ -376,10 +376,10 @@
     <!-- 模型偏好 -->
     <div class="section-panel" data-stab-panel="holdings" hidden>
       <div class="holdings-host">
-        <h3 class="sub-h">模型偏好 · 基于区间内全部 Top 5 持仓</h3>
+        <h3 class="sub-h">模型偏好 · 基于区间内全部 Top 7 持仓</h3>
         <div class="holdings">
           <div class="holdings__left">
-            <h4 class="sub-sub">Top 5 行业分布</h4>
+            <h4 class="sub-sub">Top 7 行业分布</h4>
             <div class="industry-bars" id="industry-bars"></div>
           </div>
           <div class="holdings__right">
@@ -430,7 +430,7 @@
               它不是作业报告的原样搬运，而是把模型结构、训练方法、权重、benchmark 口径和页面展示整理成一套可阅读、可复现、可继续研究的开源项目。
             </p>
             <p>
-              M-0-M、M-1-M 和 M-2-M 分别对应紧凑发布基线、3-block 主线模型和 5-block 深层迭代模型。
+              M-0-M、M-1-M 和 M-2-M 分别对应交易日刷新的紧凑发布基线、3-block 主线模型和 5-block 深层迭代模型。
               更完整的技术细节、训练入口、因子口径和回测脚本放在 GitHub 仓库与技术报告里维护。
             </p>
             <div class="doc-actions">
@@ -442,7 +442,7 @@
           <div class="doc-stat-panel" aria-label="project facts">
             <div><span>公开权重</span><strong>3</strong></div>
             <div><span>输入因子</span><strong>35</strong></div>
-            <div><span>基准策略</span><strong>Top 5</strong></div>
+            <div><span>回测引擎</span><strong>统一</strong></div>
             <div><span>许可</span><strong>Apache 2.0</strong></div>
           </div>
         </div>
@@ -546,6 +546,7 @@
             <ul class="model-points">
               <li>设计取舍是稳定和透明，适合作为 release/reference line。</li>
               <li>和 M-1-M 同属 3-block family，不应被理解成另一套架构。</li>
+              <li>只在验证到真实 A 股交易日和新行情后刷新；周末与节假日保持最近一次有效结果。</li>
             </ul>
             <div class="model-specs">
               <span>3 blocks</span><span>release anchor</span><span>no extra gating</span>
@@ -655,22 +656,31 @@
       </section>
 
       <section class="about-page" id="about-strategy" data-about-page="strategy" hidden>
-        <p class="doc-kicker">BENCHMARK STRATEGY</p>
-        <h2 class="about-h about-h--page">统一回测策略</h2>
+        <p class="doc-kicker">PORTFOLIO STRATEGIES</p>
+        <h2 class="about-h about-h--page">公开基线与研究口径</h2>
         <p>
-          回测页不展示随意调参后的最好看曲线，而是使用固定规则来比较模型排序能力。这样读者能清楚看到：
-          收益来自模型分数、数据口径和持仓规则，而不是事后挑参数。
+          页面同时保留一条可按交易日维护的 M-0-M 公开基线，以及两条 M-1-M / M-2-M 冻结研究曲线。
+          三条曲线使用相同的回测引擎、信号时序、成交与记账口径；持仓数、换仓带和行业约束则作为模型级超参数分别扫描。M-0-M 在 CSI300 数据上选择 Top 7 / sell35 / 每行业最多三只；M-1-M 选择 Top 5 / sell200 / 每行业最多一只；M-2-M 选择 Top 5 / sell50 / 每行业最多三只。
         </p>
+        <p><strong>M-0-M · 公开日更基线</strong></p>
+        <ol class="rules-compact rules-compact--docs">
+          <li><span class="rk">候选池</span>CSI300 成分股，使用公开 BaoStock 日频数据维护</li>
+          <li><span class="rk">持仓</span>Top 7 等权，每行业最多三只</li>
+          <li><span class="rk">换仓带</span>已有持仓跌出预测排名 Top 35 后才替换，降低频繁换手</li>
+          <li><span class="rk">成交</span>信号日收盘后生成目标组合，下一交易日开盘执行，open NAV，fee_rate=0.0013</li>
+          <li><span class="rk">更新门槛</span>只有交易日历与最新数据日期同时通过校验才更新；周末和休市日保持最近有效结果</li>
+        </ol>
+        <p><strong>M-1-M / M-2-M · 研究 benchmark</strong></p>
         <ol class="rules-compact rules-compact--docs">
           <li><span class="rk">候选池</span>动态 top1000 股票池，按月末流通市值选样</li>
-          <li><span class="rk">选股范围</span>每个回测日先取预测分前 100 名，再从中构造 Top 5 组合</li>
+          <li><span class="rk">持仓</span>两款 checkpoint 均选择 Top 5 等权组合</li>
           <li><span class="rk">权重</span>等权 20% / 只，不按评分加权</li>
-          <li><span class="rk">行业上限</span>行业 cap20；若无法凑满组合，按研究 benchmark fallback 继续补齐</li>
-          <li><span class="rk">卖出规则</span>掉出当日评分 Top 200 才卖，降低过度换手</li>
+          <li><span class="rk">M-1-M</span>每行业最多一只，跌出预测排名 Top 200 后替换</li>
+          <li><span class="rk">M-2-M</span>每行业最多三只，跌出预测排名 Top 50 后替换</li>
           <li><span class="rk">成交</span>按 open 成交与 open NAV 计价，fee_rate=0.0013，未额外建模滑点</li>
         </ol>
         <p class="doc-note">
-          这套策略用于公开 benchmark 与研究曲线说明；真实交易需要重新评估流动性、滑点、成交约束和合规要求。
+          两类结果都是历史模拟。M-0-M 的连续更新不会改写冻结研究曲线；真实交易仍需重新评估流动性、滑点、成交约束和合规要求。
         </p>
       </section>
 
@@ -706,8 +716,8 @@
    公开数据路线没有完整研究数据。训练和强 benchmark 使用过更完整的研究面板，
    包括完整 35 因子、动态 top1000 股票池、量比、自由流通换手、估值和资金流等字段。
    如果我只提供 BaoStock/AKShare/efinance 免费数据，请明确说明它不能完全复现 M-1-M/M-2-M 的研究能力。
-7. 如果我要复现 benchmark，请先让我提供兼容 panel 路径；然后使用统一策略：
-   n_hold=5, pool_rank=100, sell_rank=200, industry cap20, open execution/open NAV, fee_rate=0.0013。
+7. 如果我要复现 benchmark，请先让我提供兼容 panel 路径；先用 n_hold=5、sell_rank=200、每行业最多1只、open execution/open NAV、fee_rate=0.0013 做固定口径对比。
+   再用 scripts/sweep_strategy.py 固定权重与预测缓存，复核公开专属策略：M-1-M 为 Top5/sell200/行业最多1只，M-2-M 为 Top5/sell50/行业最多3只。
 8. 最后给我一份简短报告：执行了哪些代码、使用的数据在哪里、输出结果和哪些因素仍不可复现。</code></pre>
         </div>
         <p class="doc-note">
@@ -776,6 +786,6 @@
     window.addEventListener("hashchange", syncLangLinks);
   })();
 </script>
-<script type="module" src="js/main.js?v=20260709-bilingual1"></script>
+<script type="module" src="js/main.js?v=20260711-strategy-v2"></script>
 </body>
 </html>

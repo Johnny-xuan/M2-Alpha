@@ -1,8 +1,8 @@
 /* ────────────────────────────────────────────────────────────
-   picks.js — today's Top-5 picks table
+   picks.js — current baseline picks table
    ──────────────────────────────────────────────────────────── */
 import { $ } from "./utils.js";
-import { t } from "./i18n.js?v=20260709-bilingual1";
+import { t } from "./i18n.js?v=20260711-strategy-v2";
 
 export function renderPicksTable(data) {
   const tbody = $("#picks-table tbody");
@@ -22,7 +22,7 @@ export function renderPicksTable(data) {
         <td class="c-code">${p.ts}</td>
         <td class="c-name">${p.name}</td>
         <td class="c-ind">${p.industry}</td>
-        <td class="c-score">+${p.score.toFixed(2)}</td>
+        <td class="c-score">${p.score >= 0 ? "+" : ""}${p.score.toFixed(2)}</td>
         <td class="c-bar"><div class="score-bar"><i style="width: ${barW}%"></i></div></td>
         <td class="c-px">¥${p.close.toFixed(2)}</td>
         <td class="c-w">${p.weight.toFixed(1)}%</td>

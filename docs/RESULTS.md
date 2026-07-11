@@ -2,7 +2,7 @@
 
 M2-Alpha results are split into two families:
 
-1. **Public baseline display**: the current static GitHub Pages payload, centered on M-0-M.
+1. **Public baseline display**: the trading-day refreshed GitHub Pages payload, centered on M-0-M.
 2. **Full-factor research benchmark**: historical curves for M-1-M and M-2-M on a compatible research panel.
 
 They answer different questions and should not be mixed without naming the data, universe, execution, and fee basis.
@@ -11,29 +11,44 @@ They answer different questions and should not be mixed without naming the data,
 
 Source: `docs/data/data.json`
 
-The public site keeps M-0-M as the current stable baseline. It shows daily picks, daily review records, and the baseline NAV curve for the current public payload. This page is useful as an inspectable public baseline, not as a trading recommendation service.
+The public site keeps M-0-M as the current stable CSI300 baseline. It shows daily picks, daily review records, and the baseline NAV curve for the current public payload. GitHub Actions refreshes it only after a validated A-share trading session; weekends, China-market holidays, unavailable calendars, and stale data result in no publication. M-0-M uses the audited `run_research_backtest` engine with its selected Top-7/sell-rank-35/industry-max-3 strategy. Signal lag, open execution/open NAV, share/cash accounting, and fees use the same engine semantics as the research curves. The frozen research curves retain their own selected parameters and richer external top1000 panel.
+
+The M-0-M strategy was selected by a same-checkpoint, same-prediction, same-panel sweep through 2026-07-10:
+
+| M-0-M strategy | Cumulative return | Sharpe | Max drawdown |
+|---|---:|---:|---:|
+| Top 7 / sell 35 / max 3 per industry | +170.92% | 2.93 | -13.16% |
+| Top 9 / sell 40 / no industry cap | +160.90% | 2.93 | -12.01% |
+| Top 8 / sell 30 / max 4 per industry | +160.79% | 2.85 | -12.77% |
+| Top 10 / sell 50 / no industry cap | +144.67% | 2.76 | -12.22% |
+| Top 5 / sell 200 / industry cap20 | +64.85% | 1.77 | -15.79% |
+
+This is a historical strategy-selection result, not an untouched out-of-sample strategy comparison. Subsequent trading-day updates extend the selected rule forward without retuning it each day.
 
 The public payload also contains frozen research curves for M-1-M and M-2-M on the backtest page. Those curves are explicitly historical/research evidence and are not daily recommendations.
 
-## Full-Factor Research Benchmark
+## Full-Factor Selected-Strategy Curves
 
-The benchmark curve basis used for the public research display:
+The public research curves keep one audited engine and accounting contract but
+use checkpoint-specific portfolio parameters selected on a declared historical
+grid:
 
 - compatible full-factor dynamic top1000 A-share panel;
-- `n_hold=5`;
-- `pool_rank=100`;
-- `sell_rank=200`;
-- `max_industry_frac=0.2`;
 - open execution / open NAV;
 - `fee_rate=0.0013`;
-- realized window after trading-calendar alignment: 2025-07-10 to 2026-05-21.
+- realized window after label/window alignment: 2025-07-10 to 2026-06-10.
 
-| Public line | Checkpoint | Cumulative return | Sharpe | Max drawdown |
-|---|---|---:|---:|---:|
-| M-1-M | seed42 ep13, 3-block | +239.12% | 3.40 | -15.43% |
-| M-2-M | seed2024 ep20, 5-block | +354.34% | 3.99 | -17.68% |
+| Public line | Checkpoint | Selected strategy | Cumulative return | Sharpe | Max drawdown |
+|---|---|---|---:|---:|---:|
+| M-1-M | seed42 ep13, 3-block | Top 5 / sell 200 / max 1 per industry | +242.07% | 3.24 | -15.43% |
+| M-2-M | seed2024 ep20, 5-block | Top 5 / sell 50 / max 3 per industry | +443.01% | 3.99 | -13.86% |
 
-The M-2-M result is the main research highlight shown on the public site. It demonstrates the ability of the deeper 5-block Micro/Macro line under the complete-factor benchmark.
+The M-2-M result is the main research highlight shown on the public site. It demonstrates the deeper 5-block Micro/Macro line under the complete-factor benchmark and its selected portfolio rule.
+
+The portfolio rule is part of each model's released evaluation configuration.
+The backtest engine, prediction/execution lag, open execution/open NAV, equal
+weighting, and fees stay fixed; `n_hold`, the sell band, and the industry
+constraint may be selected per checkpoint on a declared historical sweep.
 
 ## Why The 4-Block Ablation Is Not A Public Main Line
 
@@ -57,16 +72,41 @@ The technical report still contains broader ablations:
 
 Those tables are retained in the PDF and technical docs to explain the research process. They are not all promoted to public model lines.
 
-## Strategy Sweep Used For The Public Research Highlight
+## Strategy Sweep Used For The Public Curves
 
-The concentrated `n=5` strategy was selected because it asks whether the model can make a small number of high-conviction selections. The same M-2-M checkpoint remains strong under alternative settings, but the public site uses the `n=5, cap20` result as its main capability line.
+`scripts/sweep_strategy.py` fixes the checkpoint, historical prediction cache,
+panel, engine, signal lag, execution, NAV accounting, and fees. It scans 145
+unique combinations over `n_hold={5,7,10,15,30}`, `sell_rank={20,35,50,100,200}`,
+and absolute per-industry limits `{1,2,3,4,5,no-cap}` where valid.
 
-| Model | n=5 cap20 | n=10 base | n=30 cap20 | n=10 no cap | n=10 cap10 |
-|---|---:|---:|---:|---:|---:|
-| 4-block ablation seed42 ep17 | +147.21% | +224.12% | +107.46% | +215.79% | +172.03% |
-| M-2-M seed2024 ep20 | +354.59% | +235.33% | +113.26% | +253.00% | +196.96% |
+| Model | Candidate | Cumulative return | Sharpe | Max drawdown | Turnover |
+|---|---|---:|---:|---:|---:|
+| M-1-M | Top 5 / sell 200 / max 1 industry | +242.07% | 3.24 | -15.43% | 0.2916 |
+| M-1-M | Top 5 / sell 200 / max 2 industry | +231.03% | 2.70 | -19.15% | 0.2965 |
+| M-1-M | Top 7 / sell 200 / max 1 industry | +216.60% | 3.34 | -14.72% | 0.2965 |
+| M-2-M | Top 5 / sell 50 / max 3 industry | +443.01% | 3.99 | -13.86% | 0.5502 |
+| M-2-M | Top 5 / sell 50 / max 4 industry | +440.96% | 3.94 | -13.86% | 0.5536 |
+| M-2-M | Top 5 / sell 20 / max 2 industry | +413.06% | 3.12 | -26.56% | 0.8496 |
 
-This sweep uses the research top1000 universe and report-style open execution with fees. It is evidence for strategy choice, not the same basis as the public M-0-M baseline display.
+`pool_rank=100` is retained in metadata for compatibility with the historical
+research interface, but the current original-compatible strategy ranks the
+full tradable list; it is not counted as an active sweep dimension. The selected
+curves are best among tested strategies on the same historical window. This is
+post-hoc strategy tuning and must not be described as untouched OOS evidence.
+
+## Fixed-Protocol Reference
+
+For an architecture-oriented comparison, both checkpoints can still be run
+with Top 5 / sell 200 / max 1 per industry. On the same panel and window:
+
+| Public line | Cumulative return | Sharpe | Max drawdown |
+|---|---:|---:|---:|
+| M-1-M | +242.07% | 3.24 | -15.43% |
+| M-2-M | +383.31% | 3.11 | -31.10% |
+
+The technical report retains its earlier report-window and five-setting tables
+as research history. The website's +443.01% M-2-M curve is the later,
+explicitly labeled model-specific strategy sweep result.
 
 ## Data Caveat
 

@@ -5,7 +5,7 @@
      · date range picker + chips + recent days list
    ──────────────────────────────────────────────────────────── */
 import { $, $$, svg, fmtPct } from "./utils.js";
-import { t } from "./i18n.js?v=20260709-bilingual1";
+import { t } from "./i18n.js?v=20260711-strategy-v2";
 
 const PAGE_SIZE = 10;
 let _scState = null;     // { dates: [...], page: N }

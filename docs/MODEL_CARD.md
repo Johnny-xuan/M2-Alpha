@@ -8,7 +8,7 @@ The public-facing model lines are:
 
 | Public line | Role |
 |---|---|
-| M-0-M | Stable public baseline currently shown on the site. |
+| M-0-M | Trading-day refreshed public baseline currently shown on the site. |
 | M-1-M | 3-block historical research curve. |
 | M-2-M | 5-block historical research curve and current research highlight. |
 
@@ -69,18 +69,24 @@ That full historical dataset is not bundled in this repository. The public/open-
 
 The public site separates baseline display from research evidence:
 
-- M-0-M is the current public baseline page.
+- M-0-M is the current CSI300 public baseline page, refreshes only after a validated A-share trading session, and uses the audited research backtest engine with its selected Top-7/sell-35/industry-max-3 strategy.
 - M-1-M and M-2-M are frozen full-factor historical research curves.
 - The backtest page labels M-2-M as a latest capability line, not as a daily updated recommendation.
+- Portfolio size, sell band, and industry constraints are model-level evaluation hyperparameters. The engine, signal lag, execution, NAV accounting, and fees remain shared and audited.
 
 Main benchmark snapshot:
 
 | Public line | Basis | Cumulative return | Sharpe | Max drawdown |
 |---|---|---:|---:|---:|
-| M-1-M | compatible full-factor top1000 panel, n=5/cap20, open execution, fee 0.0013 | +239.12% | 3.40 | -15.43% |
-| M-2-M | compatible full-factor top1000 panel, n=5/cap20, open execution, fee 0.0013 | +354.34% | 3.99 | -17.68% |
+| M-1-M | full-factor top1000, Top 5/sell 200/max 1 per industry, open, fee 0.0013 | +242.07% | 3.24 | -15.43% |
+| M-2-M | full-factor top1000, Top 5/sell 50/max 3 per industry, open, fee 0.0013 | +443.01% | 3.99 | -13.86% |
 
 These are historical simulations. They do not imply future returns.
+
+M-1-M and M-2-M use independently selected portfolio rules from the documented
+145-candidate sweeps. M-0-M uses a third Top-7/sell-35/industry-max-3
+configuration selected on its public CSI300 panel. These are post-hoc historical
+strategy selections, not untouched OOS results.
 
 ## Limitations
 

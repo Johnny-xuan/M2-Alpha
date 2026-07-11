@@ -11,6 +11,11 @@ public_site_policy:
   not_public_main_line:
     - "The 4-block depth ablation remains report evidence, not a public model line."
 
+strategy_policy:
+  shared_contract: "audited run_research_backtest engine, D signal to D+1 open execution, open NAV, equal weight, fee_rate 0.0013"
+  selection_rule: "Portfolio size, sell band, and industry constraint are model-level hyperparameters selected independently on a declared historical window."
+  fixed_protocol_use: "Use n_hold=5, pool_rank=100, sell_rank=200, and cap20 only when a same-strategy architecture comparison is required."
+
 storage_policy:
   committed_release_assets:
     - "ml/m2alpha.pt"
@@ -47,6 +52,13 @@ public_lines:
     design:
       n_layers: 3
       note: "Compact public baseline, used as the stable site anchor."
+    selected_strategy:
+      universe: CSI300_public_panel
+      n_hold: 7
+      pool_rank: 100
+      sell_rank: 35
+      max_per_industry: 3
+      selection_window_end: "2026-07-10"
     caveat: "Baseline page evidence should not be compared directly with full-factor research curves without naming the data and strategy basis."
 
   - id: m1m
@@ -62,11 +74,19 @@ public_lines:
       n_layers: 3
       note: "Canonical compact M² line."
     benchmark_highlight:
-      metric_basis: "compatible_full_factor_top1000_hold5_cap20_open_fee"
-      cum_pct: 239.12
-      sharpe: 3.40
+      metric_basis: "compatible_full_factor_top1000_hold5_industry1_sell200_open_fee"
+      cum_pct: 242.07
+      sharpe: 3.24
       max_dd_pct: -15.43
-      realized_window: "2025-07-10 to 2026-05-21"
+      realized_window: "2025-07-10 to 2026-06-10"
+    selected_strategy:
+      universe: compatible_full_factor_top1000
+      n_hold: 5
+      pool_rank: 100
+      sell_rank: 200
+      max_industry_frac: 0.2
+      max_per_industry: 1
+      selection_basis: "highest cumulative return in the documented 145-candidate strategy sweep"
     caveat: "Historical research curve; not a daily updated portfolio recommendation."
 
   - id: m2m
@@ -82,11 +102,26 @@ public_lines:
       n_layers: 5
       note: "Deeper iterative Micro/Macro line."
     benchmark_highlight:
-      metric_basis: "compatible_full_factor_top1000_hold5_cap20_open_fee"
-      cum_pct: 354.34
+      metric_basis: "compatible_full_factor_top1000_hold5_industry3_sell50_open_fee"
+      cum_pct: 443.01
       sharpe: 3.99
-      max_dd_pct: -17.68
-      realized_window: "2025-07-10 to 2026-05-21"
+      max_dd_pct: -13.86
+      realized_window: "2025-07-10 to 2026-06-10"
+    selected_strategy:
+      universe: compatible_full_factor_top1000
+      n_hold: 5
+      pool_rank: 100
+      sell_rank: 50
+      max_industry_frac: 0.6
+      max_per_industry: 3
+      selection_basis: "highest cumulative return in the documented 145-candidate strategy sweep"
+    fixed_protocol_reference:
+      n_hold: 5
+      sell_rank: 200
+      max_per_industry: 1
+      cum_pct: 383.31
+      sharpe: 3.11
+      max_dd_pct: -31.10
     caveat: "Main research highlight; not a daily updated portfolio recommendation."
 
 lineage_evidence:

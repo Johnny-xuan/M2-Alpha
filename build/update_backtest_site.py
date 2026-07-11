@@ -11,7 +11,7 @@ import argparse
 import json
 import sys
 from collections import Counter
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any
 
@@ -53,6 +53,17 @@ def fmt_date(value: str) -> str:
 
 def compact_date(value: str) -> str:
     return str(value).replace("-", "")[:8]
+
+
+def strategy_description(config: BenchmarkConfig) -> str:
+    max_per_industry = max(1, int(config.n_hold * config.max_industry_frac))
+    return (
+        f"dynamic top1000 · n={config.n_hold} · "
+        f"max {max_per_industry} names/industry · "
+        f"pool_rank={config.pool_rank} (recorded) · "
+        f"sell_rank={config.sell_rank} · {config.exec_price} execution · "
+        f"fee_rate={config.fee_rate}"
+    )
 
 
 def read_panel(path: Path) -> pd.DataFrame:
@@ -269,6 +280,29 @@ def build_scorecard(
         avg_ret = float(np.mean(returns))
         excess = avg_ret - bench_ret if bench_ret is not None else None
         hits = sum(1 for rr in returns if bench_ret is not None and rr > bench_ret)
+        portfolio_codes = set(holdings["ts_code"].astype(str))
+        ranked = (
+            preds[preds["trade_date"] == signal_d]
+            .sort_values(["pred", "ts_code"], ascending=[False, True], kind="stable")
+            .head(30)
+        )
+        top30 = []
+        for rank, row in enumerate(ranked.itertuples(index=False), 1):
+            ts = str(row.ts_code)
+            o1 = open_by.get((buy_d, ts))
+            o2 = open_by.get((sell_d, ts))
+            raw_ret = None
+            if o1 is not None and o2 is not None and o1 > 0:
+                raw_ret = (float(o2) / float(o1) - 1) * 100
+            top30.append({
+                "rank": rank,
+                "ts": ts,
+                "name": name_map.get(ts, ts),
+                "ind": industry_map.get(ts, "NA"),
+                "score": round(float(row.pred), 3),
+                "ret": round(float(raw_ret), 2) if raw_ret is not None else None,
+                "in_portfolio": ts in portfolio_codes,
+            })
         day = {
             "d": fmt_date(signal_d),
             "buy_d": fmt_date(buy_d),
@@ -280,6 +314,7 @@ def build_scorecard(
             "n": int(len(returns)),
             "hit_rate": round(hits / len(returns) * 100, 1),
             "picks": picks,
+            "top30": top30,
             "pending": False,
         }
         scorecard.append(day)
@@ -349,10 +384,7 @@ def build_model_payload(
                 "cum_pct": round(cum_return, 2),
                 "sharpe": round(float(summary["sharpe"]), 3),
                 "max_dd_pct": round(float(summary["max_drawdown_pct"]), 2),
-                "basis": (
-                    "research engine · dynamic top1000 historical panel · n=5/cap20 · "
-                    "pool_rank=100 · sell_rank=200 · open/fee"
-                ),
+                "basis": f"research engine · {strategy_description(config)}",
             },
         },
         "summary": {
@@ -408,7 +440,8 @@ def load_existing_predictions(version, config: BenchmarkConfig) -> pd.DataFrame:
 
 def run_research_backtest_set(panel: pd.DataFrame, benchmark_df: pd.DataFrame, versions, config: BenchmarkConfig,
                               industry_map: dict[str, str], name_map: dict[str, str], device: str,
-                              historical_predict_mode: bool = False) -> dict[str, Any]:
+                              historical_predict_mode: bool = False,
+                              strategy_mode: str = "selected") -> dict[str, Any]:
     config.validate()
     base_panel = panel.copy()
     base_panel["trade_date"] = base_panel["trade_date"].astype(str)
@@ -422,42 +455,49 @@ def run_research_backtest_set(panel: pd.DataFrame, benchmark_df: pd.DataFrame, v
 
     models = {}
     for version in versions:
+        version_config = (
+            replace(config, **version.selected_strategy)
+            if strategy_mode == "selected"
+            else config
+        )
+        version_config.validate()
         print(f"[historical-backtest] {version.label} {version.checkpoint}")
         if historical_predict_mode:
             preds = historical_predict(
                 prepared,
                 feature_cols,
                 version.checkpoint,
-                start=config.start,
-                end=config.end,
-                tau=config.tau,
+                start=version_config.start,
+                end=version_config.end,
+                tau=version_config.tau,
                 device=device,
-                min_stocks_per_day=config.min_stocks_per_day,
+                min_stocks_per_day=version_config.min_stocks_per_day,
             )
             prediction_path = "m2alpha.benchmark.historical_predict"
         else:
-            preds = load_existing_predictions(version, config)
+            preds = load_existing_predictions(version, version_config)
             prediction_path = str(version.preds_path)
         strategy = ResearchTopNStrategy(
-            n_hold=config.n_hold,
-            pool_rank=config.pool_rank,
-            sell_rank=config.sell_rank,
+            n_hold=version_config.n_hold,
+            pool_rank=version_config.pool_rank,
+            sell_rank=version_config.sell_rank,
             industry_map=industry_map,
-            max_industry_frac=config.max_industry_frac,
+            max_industry_frac=version_config.max_industry_frac,
         )
         result = run_research_backtest(
             preds,
             seg,
             strategy,
-            init_cash=config.init_cash,
-            fee_rate=config.fee_rate,
-            lot_size=config.lot_size,
-            exec_price=config.exec_price,
-            nav_price=config.nav_price,
+            init_cash=version_config.init_cash,
+            fee_rate=version_config.fee_rate,
+            lot_size=version_config.lot_size,
+            exec_price=version_config.exec_price,
+            nav_price=version_config.nav_price,
         )
         summary = summarize_backtest(result)
         summary["alignment"] = validate_benchmark_alignment(preds, result)
-        summary["config"] = asdict(config)
+        summary["config"] = asdict(version_config)
+        summary["strategy_mode"] = strategy_mode
         summary["n_predictions"] = int(len(preds))
         summary["n_prediction_dates"] = int(preds["trade_date"].nunique())
         summary["first_prediction_date"] = str(preds["trade_date"].min())
@@ -475,7 +515,7 @@ def run_research_backtest_set(panel: pd.DataFrame, benchmark_df: pd.DataFrame, v
             benchmark_df,
             name_map,
             industry_map,
-            config,
+            version_config,
         )
         print(
             f"  {summary['start']}->{summary['end']} "
@@ -522,6 +562,7 @@ def build_data_json(models: dict[str, Any], args: argparse.Namespace, config: Be
     for key in curve_order:
         payload = models[key]
         summary = dict(payload["summary"])
+        curve_config = BenchmarkConfig(**payload["benchmark_summary"]["config"])
         summary["source_model"] = f"{payload['model']['label']} {payload['model']['lineage']}"
         backtest_curves.append({
             "key": key,
@@ -530,7 +571,7 @@ def build_data_json(models: dict[str, Any], args: argparse.Namespace, config: Be
             "kind": "historical_research_curve",
             "source_model": summary["source_model"],
             "cutoff_note": "Frozen full-factor research curve; not a daily recommendation.",
-            "strategy": "dynamic top1000 · n=5 · cap20 · pool_rank=100 · sell_rank=200 · open execution · fee_rate=0.0013",
+            "strategy": strategy_description(curve_config),
             "summary": summary,
             "equity_curve": payload["equity_curve"],
             "monthly_returns": payload["monthly_returns"],
@@ -569,13 +610,17 @@ def build_data_json(models: dict[str, Any], args: argparse.Namespace, config: Be
         },
         "registry_default_model": DEFAULT_MODEL_LABEL,
         "strategy": {
-            "name": "research_top5_cap20_lag200",
+            "name": (
+                "model_specific_selected_strategies"
+                if args.strategy_mode == "selected"
+                else "fixed_protocol"
+            ),
+            "mode": args.strategy_mode,
             "universe": "dynamic top1000 historical panel",
-            "n_hold": config.n_hold,
-            "pool_rank": config.pool_rank,
-            "sell_rank": config.sell_rank,
-            "max_industry_frac": config.max_industry_frac,
-            "industry_cap_pct": round(config.max_industry_frac * 100, 2),
+            "models": {
+                key: payload["benchmark_summary"]["config"]
+                for key, payload in models.items()
+            },
             "execution": "prediction date D, trade at next session open through prev_pred signal lag",
             "costs": f"fee_rate={config.fee_rate}",
             "nav_price": config.nav_price or config.exec_price,
@@ -610,6 +655,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--exec-price", choices=["open", "close"], default="open")
     parser.add_argument("--nav-price", choices=["open", "close"], default=None)
     parser.add_argument("--min-stocks-per-day", type=int, default=30)
+    parser.add_argument(
+        "--strategy-mode",
+        choices=["selected", "fixed"],
+        default="selected",
+        help=(
+            "selected uses each checkpoint's registered strategy; fixed applies "
+            "the CLI strategy arguments to every checkpoint"
+        ),
+    )
     parser.add_argument(
         "--historical-predict",
         action="store_true",
@@ -665,6 +719,7 @@ def main() -> None:
         name_map,
         args.device,
         historical_predict_mode=historical_predict_mode,
+        strategy_mode=args.strategy_mode,
     )
     data = build_data_json(models, args, config)
     args.out.parent.mkdir(parents=True, exist_ok=True)

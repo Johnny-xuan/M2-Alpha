@@ -12,6 +12,7 @@ jobs:
     steps:
       - name: Explain repository backtest policy
         run: |
-          echo "M2-Alpha no longer runs a scheduled market-data tracker in GitHub Actions."
-          echo "docs/data/data.json is generated from the local research-grade panel with the audited benchmark engine."
-          echo "Use build/update_backtest_site.py with a compatible panel to rebuild the historical backtest payload."
+          echo "M-0-M is refreshed by the separate trading-day baseline workflow."
+          echo "M-1-M and M-2-M remain frozen historical research curves."
+          echo "docs/data/data.json combines the M-0-M baseline with frozen research curves."
+          echo "Use build/update_backtest_site.py with a compatible panel to rebuild M-1-M/M-2-M historical curves."

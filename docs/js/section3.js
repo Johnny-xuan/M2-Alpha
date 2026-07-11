@@ -5,10 +5,10 @@
      · re-computes all 4 panels' data from the selected range
    ──────────────────────────────────────────────────────────── */
 import { $, $$, fmtPct } from "./utils.js";
-import { t } from "./i18n.js?v=20260709-bilingual1";
-import { drawEquityChart } from "./equity-chart.js?v=20260709-bilingual1";
-import { renderMonthlyBars } from "./monthly.js?v=20260709-bilingual1";
-import { renderHoldingsPanel } from "./holdings.js?v=20260709-bilingual1";
+import { t } from "./i18n.js?v=20260711-strategy-v2";
+import { drawEquityChart } from "./equity-chart.js?v=20260711-strategy-v2";
+import { renderMonthlyBars } from "./monthly.js?v=20260711-strategy-v2";
+import { renderHoldingsPanel } from "./holdings.js?v=20260711-strategy-v2";
 
 const STARTING_NAV = 1_000_000;
 

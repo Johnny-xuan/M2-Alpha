@@ -2,7 +2,7 @@
    tab-picks.js — Tab 1 sidebar: mini excess chart + recent hits chips
    ──────────────────────────────────────────────────────────── */
 import { $, svg, fmtPct } from "./utils.js";
-import { t } from "./i18n.js?v=20260709-bilingual1";
+import { t } from "./i18n.js?v=20260711-strategy-v2";
 
 /* mini 60-day excess sparkline */
 export function renderMiniExcess(data) {

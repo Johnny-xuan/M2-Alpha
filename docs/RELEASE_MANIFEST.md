@@ -14,14 +14,16 @@ The release includes:
 - `docs/report/` as the public technical-report PDF, LaTeX source, and figures;
 - `docs/*.md` for method, data, results, reproduction, audit, and maintenance notes;
 - `m2alpha/` as the readable Micro/Macro research implementation;
+- `.github/workflows/m0-baseline-update.yml` as the scheduled, trading-day-aware M-0-M baseline updater;
 - `build/alpha_model/`, `build/fetch_data.py`, `build/enrich_data.py`,
-  `build/inference.py`, `build/update_backtest_site.py`, `build/init.py`, and
-  `build/industry_map.csv` as public data, inference, and site-data utilities;
-- `scripts/train_baseline.py`, `scripts/benchmark_research.py`, and `scripts/audit_data_source_fields.py` as public reproduction entrypoints;
+  `build/inference.py`, `build/m0_inference.py`, `build/trading_calendar.py`, `build/update_m0_baseline.py`,
+  `build/update_backtest_site.py`, `build/init.py`, and `build/industry_map.csv`
+  as public data, inference, and site-data utilities;
+- `scripts/train_baseline.py`, `scripts/benchmark_research.py`, `scripts/sweep_strategy.py`, `scripts/audit_data_source_fields.py`, and `scripts/test_trading_calendar.py` as public reproduction, strategy-selection, and guard checks;
 - `configs/baseline.json` as the baseline training configuration;
 - `model_registry.yml` as the machine-readable public model registry;
 - `ml/m2alpha.pt`, `ml/m2alpha-m1m.pt`, and `ml/m2alpha-m2m.pt` as released model weights;
-- `build/cache/panel.parquet`, `build/cache/csi300.parquet`, `build/cache/basic.csv`, `build/cache/preds_m1m.parquet`, `build/cache/preds_m2m.parquet`, and `build/cache/source_enrichment.json` as public cache artifacts.
+- `build/cache/panel.parquet`, `build/cache/csi300.parquet`, `build/cache/basic.csv`, `build/cache/preds_m0m.parquet`, `build/cache/preds_m1m.parquet`, `build/cache/preds_m2m.parquet`, and `build/cache/source_enrichment.json` as public cache artifacts.
 
 ## Public Model Contract
 
@@ -29,7 +31,7 @@ The public names are:
 
 | Public name | Role |
 |---|---|
-| M-0-M | Stable public baseline shown on the site. |
+| M-0-M | Trading-day refreshed public baseline shown on the site. |
 | M-1-M | Frozen 3-block full-factor research curve. |
 | M-2-M | Frozen 5-block full-factor research curve and main research highlight. |
 
@@ -47,7 +49,6 @@ The release intentionally excludes:
 - private data panels, private paths, server names, credentials, and local notebooks;
 - obsolete public-cache simulator and old daily wrapper entrypoints;
 - old single-model prediction cache `build/cache/preds.parquet`;
-- scheduled market-data update workflows.
 
 ## Data Boundary
 
@@ -69,6 +70,7 @@ git diff --check
 python -m compileall -q build m2alpha scripts
 python scripts/train_baseline.py --smoke --out /tmp/m2alpha_smoke.pt --device cpu
 python scripts/benchmark_research.py --self-test --out-dir /tmp/m2alpha_benchmark_selftest
+python scripts/test_trading_calendar.py
 ```
 
 For docs or website changes, serve both page entries locally:

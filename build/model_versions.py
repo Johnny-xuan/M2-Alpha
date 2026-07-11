@@ -24,6 +24,7 @@ class ModelVersion:
     sha256: str
     role: str
     research_benchmark: dict[str, object]
+    selected_strategy: dict[str, object]
 
     def public_metadata(self) -> dict:
         return {
@@ -35,6 +36,7 @@ class ModelVersion:
             "n_layers": self.n_layers,
             "role": self.role,
             "research_benchmark": self.research_benchmark,
+            "selected_strategy": self.selected_strategy,
         }
 
 
@@ -52,10 +54,16 @@ MODEL_VERSIONS: tuple[ModelVersion, ...] = (
         role="historical full-factor 3-block research curve",
         research_benchmark={
             "label": "research benchmark",
-            "cum_pct": 239.12,
-            "sharpe": 3.40,
+            "cum_pct": 242.07,
+            "sharpe": 3.24,
             "max_dd_pct": -15.43,
-            "basis": "compatible full-factor top1000 panel · n=5/cap20 · pool_rank=100 · sell_rank=200 · open execution · fee_rate=0.0013",
+            "basis": "compatible full-factor top1000 panel · n=5 · max 1 name/industry · pool_rank=100 (recorded) · sell_rank=200 · open execution · fee_rate=0.0013",
+        },
+        selected_strategy={
+            "n_hold": 5,
+            "pool_rank": 100,
+            "sell_rank": 200,
+            "max_industry_frac": 0.2,
         },
     ),
     ModelVersion(
@@ -71,10 +79,16 @@ MODEL_VERSIONS: tuple[ModelVersion, ...] = (
         role="historical full-factor 5-block research highlight",
         research_benchmark={
             "label": "research benchmark",
-            "cum_pct": 354.34,
+            "cum_pct": 443.01,
             "sharpe": 3.99,
-            "max_dd_pct": -17.68,
-            "basis": "compatible full-factor top1000 panel · n=5/cap20 · pool_rank=100 · sell_rank=200 · open execution · fee_rate=0.0013",
+            "max_dd_pct": -13.86,
+            "basis": "compatible full-factor top1000 panel · n=5 · max 3 names/industry · pool_rank=100 (recorded) · sell_rank=50 · open execution · fee_rate=0.0013",
+        },
+        selected_strategy={
+            "n_hold": 5,
+            "pool_rank": 100,
+            "sell_rank": 50,
+            "max_industry_frac": 0.6,
         },
     ),
 )

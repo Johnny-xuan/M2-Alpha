@@ -3,15 +3,15 @@
    4 tab architecture: 今日推荐 / 每日复盘 / 回测业绩 / 关于
    ──────────────────────────────────────────────────────────────────────── */
 import { $, $$, nextTradingDay } from "./utils.js";
-import { LANG, t } from "./i18n.js?v=20260709-bilingual1";
-import { startNavClock } from "./navbar.js?v=20260709-bilingual1";
-import { initTheme } from "./theme.js?v=20260709-bilingual1";
+import { LANG, t } from "./i18n.js?v=20260711-strategy-v2";
+import { startNavClock } from "./navbar.js?v=20260711-strategy-v2";
+import { initTheme } from "./theme.js?v=20260711-strategy-v2";
 import { initRouter } from "./router.js";
 import { startCountUps } from "./hero.js";
-import { renderPicksTable } from "./picks.js?v=20260709-bilingual1";
-import { renderMiniExcess, renderRecentHits } from "./tab-picks.js?v=20260709-bilingual1";
-import { renderScorecardSummary, renderExcessChart, initDateRange } from "./scorecard.js?v=20260709-bilingual1";
-import { initSection3, refreshSection3 } from "./section3.js?v=20260709-bilingual1";
+import { renderPicksTable } from "./picks.js?v=20260711-strategy-v2";
+import { renderMiniExcess, renderRecentHits } from "./tab-picks.js?v=20260711-strategy-v2";
+import { renderScorecardSummary, renderExcessChart, initDateRange } from "./scorecard.js?v=20260711-strategy-v2";
+import { initSection3, refreshSection3 } from "./section3.js?v=20260711-strategy-v2";
 
 const MODEL_STORAGE_KEY = "m2alpha-model-version-v4";
 
@@ -315,7 +315,7 @@ function populateMeta(data) {
   const latest = s.asof || "—";
   renderDataSourceStatus(data);
 
-  const nextDay = nextTradingDay(latest);
+  const nextDay = data.next_trading_day || nextTradingDay(latest);
 
   const ntd = document.getElementById("next-trading-day");
   const navNextEl = document.getElementById("nav-next-day");
@@ -358,7 +358,7 @@ function populateMeta(data) {
     research_sharpe_text:   research.sharpe != null ? Number(research.sharpe).toFixed(2) : "—",
     research_mdd_text:      research.max_dd_pct != null ? fmtPctTxt(research.max_dd_pct, 1) : "—",
     research_basis_text:    research.basis || "—",
-    capability_basis_text:  capabilityBasisText(research.basis),
+    capability_basis_text:  capabilityBasisText(researchCurve),
     excess_pp:              (s.excess >= 0 ? "+" : "") + s.excess.toFixed(1) + " pp",
     monthly_win_text:       `${s.monthly_win_rate.toFixed(0)}% (${monthsWon}/${monthsTotal})`,
     monthly_won_text:       t("section.monthlyWin", { months: monthsTotal, won: monthsWon }),
@@ -461,9 +461,11 @@ function coverageText(n, d) {
   return Math.round((n || 0) / d * 100) + "%";
 }
 
-function capabilityBasisText(basis) {
-  if (!basis) return t("capability.basisFallback");
-  const dateRange = basis.split("·")[0]?.trim();
+function capabilityBasisText(curve) {
+  if (!curve) return t("capability.basisFallback");
+  const start = curve.summary?.start || "—";
+  const end = curve.summary?.asof || "—";
+  const dateRange = `${start} → ${end}`;
   return t("capability.basis", { dateRange });
 }
 
@@ -473,6 +475,10 @@ function renderDataSourceStatus(data) {
   const ds = data.data_sources || {};
   const meta = ds.metadata || {};
   if (!Object.keys(meta).length) {
+    const baseline = data.public_baseline || {};
+    const portfolioSize = baseline.portfolio_size || 7;
+    const sellRank = baseline.sell_rank || 35;
+    const industryLimit = baseline.max_per_industry || 3;
     host.innerHTML = `
       <span class="data-source-inline__tag">data</span>
       <div class="data-source-inline__body">
@@ -480,12 +486,12 @@ function renderDataSourceStatus(data) {
           ${t("data.baselineTitle", { asof: data.summary?.asof })}
         </div>
         <div class="data-source-inline__chips">
-          <span class="ds-chip ds-chip--ok"><i></i><b>panel</b><em>dynamic top1000</em></span>
-          <span class="ds-chip ds-chip--ok"><i></i><b>engine</b><em>benchmark.py</em></span>
-          <span class="ds-chip ds-chip--ok"><i></i><b>strategy</b><em>top5 / pool100</em></span>
+          <span class="ds-chip ds-chip--ok"><i></i><b>universe</b><em>${baseline.universe || "CSI300"}</em></span>
+          <span class="ds-chip ds-chip--ok"><i></i><b>portfolio</b><em>top${portfolioSize}</em></span>
+          <span class="ds-chip ds-chip--ok"><i></i><b>strategy</b><em>sell${sellRank} / industry≤${industryLimit}</em></span>
         </div>
         <div class="data-source-inline__note">
-          ${data.backtest_curve_note || t("data.fallbackNote")}
+          ${t("data.fallbackNote")}
         </div>
       </div>
     `;

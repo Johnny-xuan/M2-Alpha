@@ -2,7 +2,7 @@
    holdings.js — industry distribution + most-held tickers
    ──────────────────────────────────────────────────────────── */
 import { $ } from "./utils.js";
-import { t } from "./i18n.js?v=20260709-bilingual1";
+import { t } from "./i18n.js?v=20260711-strategy-v2";
 
 export function renderHoldingsPanel(data) {
   const ind = data.industry_avg.slice(0, 10);

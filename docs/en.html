@@ -25,7 +25,7 @@
 <meta name="twitter:description" content="M2-Alpha public baseline and research backtest curves · A-share cross-sectional alpha">
 <meta name="twitter:image" content="https://johnny-xuan.github.io/M2-Alpha/og-image.png">
 
-<link rel="stylesheet" href="styles.css?v=20260709-bilingual1">
+<link rel="stylesheet" href="styles.css?v=20260711-strategy-v2">
 
 <!-- Default light theme and first-paint guard -->
 <script>
@@ -116,7 +116,7 @@
             Entry · <em id="next-trading-day">—</em> · Buy at Open
           </h1>
           <p class="block-sub">
-            <strong id="picks-model-title">M-0-M</strong> cross-sectional Top 5 picks · Based on the <strong id="picks-asof">—</strong> close ·
+            <strong id="picks-model-title">M-0-M</strong> cross-sectional Top 7 picks · Based on the <strong id="picks-asof">—</strong> close ·
             Rebalance at 09:30 on the next trading day
           </p>
         </header>
@@ -182,8 +182,8 @@
     <header class="block-head">
       <h1 class="block-title">Daily Review · <span id="sc-days">—</span> samples</h1>
       <p class="block-sub">
-        The Top 5 portfolio follows the research benchmark: delayed signal, open execution,
-        sell-band discipline, and fee accounting. This page reviews daily portfolio return vs CSI 300.
+        The M-0-M public baseline uses the unified benchmark engine with its selected Top 7,
+        sell-rank 35, and max-three-per-industry strategy, plus the same signal lag, open NAV, and fee accounting.
       </p>
     </header>
 
@@ -192,12 +192,12 @@
       <div class="sc-stat">
         <div class="sc-stat__k">Avg Daily Excess</div>
         <div class="sc-stat__v" data-sc-stat="excess_avg" data-suffix="%">+0.00%</div>
-        <div class="sc-stat__d">Top 5 average return minus CSI 300</div>
+        <div class="sc-stat__d">Top 7 average return minus CSI 300</div>
       </div>
       <div class="sc-stat">
         <div class="sc-stat__k">Daily Win Rate</div>
         <div class="sc-stat__v" data-sc-stat="win_rate_vs_bench_daily" data-suffix="%">0.00%</div>
-        <div class="sc-stat__d"><span data-sc-text="win_days">—</span> / <span data-sc-text="n_days_total">—</span> days Top 5 beat the benchmark</div>
+        <div class="sc-stat__d"><span data-sc-text="win_days">—</span> / <span data-sc-text="n_days_total">—</span> days Top 7 beat the benchmark</div>
       </div>
       <div class="sc-stat">
         <div class="sc-stat__k">Stock Hit Rate</div>
@@ -214,7 +214,7 @@
     <!-- 60-day excess chart -->
     <div class="sc-chart-host">
       <h3 class="sub-h">
-        <span>Last 60 days · Top 5 portfolio vs CSI 300</span>
+        <span>Last 60 days · Top 7 portfolio vs CSI 300</span>
         <span class="sub-h__legend">
           <span class="lg lg--gain"><i></i>Beat</span>
           <span class="lg lg--loss"><i></i>Trail</span>
@@ -377,10 +377,10 @@
     <!-- Model preference -->
     <div class="section-panel" data-stab-panel="holdings" hidden>
       <div class="holdings-host">
-        <h3 class="sub-h">Model Preference · Based on all Top 5 holdings in range</h3>
+        <h3 class="sub-h">Model Preference · Based on all Top 7 holdings in range</h3>
         <div class="holdings">
           <div class="holdings__left">
-            <h4 class="sub-sub">Top 5 Industry Distribution</h4>
+            <h4 class="sub-sub">Top 7 Industry Distribution</h4>
             <div class="industry-bars" id="industry-bars"></div>
           </div>
           <div class="holdings__right">
@@ -433,7 +433,7 @@
               reproducible, research-friendly project.
             </p>
             <p>
-              M-0-M, M-1-M, and M-2-M correspond to the compact release baseline, the canonical
+              M-0-M, M-1-M, and M-2-M correspond to the trading-day refreshed compact release baseline, the canonical
               3-block line, and the deeper 5-block iterative line. Full method details, training
               entry points, factor contracts, and backtest scripts are maintained in the GitHub
               repository and the technical report.
@@ -447,7 +447,7 @@
           <div class="doc-stat-panel" aria-label="project facts">
             <div><span>Released weights</span><strong>3</strong></div>
             <div><span>Input factors</span><strong>35</strong></div>
-            <div><span>Benchmark strategy</span><strong>Top 5</strong></div>
+            <div><span>Backtest engine</span><strong>Unified</strong></div>
             <div><span>License</span><strong>Apache 2.0</strong></div>
           </div>
         </div>
@@ -557,6 +557,7 @@
             <ul class="model-points">
               <li>Prioritizes stability and transparency as a release/reference line.</li>
               <li>Belongs to the same 3-block family as M-1-M, not a separate architecture.</li>
+              <li>Refreshes only after a validated A-share session with fresh data; weekends and holidays keep the last valid result.</li>
             </ul>
             <div class="model-specs">
               <span>3 blocks</span><span>release anchor</span><span>no extra gating</span>
@@ -670,24 +671,37 @@
       </section>
 
       <section class="about-page" id="about-strategy" data-about-page="strategy" hidden>
-        <p class="doc-kicker">BENCHMARK STRATEGY</p>
-        <h2 class="about-h about-h--page">Unified Backtest Strategy</h2>
+        <p class="doc-kicker">PORTFOLIO STRATEGIES</p>
+        <h2 class="about-h about-h--page">Public Baseline and Research Protocol</h2>
         <p>
-          The backtest page does not show the prettiest curve after arbitrary tuning. It uses fixed
-          rules to compare model ranking ability, making it clear that performance comes from model
-          scores, data protocol, and portfolio rules rather than parameter picking after the fact.
+          The site keeps one trading-day-maintained M-0-M public baseline and two frozen M-1-M / M-2-M
+          research curves. All three use the same engine, signal timing, execution, and accounting semantics;
+          portfolio size, sell band, and industry constraints are swept as model-level hyperparameters.
+          M-0-M selects Top 7 / sell35 / max-three-per-industry on CSI300. On full-factor top1000 data,
+          M-1-M selects Top 5 / sell200 / max-one-per-industry, while M-2-M selects Top 5 / sell50 /
+          max-three-per-industry.
         </p>
+        <p><strong>M-0-M · Trading-day public baseline</strong></p>
+        <ol class="rules-compact rules-compact--docs">
+          <li><span class="rk">Universe</span>CSI300 constituents maintained with public BaoStock daily data</li>
+          <li><span class="rk">Portfolio</span>Equal-weight Top 7 with at most three names per industry</li>
+          <li><span class="rk">Hold band</span>Replace a holding only after it falls outside prediction rank 35</li>
+          <li><span class="rk">Execution</span>Build the target after the signal-day close, execute at the next open, use open NAV, and charge fee_rate=0.0013</li>
+          <li><span class="rk">Update gate</span>Publish only when both the trading calendar and latest data date validate; weekends and market holidays retain the last valid result</li>
+        </ol>
+        <p><strong>M-1-M / M-2-M · Research benchmark</strong></p>
         <ol class="rules-compact rules-compact--docs">
           <li><span class="rk">Universe</span>Dynamic top1000 stock pool sampled by month-end float market cap</li>
-          <li><span class="rk">Selection</span>Take the top 100 predicted names each backtest day, then build a Top 5 portfolio</li>
+          <li><span class="rk">Portfolio</span>Both checkpoint sweeps select an equal-weight Top 5 portfolio</li>
           <li><span class="rk">Weights</span>Equal weight, 20% per holding; no score-weighting</li>
-          <li><span class="rk">Industry cap</span>Industry cap20; if the portfolio cannot be filled, continue with the research benchmark fallback</li>
-          <li><span class="rk">Sell rule</span>Sell only after a name falls out of daily Top 200, reducing excessive turnover</li>
+          <li><span class="rk">M-1-M</span>Maximum one name per industry; replace after falling below prediction rank 200</li>
+          <li><span class="rk">M-2-M</span>Maximum three names per industry; replace after falling below prediction rank 50</li>
           <li><span class="rk">Execution</span>Open execution and open NAV accounting, fee_rate=0.0013, with no additional slippage model</li>
         </ol>
         <p class="doc-note">
-          This strategy is for the public benchmark and research-curve explanation. Real trading requires
-          fresh assessment of liquidity, slippage, execution constraints, and compliance requirements.
+          Both result families are historical simulations. M-0-M refreshes never rewrite the frozen research
+          curves. Real trading still requires fresh assessment of liquidity, slippage, execution constraints,
+          and compliance requirements.
         </p>
       </section>
 
@@ -725,8 +739,10 @@
    The public/open-data path does not include the full research data. Training and strong benchmark results used a richer research panel,
    including the full 35 factors, dynamic top1000 stock universe, volume ratio, free-float turnover, valuation, and money-flow fields.
    If I only provide free BaoStock/AKShare/efinance data, clearly state that it cannot fully reproduce the M-1-M/M-2-M research capability.
-7. If I want to reproduce the benchmark, first ask me for a compatible panel path; then use the unified strategy:
-   n_hold=5, pool_rank=100, sell_rank=200, industry cap20, open execution/open NAV, fee_rate=0.0013.
+7. If I want to reproduce the benchmark, first ask me for a compatible panel path. Start with the fixed protocol:
+   n_hold=5, sell_rank=200, max one name per industry, open execution/open NAV, fee_rate=0.0013.
+   Then use scripts/sweep_strategy.py on fixed weights and predictions to verify the selected curves:
+   M-1-M Top5/sell200/max-1-industry and M-2-M Top5/sell50/max-3-industry.
 8. Finish with a short report: what code was run, where the data came from, what outputs were produced, and which factors remain unreproducible.</code></pre>
         </div>
         <p class="doc-note">
@@ -800,6 +816,6 @@
     window.addEventListener("hashchange", syncLangLinks);
   })();
 </script>
-<script type="module" src="js/main.js?v=20260709-bilingual1"></script>
+<script type="module" src="js/main.js?v=20260711-strategy-v2"></script>
 </body>
 </html>

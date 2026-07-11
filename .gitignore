@@ -37,6 +37,7 @@ docs/data/*.csv
 # build/cache/ 大部分忽略，只保留 incremental 模式作为状态的生产数据文件
 build/cache/*
 !build/cache/panel.parquet
+!build/cache/preds_m0m.parquet
 !build/cache/preds_m1m.parquet
 !build/cache/preds_m2m.parquet
 !build/cache/csi300.parquet

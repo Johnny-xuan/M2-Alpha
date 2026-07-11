@@ -7,7 +7,7 @@ This document defines the public scope of M2-Alpha: what belongs in the reposito
 M2-Alpha is a research-to-public repository for an A-share deep-learning alpha model:
 
 - research: expose model design, training method, benchmark code, results, and limitations;
-- public: provide readable code, released weights, documentation, and a static presentation site;
+- public: provide readable code, released weights, documentation, and a GitHub Pages presentation site with a trading-day refreshed M-0-M baseline;
 - reproducibility: make benchmark results reproducible when users provide a compatible full-factor A-share panel.
 
 The repository is not a stock recommendation service, not an investment product, and not a raw export of the local development workspace.
@@ -19,7 +19,7 @@ The repository contains these public surfaces:
 - `README.md`: concise project entry point.
 - `docs/index.html`: Chinese public site.
 - `docs/en.html`: English public site.
-- `docs/data/data.json`: static site data payload for the public baseline and research curves.
+- `docs/data/data.json`: site data payload for the refreshed public baseline and frozen research curves.
 - `docs/report/`: PDF and LaTeX technical report.
 - `docs/*.md`: public method, model, data, result, reproduction, and maintenance docs.
 - `docs/RELEASE_MANIFEST.md`: public release-scope checklist.
@@ -35,7 +35,7 @@ Local planning notes, experiment inventories, raw checkpoint pools, and unpublis
 
 The website-facing lines are:
 
-- `M-0-M`: current stable public baseline.
+- `M-0-M`: current public baseline, refreshed only after a validated A-share trading session.
 - `M-1-M`: historical 3-block full-factor research curve.
 - `M-2-M`: historical 5-block full-factor research curve and main research highlight.
 
@@ -45,7 +45,7 @@ Public commands, model files, website payloads, and public docs should use these
 
 Public metrics must name their basis.
 
-- Public baseline metrics come from `docs/data/data.json`.
+- Public baseline metrics come from `docs/data/data.json`; its M-0-M fields refresh only when the scheduled guard confirms both an A-share trading session and fresh panel data. M-0-M calls the same audited `run_research_backtest` engine with its selected Top-7/sell-35/industry-max-3 strategy on the BaoStock CSI300 panel.
 - Research benchmark metrics come from `scripts/benchmark_research.py` when a compatible historical panel is supplied.
 - Frozen report metrics must stay labeled as report-derived records.
 - Historical research curves must not be presented as daily recommendations.
