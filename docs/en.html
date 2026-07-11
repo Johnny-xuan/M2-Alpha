@@ -25,7 +25,7 @@
 <meta name="twitter:description" content="M2-Alpha public baseline and research backtest curves · A-share cross-sectional alpha">
 <meta name="twitter:image" content="https://johnny-xuan.github.io/M2-Alpha/og-image.png">
 
-<link rel="stylesheet" href="styles.css?v=20260711-strategy-v2">
+<link rel="stylesheet" href="styles.css?v=20260711-strategy-explainer">
 
 <!-- Default light theme and first-paint guard -->
 <script>
@@ -672,32 +672,72 @@
 
       <section class="about-page" id="about-strategy" data-about-page="strategy" hidden>
         <p class="doc-kicker">PORTFOLIO STRATEGIES</p>
-        <h2 class="about-h about-h--page">Public Baseline and Research Protocol</h2>
-        <p>
-          The site keeps one trading-day-maintained M-0-M public baseline and two frozen M-1-M / M-2-M
-          research curves. All three use the same engine, signal timing, execution, and accounting semantics;
-          portfolio size, sell band, and industry constraints are swept as model-level hyperparameters.
-          M-0-M selects Top 7 / sell35 / max-three-per-industry on CSI300. On full-factor top1000 data,
-          M-1-M selects Top 5 / sell200 / max-one-per-industry, while M-2-M selects Top 5 / sell50 /
-          max-three-per-industry.
+        <h2 class="about-h about-h--page">From Model Scores to Holdings</h2>
+        <p class="strategy-lede">
+          M²-Alpha does not output a buy list to copy directly. It assigns a relative prediction score to every
+          stock in the same trading-day cross section. The portfolio strategy converts that changing ranking into
+          an executable portfolio with a defined size, controlled turnover, and bounded industry concentration.
         </p>
-        <p><strong>M-0-M · Trading-day public baseline</strong></p>
-        <ol class="rules-compact rules-compact--docs">
-          <li><span class="rk">Universe</span>CSI300 constituents maintained with public BaoStock daily data</li>
-          <li><span class="rk">Portfolio</span>Equal-weight Top 7 with at most three names per industry</li>
-          <li><span class="rk">Hold band</span>Replace a holding only after it falls outside prediction rank 35</li>
-          <li><span class="rk">Execution</span>Build the target after the signal-day close, execute at the next open, use open NAV, and charge fee_rate=0.0013</li>
-          <li><span class="rk">Update gate</span>Publish only when both the trading calendar and latest data date validate; weekends and market holidays retain the last valid result</li>
-        </ol>
-        <p><strong>M-1-M / M-2-M · Research benchmark</strong></p>
-        <ol class="rules-compact rules-compact--docs">
-          <li><span class="rk">Universe</span>Dynamic top1000 stock pool sampled by month-end float market cap</li>
-          <li><span class="rk">Portfolio</span>Both checkpoint sweeps select an equal-weight Top 5 portfolio</li>
-          <li><span class="rk">Weights</span>Equal weight, 20% per holding; no score-weighting</li>
-          <li><span class="rk">M-1-M</span>Maximum one name per industry; replace after falling below prediction rank 200</li>
-          <li><span class="rk">M-2-M</span>Maximum three names per industry; replace after falling below prediction rank 50</li>
-          <li><span class="rk">Execution</span>Open execution and open NAV accounting, fee_rate=0.0013, with no additional slippage model</li>
-        </ol>
+
+        <div class="strategy-flow" aria-label="Five steps from model scores to portfolio execution">
+          <div class="strategy-flow__step"><span>01 · Market close</span><strong>Build factors</strong><p>Use only information available by the close of day D to construct inputs for every eligible stock.</p></div>
+          <div class="strategy-flow__step"><span>02 · Model output</span><strong>Score stocks</strong><p>The model scores each stock, then sorts the daily cross section from highest to lowest.</p></div>
+          <div class="strategy-flow__step"><span>03 · Review holdings</span><strong>Keep or exit</strong><p>An existing holding stays until it falls outside the sell band, preventing small rank changes from causing repeated trades.</p></div>
+          <div class="strategy-flow__step"><span>04 · Fill vacancies</span><strong>Walk the ranking</strong><p>Add the highest-ranked names while skipping stocks that are untradable or would exceed the industry limit.</p></div>
+          <div class="strategy-flow__step"><span>05 · Next session</span><strong>Execute at open</strong><p>The day-D signal trades at the D+1 open. Holdings are equal-weighted and bilateral fees are charged.</p></div>
+        </div>
+
+        <div class="strategy-explainer">
+          <section>
+            <span class="strategy-explainer__kicker">The industry rule does not pick industries</span>
+            <h3>The model ranks stocks, not sectors</h3>
+            <p>
+              Industry labels come from the security metadata map. The strategy walks down the stock ranking.
+              If a candidate belongs to an industry that has already reached its portfolio limit, that stock is
+              skipped and the next high-scoring stock is considered. “Maximum three per industry” therefore means
+              <strong>one industry may occupy at most three portfolio slots</strong>; it does not predict or select
+              the three best industries.
+            </p>
+          </section>
+          <section>
+            <span class="strategy-explainer__kicker">What the strategy solves</span>
+            <h3>Balance conviction, turnover, and sector exposure</h3>
+            <p>
+              Top N controls portfolio concentration. The sell band controls how weak a model view must become
+              before replacing a holding. The industry limit prevents a cluster of high scores in one sector from
+              dominating the portfolio. Together they turn “which stocks score higher” into “which stocks are held.”
+            </p>
+          </section>
+        </div>
+
+        <div class="strategy-terms" aria-label="Portfolio parameter definitions">
+          <div><strong>candidate universe</strong><p>The research scope is fixed before scoring. M-0-M uses CSI300; research curves use the top 1000 names by the latest month-end free-float market-cap snapshot available by that date, carried forward until the next rebalance.</p></div>
+          <div><strong>Top N</strong><p>Hold N stocks in the target portfolio. Top 5 is more concentrated than Top 7, so each name has a larger NAV impact.</p></div>
+          <div><strong>sell rank</strong><p>The exit threshold for existing holdings. With sell35, a stock is replaced only after leaving the daily Top 35, not immediately after leaving Top 7.</p></div>
+          <div><strong>industry limit</strong><p>The maximum number of portfolio slots from one industry. It changes portfolio construction, not the prediction score assigned by the model.</p></div>
+        </div>
+
+        <h3 class="strategy-section-title">Fixed rules behind the three public curves</h3>
+        <p class="strategy-section-copy">
+          All three models share the same signal lag, execution, NAV, and fee engine. Their depth and score
+          distributions differ, so portfolio parameters were swept separately on a declared historical window.
+          Once selected, the published rule stays fixed; it is not re-optimized every trading day.
+        </p>
+        <div class="strategy-table-wrap">
+          <table class="strategy-table">
+            <thead><tr><th>Model</th><th>Candidate universe</th><th>Target</th><th>Exit old holding</th><th>Industry rule</th><th>Role on site</th></tr></thead>
+            <tbody>
+              <tr><th>M-0-M</th><td>CSI300</td><td>Equal-weight Top 7</td><td>Outside Top 35</td><td>Max 3 per industry</td><td>Trading-day public baseline</td></tr>
+              <tr><th>M-1-M</th><td>Latest month-end float-cap top1000</td><td>Equal-weight Top 5</td><td>Outside Top 200</td><td>Max 1 per industry</td><td>Frozen 3-block research curve</td></tr>
+              <tr><th>M-2-M</th><td>Latest month-end float-cap top1000</td><td>Equal-weight Top 5</td><td>Outside Top 50</td><td>Max 3 per industry</td><td>Frozen 5-block research curve</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="strategy-footnote">
+          M-0-M refreshes only when both the A-share calendar and latest market-data date validate; weekends and
+          market holidays retain the last valid result. M-1-M/M-2-M use the full-factor research panel and remain
+          frozen after their stated cutoff.
+        </p>
         <p class="doc-note">
           Both result families are historical simulations. M-0-M refreshes never rewrite the frozen research
           curves. Real trading still requires fresh assessment of liquidity, slippage, execution constraints,
