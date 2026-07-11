@@ -25,7 +25,7 @@
 <meta name="twitter:description" content="M2-Alpha 当前公开基线与研究回测曲线 · A 股截面 alpha">
 <meta name="twitter:image" content="https://johnny-xuan.github.io/M2-Alpha/og-image.png">
 
-<link rel="stylesheet" href="styles.css?v=20260711-strategy-explainer">
+<link rel="stylesheet" href="styles.css?v=20260711-strategy-rule">
 
 <!-- 默认亮色主题 + 防首屏闪烁 -->
 <script>
@@ -657,65 +657,69 @@
 
       <section class="about-page" id="about-strategy" data-about-page="strategy" hidden>
         <p class="doc-kicker">PORTFOLIO STRATEGIES</p>
-        <h2 class="about-h about-h--page">模型分数如何变成持仓</h2>
-        <p class="strategy-lede">
-          M²-Alpha 模型的输出不是一张直接照抄的买入清单，而是同一交易日内每只股票的相对预测分数。
-          回测策略负责把这组每天都会变化的横截面排名，转换成一个持仓数量明确、换手受控、行业不过度集中的可执行组合。
+        <h2 class="about-h about-h--page">实际采用的选股与换仓策略</h2>
+        <div class="strategy-definition">
+          <span>高分股票等权持有，排名明显走弱后再换仓</span>
+          <p>
+            每个交易日收盘后，模型给候选池内的股票打分。分数越高，表示模型越希望优先持有。
+            组合先保留仍在卖出排名线以内的旧仓，再从最高分股票开始补足空位；同一行业的持仓数量受限。
+            最终组合等权，并在下一交易日开盘成交。
+          </p>
+        </div>
+
+        <section class="strategy-example" aria-labelledby="strategy-m0-title">
+          <header>
+            <span>M-0-M · 当前公开基线</span>
+            <h3 id="strategy-m0-title">每天具体怎么做</h3>
+          </header>
+          <div class="strategy-example-grid">
+            <div>
+              <span>D 日收盘</span>
+              <strong>先检查原来的 7 只持仓</strong>
+              <p>能够交易且当天模型排名仍在前 35 的股票继续持有；跌到第 36 名以后才准备卖出。</p>
+            </div>
+            <div>
+              <span>D 日收盘</span>
+              <strong>再从最高分股票补足 7 只</strong>
+              <p>从排名第 1 的股票向下选择；已经持有、无法交易，或会让同一行业超过 3 只的候选会被跳过。</p>
+            </div>
+            <div>
+              <span>D+1 日开盘</span>
+              <strong>调成 7 只等权组合</strong>
+              <p>正常情况下每只目标权重约 14.29%，在下一交易日开盘买卖，每笔成交计入 0.13% 费用。</p>
+            </div>
+          </div>
+          <p class="strategy-case">
+            <strong>一个简单例子：</strong>如果昨天的 7 只持仓今天排名为
+            <code>4 / 9 / 17 / 23 / 31 / 44 / 78</code>，sell35 会保留前五只，
+            卖出排名 44 和 78 的两只，再从当日最高分候选中补两个空位。
+          </p>
+        </section>
+
+        <p class="strategy-why">
+          这里的关键不是每天把组合完全换成新的 Top 7。sell35 留出了一段缓冲：
+          股票只是从第 7 名滑到第 8 名时不会立刻卖出，只有模型观点明显变弱、跌出前 35 才换仓。
+          行业规则也不是选择“最好的三个行业”，而是按股票排名补仓时，通常不让同一行业占超过三个名额。
         </p>
 
-        <div class="strategy-flow" aria-label="从模型评分到组合执行的五个步骤">
-          <div class="strategy-flow__step"><span>01 · 收盘数据</span><strong>构造因子</strong><p>用截至 D 日收盘可见的数据，为候选池内每只股票构造模型输入。</p></div>
-          <div class="strategy-flow__step"><span>02 · 模型输出</span><strong>股票评分</strong><p>模型给每只股票一个分数，并在当日横截面内从高到低排序。</p></div>
-          <div class="strategy-flow__step"><span>03 · 先看旧仓</span><strong>保留或卖出</strong><p>只要原持仓没有跌出卖出排名带，就继续持有，避免排名轻微波动造成反复交易。</p></div>
-          <div class="strategy-flow__step"><span>04 · 再补空位</span><strong>按排名填仓</strong><p>从最高分股票开始补足组合，同时跳过停牌、不可交易或触发行业上限的股票。</p></div>
-          <div class="strategy-flow__step"><span>05 · 下一交易日</span><strong>开盘执行</strong><p>D 日信号在 D+1 日开盘成交，组合等权，并计入双边手续费。</p></div>
-        </div>
-
-        <div class="strategy-explainer">
-          <section>
-            <span class="strategy-explainer__kicker">行业约束不是“挑行业”</span>
-            <h3>模型排的是股票，不是行业</h3>
-            <p>
-              行业标签来自股票基础信息映射。策略按股票预测分数逐只向下扫描；如果某只股票所属行业已经达到组合上限，
-              就暂时跳过它，继续选择下一只高分股票。因此“每行业最多三只”表示<strong>同一行业最多占三个持仓名额</strong>，
-              不是先预测或挑出三个最好的行业。
-            </p>
-          </section>
-          <section>
-            <span class="strategy-explainer__kicker">策略在解决什么</span>
-            <h3>在集中度、换手和行业暴露之间取平衡</h3>
-            <p>
-              Top N 决定组合有多集中；卖出排名带决定模型观点变弱到什么程度才换仓；行业上限防止高分股票恰好集中在同一板块。
-              三者一起把“谁的分数更高”变成“今天实际持有哪些股票”。
-            </p>
-          </section>
-        </div>
-
-        <div class="strategy-terms" aria-label="策略参数解释">
-          <div><strong>候选股票池</strong><p>模型开始评分前先确定研究范围。M-0-M 使用 CSI300；研究曲线使用动态 top1000，即按不晚于当日的最近月末流通市值快照选出前 1000 只，并沿用到下一次月末调样。</p></div>
-          <div><strong>Top N</strong><p>最终持有 N 只股票。Top 5 比 Top 7 更集中，每只股票对净值的影响也更大。</p></div>
-          <div><strong>sell rank</strong><p>旧持仓的退出阈值。例如 sell35 表示它跌出当日预测排名前 35 后才会被替换，而不是一离开 Top 7 就立即卖出。</p></div>
-          <div><strong>行业上限</strong><p>限制同一行业能占用的持仓名额。它只影响组合构造，不改变模型给股票算出的预测分数。</p></div>
-        </div>
-
-        <h3 class="strategy-section-title">三条公开曲线采用的固定策略</h3>
+        <h3 class="strategy-section-title">M-1-M 和 M-2-M 采用同一套买卖逻辑</h3>
         <p class="strategy-section-copy">
-          三款模型共用相同的信号滞后、成交、净值和费用引擎，但模型深度与评分分布不同，因此分别在声明过的历史窗口中扫描组合参数。
-          公开曲线采用选定后固定下来的参数，不会在每个交易日重新挑一套更好看的策略。
+          三款模型的操作顺序完全相同，区别只在候选池、持仓数、卖出排名线和行业名额。
+          这些参数在历史窗口中选定后固定用于公开曲线，不会每天重新调参。
         </p>
         <div class="strategy-table-wrap">
           <table class="strategy-table">
-            <thead><tr><th>模型</th><th>候选股票池</th><th>目标持仓</th><th>旧仓退出</th><th>行业约束</th><th>页面角色</th></tr></thead>
+            <thead><tr><th>模型</th><th>每天在哪些股票中评分</th><th>持有</th><th>什么时候卖旧仓</th><th>同一行业通常最多</th></tr></thead>
             <tbody>
-              <tr><th>M-0-M</th><td>CSI300</td><td>Top 7 等权</td><td>跌出 Top 35</td><td>每行业最多 3 只</td><td>交易日更新的公开基线</td></tr>
-              <tr><th>M-1-M</th><td>最近月末流通市值 top1000</td><td>Top 5 等权</td><td>跌出 Top 200</td><td>每行业最多 1 只</td><td>冻结的 3-block 研究曲线</td></tr>
-              <tr><th>M-2-M</th><td>最近月末流通市值 top1000</td><td>Top 5 等权</td><td>跌出 Top 50</td><td>每行业最多 3 只</td><td>冻结的 5-block 研究曲线</td></tr>
+              <tr><th>M-0-M</th><td>CSI300 成分股</td><td>7 只等权</td><td>模型排名跌出前 35</td><td>3 只</td></tr>
+              <tr><th>M-1-M</th><td>最近月末流通市值前 1000 只</td><td>5 只等权</td><td>模型排名跌出前 200</td><td>1 只</td></tr>
+              <tr><th>M-2-M</th><td>最近月末流通市值前 1000 只</td><td>5 只等权</td><td>模型排名跌出前 50</td><td>3 只</td></tr>
             </tbody>
           </table>
         </div>
         <p class="strategy-footnote">
-          M-0-M 只有在交易日历与最新行情日期同时通过校验时才更新；周末和休市日保持最近一次有效结果。
-          M-1-M / M-2-M 使用完整因子研究面板，曲线截止后保持冻结。
+          无法交易的旧仓不会被强制卖出。如果严格行业上限导致组合无法补满，原研究实现会在最后一步放宽行业限制以保持目标持仓数。
+          M-0-M 按有效交易日更新；M-1-M / M-2-M 是截止到声明日期的冻结研究回测。
         </p>
         <p class="doc-note">
           两类结果都是历史模拟。M-0-M 的连续更新不会改写冻结研究曲线；真实交易仍需重新评估流动性、滑点、成交约束和合规要求。
