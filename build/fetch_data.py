@@ -618,7 +618,11 @@ def main():
         pass
 
     today = datetime.now()
-    end_date = args.end or today.strftime("%Y-%m-%d")
+    raw_end_date = args.end or today.strftime("%Y-%m-%d")
+    end_date = datetime.strptime(
+        str(raw_end_date).replace("-", "")[:8],
+        "%Y%m%d",
+    ).strftime("%Y-%m-%d")
 
     if args.incremental:
         panel_path = CACHE / "panel.parquet"
@@ -639,7 +643,10 @@ def main():
             return
         print(f"[fetch incremental] panel max={max_d}, 新增窗口 {start_date} → {end_date}")
     elif args.start:
-        start_date = args.start
+        start_date = datetime.strptime(
+            str(args.start).replace("-", "")[:8],
+            "%Y%m%d",
+        ).strftime("%Y-%m-%d")
     elif args.days is None:
         start_date = DEFAULT_HISTORY_START
     else:
